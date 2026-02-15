@@ -28,11 +28,11 @@ import androidx.compose.ui.unit.dp
  * to create a softer, more natural feel inspired by organic forms
  */
 val OrganicShapes = Shapes(
-    extraSmall = RoundedCornerShape(0.dp),
-    small = RoundedCornerShape(0.dp),
-    medium = RoundedCornerShape(0.dp),
-    large = RoundedCornerShape(0.dp),
-    extraLarge = RoundedCornerShape(0.dp)
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(24.dp),
+    extraLarge = RoundedCornerShape(32.dp)
 )
 
 /**
@@ -45,10 +45,10 @@ val OrganicShapes = Shapes(
  * Use for: Cards, containers, prominent UI elements
  */
 val RiverShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 0.dp,
-    bottomEnd = 0.dp,
-    bottomStart = 0.dp
+    topStart = 32.dp,
+    topEnd = 8.dp,
+    bottomEnd = 32.dp,
+    bottomStart = 8.dp
 )
 
 /**
@@ -57,10 +57,10 @@ val RiverShape = RoundedCornerShape(
  * Use for: Chips, badges, compact containers
  */
 val LeafShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 0.dp,
-    bottomEnd = 0.dp,
-    bottomStart = 0.dp
+    topStart = 24.dp,
+    topEnd = 4.dp,
+    bottomEnd = 24.dp,
+    bottomStart = 4.dp
 )
 
 /**
@@ -69,17 +69,17 @@ val LeafShape = RoundedCornerShape(
  * Use for: Small cards, list items, buttons
  */
 val PebbleShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 0.dp,
-    bottomEnd = 0.dp,
-    bottomStart = 0.dp
+    topStart = 20.dp,
+    topEnd = 6.dp,
+    bottomEnd = 20.dp,
+    bottomStart = 6.dp
 )
 
 /**
  * Highly rounded shape for soft, approachable elements
  * Use for: FABs, prominent buttons, avatars
  */
-val SoftRectangleShape = RoundedCornerShape(0.dp)
+val SoftRectangleShape = RoundedCornerShape(20.dp)
 
 /**
  * Top-heavy curve for bottom sheets and modals
@@ -87,8 +87,8 @@ val SoftRectangleShape = RoundedCornerShape(0.dp)
  * Use for: Bottom sheets, modal dialogs
  */
 val WaveShape = RoundedCornerShape(
-    topStart = 0.dp,
-    topEnd = 0.dp,
+    topStart = 32.dp,
+    topEnd = 32.dp,
     bottomEnd = 0.dp,
     bottomStart = 0.dp
 )
@@ -100,7 +100,6 @@ val WaveShape = RoundedCornerShape(
 val HillShape = RoundedCornerShape(
     topStart = 0.dp,
     topEnd = 0.dp,
-    bottomEnd = 0.dp,
-    bottomStart = 0.dp
+    bottomEnd = 24.dp,
+    bottomStart = 24.dp
 )
-

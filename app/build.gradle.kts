@@ -188,7 +188,6 @@ dependencies {
     implementation(projects.feature.map)
     implementation(projects.feature.node)
     implementation(projects.feature.settings)
-    implementation(projects.feature.firmware)
     implementation(projects.feature.emergency)
     implementation(projects.feature.sos)
 

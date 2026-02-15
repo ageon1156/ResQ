@@ -106,6 +106,7 @@ constructor(
         private const val SUMMARY_ID = 1
         private const val PERSON_ICON_SIZE = 128
         private const val PERSON_ICON_TEXT_SIZE_RATIO = 0.5f
+        private const val SILENT_NODE_NOTIFY_BASE = 200_000
     }
 
     /**
@@ -180,6 +181,13 @@ constructor(
                 NotificationManager.IMPORTANCE_HIGH,
             )
 
+        object SilentNode :
+            NotificationType(
+                "silent_node",
+                Res.string.meshtastic_alerts_notifications, // reuses the alerts string
+                NotificationManager.IMPORTANCE_HIGH,
+            )
+
         companion object {
             // A list of all types for easy initialization.
             fun allTypes() = listOf(
@@ -192,6 +200,7 @@ constructor(
                 LowBatteryLocal,
                 LowBatteryRemote,
                 Client,
+                SilentNode,
             )
         }
     }
@@ -229,6 +238,7 @@ constructor(
                     NotificationType.NewNode,
                     NotificationType.LowBatteryLocal,
                     NotificationType.LowBatteryRemote,
+                    NotificationType.SilentNode,
                     -> {
                         setShowBadge(true)
                         setSound(
@@ -454,6 +464,20 @@ constructor(
 
     override fun clearClientNotification(notification: MeshProtos.ClientNotification) =
         notificationManager.cancel(notification.toString().hashCode())
+
+    override fun showSilentNodeNotification(nodeNum: Int, title: String, message: String) {
+        val notification = commonBuilder(NotificationType.SilentNode)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(Notification.CATEGORY_ALARM)
+            .setAutoCancel(true)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setWhen(System.currentTimeMillis())
+            .setShowWhen(true)
+            .build()
+        notificationManager.notify(SILENT_NODE_NOTIFY_BASE + nodeNum, notification)
+    }
 
     // endregion
 

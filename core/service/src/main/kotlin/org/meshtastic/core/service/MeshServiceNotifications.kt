@@ -70,5 +70,7 @@ interface MeshServiceNotifications {
     fun cancelLowBatteryNotification(node: NodeEntity)
 
     fun clearClientNotification(notification: MeshProtos.ClientNotification)
+
+    fun showSilentNodeNotification(nodeNum: Int, title: String, message: String)
 }
 

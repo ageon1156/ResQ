@@ -25,12 +25,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.automirrored.outlined.VolumeMute
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.QrCode2
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,8 +34,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconToggleButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -50,36 +44,31 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.meshtastic.core.database.model.Node
+import org.meshtastic.core.service.ServiceAction
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.actions
 import org.meshtastic.core.strings.direct_message
-import org.meshtastic.core.strings.favorite
-import org.meshtastic.core.strings.ignore
-import org.meshtastic.core.strings.mute_notifications
+import org.meshtastic.core.strings.leave_mesh
+import org.meshtastic.core.strings.leave_mesh_text
+import org.meshtastic.core.strings.leave_mesh_title
 import org.meshtastic.core.strings.remove
 import org.meshtastic.core.strings.share_contact
 import org.meshtastic.core.ui.component.ListItem
-import org.meshtastic.core.ui.component.SwitchListItem
+import org.meshtastic.core.ui.component.SimpleAlertDialog
 import org.meshtastic.feature.node.model.NodeDetailAction
-import org.meshtastic.feature.node.model.isEffectivelyUnmessageable
 
 private enum class DialogType {
-    FAVORITE,
-    IGNORE,
-    MUTE,
     REMOVE,
+    LEAVE_MESH,
 }
 
 @Composable
 fun DeviceActions(
     node: Node,
-    lastTracerouteTime: Long?,
-    lastRequestNeighborsTime: Long?,
     onAction: (NodeDetailAction) -> Unit,
     modifier: Modifier = Modifier,
     isLocal: Boolean = false,
@@ -88,16 +77,28 @@ fun DeviceActions(
 
     NodeActionDialogs(
         node = node,
-        displayFavoriteDialog = displayedDialog == DialogType.FAVORITE,
-        displayIgnoreDialog = displayedDialog == DialogType.IGNORE,
-        displayMuteDialog = displayedDialog == DialogType.MUTE,
+        displayFavoriteDialog = false,
+        displayIgnoreDialog = false,
+        displayMuteDialog = false,
         displayRemoveDialog = displayedDialog == DialogType.REMOVE,
         onDismissMenuRequest = { displayedDialog = null },
-        onConfirmFavorite = { onAction(NodeDetailAction.HandleNodeMenuAction(NodeMenuAction.Favorite(it))) },
-        onConfirmIgnore = { onAction(NodeDetailAction.HandleNodeMenuAction(NodeMenuAction.Ignore(it))) },
-        onConfirmMute = { onAction(NodeDetailAction.HandleNodeMenuAction(NodeMenuAction.Mute(it))) },
+        onConfirmFavorite = {},
+        onConfirmIgnore = {},
+        onConfirmMute = {},
         onConfirmRemove = { onAction(NodeDetailAction.HandleNodeMenuAction(NodeMenuAction.Remove(it))) },
     )
+
+    if (displayedDialog == DialogType.LEAVE_MESH) {
+        SimpleAlertDialog(
+            title = Res.string.leave_mesh_title,
+            text = Res.string.leave_mesh_text,
+            onConfirm = {
+                displayedDialog = null
+                onAction(NodeDetailAction.TriggerServiceAction(ServiceAction.LeaveMesh))
+            },
+            onDismiss = { displayedDialog = null },
+        )
+    }
 
     ElevatedCard(
         modifier = modifier.fillMaxWidth(),
@@ -111,27 +112,15 @@ fun DeviceActions(
                 node = node,
                 isLocal = isLocal,
                 onAction = onAction,
-                onFavoriteClick = { displayedDialog = DialogType.FAVORITE },
             )
-
-            if (!isLocal) {
-                ActionsDivider()
-
-                RemoteDeviceActions(
-                    node = node,
-                    lastTracerouteTime = lastTracerouteTime,
-                    lastRequestNeighborsTime = lastRequestNeighborsTime,
-                    onAction = onAction,
-                )
-            }
 
             ActionsDivider()
 
             ManagementActions(
                 node = node,
-                onIgnoreClick = { displayedDialog = DialogType.IGNORE },
-                onMuteClick = { displayedDialog = DialogType.MUTE },
+                isLocal = isLocal,
                 onRemoveClick = { displayedDialog = DialogType.REMOVE },
+                onLeaveMeshClick = { displayedDialog = DialogType.LEAVE_MESH },
             )
         }
     }
@@ -161,48 +150,32 @@ private fun PrimaryActionsRow(
     node: Node,
     isLocal: Boolean,
     onAction: (NodeDetailAction) -> Unit,
-    onFavoriteClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (!node.isEffectivelyUnmessageable && !isLocal) {
-            Button(
-                onClick = { onAction(NodeDetailAction.HandleNodeMenuAction(NodeMenuAction.DirectMessage(node))) },
-                modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.large,
-                colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ),
-            ) {
-                Icon(Icons.AutoMirrored.Filled.Message, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(Res.string.direct_message))
-            }
+        Button(
+            onClick = { onAction(NodeDetailAction.HandleNodeMenuAction(NodeMenuAction.DirectMessage(node))) },
+            modifier = Modifier.weight(1f),
+            shape = MaterialTheme.shapes.large,
+            colors =
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ),
+        ) {
+            Icon(Icons.AutoMirrored.Filled.Message, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(Res.string.direct_message))
         }
 
         OutlinedButton(
             onClick = { onAction(NodeDetailAction.ShareContact) },
-            modifier = if (node.isEffectivelyUnmessageable || isLocal) Modifier.weight(1f) else Modifier,
             shape = MaterialTheme.shapes.large,
         ) {
             Icon(Icons.Rounded.QrCode2, contentDescription = null)
-            if (node.isEffectivelyUnmessageable || isLocal) {
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(Res.string.share_contact))
-            }
-        }
-
-        IconToggleButton(checked = node.isFavorite, onCheckedChange = { onFavoriteClick() }) {
-            Icon(
-                imageVector = if (node.isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
-                contentDescription = stringResource(Res.string.favorite),
-                tint = if (node.isFavorite) Color.Yellow else LocalContentColor.current,
-            )
         }
     }
 }
@@ -210,37 +183,21 @@ private fun PrimaryActionsRow(
 @Composable
 private fun ManagementActions(
     node: Node,
-    onIgnoreClick: () -> Unit,
-    onMuteClick: () -> Unit,
+    isLocal: Boolean,
     onRemoveClick: () -> Unit,
+    onLeaveMeshClick: () -> Unit,
 ) {
     Column {
-        SwitchListItem(
-            text = stringResource(Res.string.ignore),
-            leadingIcon =
-            if (node.isIgnored) {
-                Icons.AutoMirrored.Outlined.VolumeMute
-            } else {
-                Icons.AutoMirrored.Default.VolumeUp
-            },
-            checked = node.isIgnored,
-            onClick = onIgnoreClick,
-        )
-
-        if (node.capabilities.canMuteNode) {
-            SwitchListItem(
-                text = stringResource(Res.string.mute_notifications),
-                leadingIcon =
-                if (node.isMuted) {
-                    Icons.AutoMirrored.Filled.VolumeOff
-                } else {
-                    Icons.AutoMirrored.Default.VolumeUp
-                },
-                checked = node.isMuted,
-                onClick = onMuteClick,
+        if (isLocal) {
+            ListItem(
+                text = stringResource(Res.string.leave_mesh),
+                leadingIcon = Icons.Rounded.ExitToApp,
+                trailingIcon = null,
+                textColor = MaterialTheme.colorScheme.error,
+                leadingIconTint = MaterialTheme.colorScheme.error,
+                onClick = onLeaveMeshClick,
             )
         }
-
         ListItem(
             text = stringResource(Res.string.remove),
             leadingIcon = Icons.Rounded.Delete,

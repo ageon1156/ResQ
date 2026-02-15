@@ -23,7 +23,6 @@ include(
     ":feature:map",
     ":feature:node",
     ":feature:settings",
-    ":feature:firmware",
     ":feature:emergency",
     ":feature:sos",
     ":mesh_service_example",

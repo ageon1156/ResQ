@@ -81,6 +81,7 @@ constructor(
     private val tracerouteHandler: MeshTracerouteHandler,
     private val neighborInfoHandler: MeshNeighborInfoHandler,
     private val radioConfigRepository: RadioConfigRepository,
+    private val silentNodeDetector: SilentNodeDetector,
 ) {
     private var scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -99,6 +100,11 @@ constructor(
         val dataPacket = dataMapper.toDataPacket(packet) ?: return
         val fromUs = myNodeNum == packet.from
         dataPacket.status = MessageStatus.RECEIVED
+
+        // ── Silent-node detection: record heartbeat for every incoming packet ──
+        if (!fromUs) {
+            silentNodeDetector.onPacketReceived(packet.from)
+        }
 
         val shouldBroadcast = handleDataPacket(packet, dataPacket, myNodeNum, fromUs, logUuid, logInsertJob)
 
@@ -178,8 +184,19 @@ constructor(
                 handleRangeTest(dataPacket, myNodeNum)
                 shouldBroadcast = false
             }
+
+            Portnums.PortNum.PRIVATE_APP_VALUE -> {
+                handlePrivateApp(packet)
+                shouldBroadcast = false
+            }
         }
         return shouldBroadcast
+    }
+
+    private fun handlePrivateApp(packet: MeshPacket) {
+        val text = packet.decoded.payload.toStringUtf8()
+        if (silentNodeDetector.tryParseSilenceReport(text, packet.from)) return
+        silentNodeDetector.tryParseGracefulExit(text, packet.from)
     }
 
     private fun handleRangeTest(dataPacket: DataPacket, myNodeNum: Int) {

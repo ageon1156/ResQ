@@ -28,7 +28,6 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.TileProvider
 import com.google.android.gms.maps.model.UrlTileProvider
-import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.data.geojson.GeoJsonLayer
 import com.google.maps.android.data.kml.KmlLayer
@@ -106,16 +105,16 @@ constructor(
             ?: ourNodeInfo.value?.position?.toLatLng()
             ?: LatLng(0.0, 0.0)
 
-    val cameraPositionState =
-        CameraPositionState(
-            position =
-            CameraPosition(
-                targetLatLng,
-                googleMapsPrefs.cameraZoom,
-                googleMapsPrefs.cameraTilt,
-                googleMapsPrefs.cameraBearing,
-            ),
+    val initialCameraPosition =
+        CameraPosition(
+            targetLatLng,
+            googleMapsPrefs.cameraZoom,
+            googleMapsPrefs.cameraTilt,
+            googleMapsPrefs.cameraBearing,
         )
+
+    private val _cameraPositionEvent = MutableSharedFlow<CameraPosition>(extraBufferCapacity = 1)
+    val cameraPositionEvent: SharedFlow<CameraPosition> = _cameraPositionEvent.asSharedFlow()
 
     val theme: StateFlow<Int> = uiPreferencesDataSource.theme
 
@@ -271,7 +270,7 @@ constructor(
                 wpMap[wpId]?.let { packet ->
                     val waypoint = packet.data.waypoint!!
                     val latLng = LatLng(waypoint.latitudeI / 1e7, waypoint.longitudeI / 1e7)
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 15f)
+                    _cameraPositionEvent.tryEmit(CameraPosition.fromLatLngZoom(latLng, 15f))
                 }
             }
         }

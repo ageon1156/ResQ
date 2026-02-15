@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ForkLeft
 import androidx.compose.material.icons.filled.Icecream
 import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
@@ -39,7 +38,6 @@ import org.meshtastic.core.database.entity.FirmwareRelease
 import org.meshtastic.core.database.entity.asDeviceVersion
 import org.meshtastic.core.database.model.Node
 import org.meshtastic.core.model.DeviceVersion
-import org.meshtastic.core.navigation.SettingsRoutes
 import org.meshtastic.core.service.ServiceAction
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.administration
@@ -48,7 +46,6 @@ import org.meshtastic.core.strings.firmware_edition
 import org.meshtastic.core.strings.installed_firmware_version
 import org.meshtastic.core.strings.latest_alpha_firmware
 import org.meshtastic.core.strings.latest_stable_firmware
-import org.meshtastic.core.strings.remote_admin
 import org.meshtastic.core.strings.request_metadata
 import org.meshtastic.core.ui.component.InsetDivider
 import org.meshtastic.core.ui.component.ListItem
@@ -84,16 +81,6 @@ fun AdministrationSection(
                     onAction(NodeDetailAction.TriggerServiceAction(ServiceAction.GetDeviceMetadata(node.num)))
                 },
             )
-
-            InsetDivider()
-
-            ListItem(
-                text = stringResource(Res.string.remote_admin),
-                leadingIcon = Icons.Default.Settings,
-                enabled = metricsState.isLocal || node.metadata != null,
-            ) {
-                onAction(NodeDetailAction.Navigate(SettingsRoutes.Settings(node.num)))
-            }
         }
     }
 

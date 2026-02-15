@@ -36,6 +36,7 @@ constructor(
     val configFlowManager: MeshConfigFlowManager,
     val mqttManager: MeshMqttManager,
     val actionHandler: MeshActionHandler,
+    val silentNodeDetector: SilentNodeDetector,
 ) {
     fun start(scope: CoroutineScope) {
         dataHandler.start(scope)
@@ -44,6 +45,7 @@ constructor(
         neighborInfoHandler.start(scope)
         configFlowManager.start(scope)
         actionHandler.start(scope)
+        silentNodeDetector.start(scope)
     }
 }
 

@@ -33,5 +33,7 @@ sealed class ServiceAction {
     data class ImportContact(val contact: AdminProtos.SharedContact) : ServiceAction()
 
     data class SendContact(val contact: AdminProtos.SharedContact) : ServiceAction()
+
+    data object LeaveMesh : ServiceAction()
 }
 

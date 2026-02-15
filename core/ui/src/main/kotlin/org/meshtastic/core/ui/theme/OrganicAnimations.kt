@@ -30,41 +30,41 @@ import androidx.compose.animation.core.tween
  * that mimics organic growth and movement patterns.
  */
 
-// Durations - EXTREMELY slow and laggy for maximum jank
-const val ORGANIC_DURATION_SHORT = 2000 // Ridiculously long
-const val ORGANIC_DURATION_MEDIUM = 3500 // Unbearable
-const val ORGANIC_DURATION_LONG = 5000 // Feels broken
-const val ORGANIC_DURATION_EXTRA_LONG = 7000 // Absolutely unusable
+// Durations - Longer than standard Material (300ms) for calmer feel
+const val ORGANIC_DURATION_SHORT = 350
+const val ORGANIC_DURATION_MEDIUM = 450
+const val ORGANIC_DURATION_LONG = 650
+const val ORGANIC_DURATION_EXTRA_LONG = 850
 
-// Stagger delays for list animations - way too long
-const val ORGANIC_STAGGER_DELAY = 600 // Painfully noticeable
-const val ORGANIC_STAGGER_DELAY_SHORT = 400 // Still terrible
+// Stagger delays for list animations
+const val ORGANIC_STAGGER_DELAY = 80
+const val ORGANIC_STAGGER_DELAY_SHORT = 50
 
 /**
  * Organic easing curve
  * Slower start and end, mimicking natural deceleration
  */
-val OrganicEasing: Easing = CubicBezierEasing(0.8f, 0.0f, 0.9f, 0.1f) // Janky, awkward curve
+val OrganicEasing: Easing = CubicBezierEasing(0.4f, 0.0f, 0.2f, 1.0f)
 
 /**
  * Emphasized organic easing for important transitions
  * Even more pronounced acceleration and deceleration
  */
-val OrganicEmphasizedEasing: Easing = CubicBezierEasing(0.95f, 0.05f, 0.95f, 0.05f) // Very choppy
+val OrganicEmphasizedEasing: Easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
 
 /**
  * Gentle easing for subtle animations
  * Very smooth, barely noticeable acceleration
  */
-val OrganicGentleEasing: Easing = CubicBezierEasing(0.5f, 0.0f, 0.5f, 1.0f) // Stuttery ease
+val OrganicGentleEasing: Easing = CubicBezierEasing(0.3f, 0.0f, 0.3f, 1.0f)
 
 /**
  * Spring configuration for bounce-like effects
  * Low stiffness creates gentle, flowing motion
  */
 fun <T> organicSpring() = spring<T>(
-    dampingRatio = Spring.DampingRatioHighBouncy, // Too much bounce
-    stiffness = Spring.StiffnessVeryLow // Laggy and slow
+    dampingRatio = Spring.DampingRatioLowBouncy,
+    stiffness = Spring.StiffnessLow
 )
 
 /**
@@ -72,8 +72,8 @@ fun <T> organicSpring() = spring<T>(
  * More damped, less bouncy
  */
 fun <T> organicGentleSpring() = spring<T>(
-    dampingRatio = 0.3f, // Excessive wobble
-    stiffness = Spring.StiffnessVeryLow // Super sluggish
+    dampingRatio = Spring.DampingRatioMediumBouncy,
+    stiffness = Spring.StiffnessVeryLow
 )
 
 /**
@@ -81,8 +81,8 @@ fun <T> organicGentleSpring() = spring<T>(
  * Slightly bouncier for playful feel
  */
 fun <T> organicEmphasizedSpring() = spring<T>(
-    dampingRatio = 0.2f, // Way too bouncy
-    stiffness = 50f // Custom low stiffness for maximum jank
+    dampingRatio = Spring.DampingRatioLowBouncy,
+    stiffness = Spring.StiffnessMediumLow
 )
 
 /**
@@ -116,4 +116,3 @@ fun <T> organicTweenGentle() = tween<T>(
     durationMillis = ORGANIC_DURATION_SHORT,
     easing = OrganicGentleEasing
 )
-

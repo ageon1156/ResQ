@@ -122,5 +122,7 @@ class FakeMeshServiceNotifications : MeshServiceNotifications {
     override fun cancelLowBatteryNotification(node: NodeEntity) {}
 
     override fun clearClientNotification(notification: MeshProtos.ClientNotification) {}
+
+    override fun showSilentNodeNotification(nodeNum: Int, title: String, message: String) {}
 }
 

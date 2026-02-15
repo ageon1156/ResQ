@@ -46,7 +46,6 @@ import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.HealthAndSafety
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Sos
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -101,11 +100,9 @@ import com.geeksville.mesh.navigation.channelsGraph
 import com.geeksville.mesh.navigation.connectionsGraph
 import com.geeksville.mesh.navigation.contactsGraph
 import com.geeksville.mesh.navigation.emergencyGraph
-import com.geeksville.mesh.navigation.firmwareGraph
 import com.geeksville.mesh.navigation.sosGraph
 import com.geeksville.mesh.navigation.mapGraph
 import com.geeksville.mesh.navigation.nodesGraph
-import com.geeksville.mesh.navigation.settingsGraph
 import com.geeksville.mesh.repository.radio.MeshActivity
 import com.geeksville.mesh.service.MeshService
 import com.geeksville.mesh.ui.connections.DeviceType
@@ -128,11 +125,9 @@ import org.meshtastic.core.navigation.SOSRoutes
 import org.meshtastic.core.navigation.NodeDetailRoutes
 import org.meshtastic.core.navigation.NodesRoutes
 import org.meshtastic.core.navigation.Route
-import org.meshtastic.core.navigation.SettingsRoutes
 import org.meshtastic.core.service.ConnectionState
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.app_too_old
-import org.meshtastic.core.strings.bottom_nav_settings
 import org.meshtastic.core.strings.client_notification
 import org.meshtastic.core.strings.close
 import org.meshtastic.core.strings.compromised_keys
@@ -246,9 +241,6 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
             title = Res.string.client_notification,
             text = { Text(text = message) },
             onConfirm = {
-                if (compromisedKeys) {
-                    navController.navigate(SettingsRoutes.Security)
-                }
                 uIViewModel.clearClientNotification(notification)
             },
             onDismiss = { uIViewModel.clearClientNotification(notification) },
@@ -609,7 +601,6 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
             mapGraph(navController)
             channelsGraph(navController)
             connectionsGraph(navController)
-            firmwareGraph(navController)
             emergencyGraph(navController)
             sosGraph(navController)
         }

@@ -54,15 +54,10 @@ import org.meshtastic.core.ui.component.preview.NodePreviewParameterProvider
 import org.meshtastic.core.ui.theme.AppTheme
 import org.meshtastic.feature.node.compass.CompassUiState
 import org.meshtastic.feature.node.compass.CompassViewModel
-import org.meshtastic.feature.node.component.AdministrationSection
 import org.meshtastic.feature.node.component.CompassSheetContent
 import org.meshtastic.feature.node.component.DeviceActions
-import org.meshtastic.feature.node.component.DeviceDetailsSection
 import org.meshtastic.feature.node.component.FirmwareReleaseSheetContent
-import org.meshtastic.feature.node.component.MetricsSection
-import org.meshtastic.feature.node.component.NodeDetailsSection
 import org.meshtastic.feature.node.component.NodeMenuAction
-import org.meshtastic.feature.node.component.NotesSection
 import org.meshtastic.feature.node.component.PositionSection
 import org.meshtastic.feature.node.model.LogsType
 import org.meshtastic.feature.node.model.MetricsState
@@ -73,11 +68,8 @@ fun NodeDetailContent(
     node: Node,
     ourNode: Node?,
     metricsState: MetricsState,
-    lastTracerouteTime: Long?,
-    lastRequestNeighborsTime: Long?,
     availableLogs: Set<LogsType>,
     onAction: (NodeDetailAction) -> Unit,
-    onSaveNotes: (nodeNum: Int, notes: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showShareDialog by remember { mutableStateOf(false) }
@@ -87,8 +79,6 @@ fun NodeDetailContent(
 
     NodeDetailList(
         node = node,
-        lastTracerouteTime = lastTracerouteTime,
-        lastRequestNeighborsTime = lastRequestNeighborsTime,
         ourNode = ourNode,
         metricsState = metricsState,
         onAction = { action ->
@@ -100,7 +90,6 @@ fun NodeDetailContent(
         },
         modifier = modifier,
         availableLogs = availableLogs,
-        onSaveNotes = onSaveNotes,
     )
 }
 
@@ -109,13 +98,10 @@ fun NodeDetailContent(
 @Suppress("LongMethod")
 fun NodeDetailList(
     node: Node,
-    lastTracerouteTime: Long?,
-    lastRequestNeighborsTime: Long?,
     ourNode: Node?,
     metricsState: MetricsState,
     onAction: (NodeDetailAction) -> Unit,
     availableLogs: Set<LogsType>,
-    onSaveNotes: (Int, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showFirmwareSheet by remember { mutableStateOf(false) }
@@ -157,12 +143,8 @@ fun NodeDetailList(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).focusable(),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        NodeDetailsSection(node)
-
         DeviceActions(
             isLocal = metricsState.isLocal,
-            lastTracerouteTime = lastTracerouteTime,
-            lastRequestNeighborsTime = lastRequestNeighborsTime,
             node = node,
             onAction = onAction,
         )
@@ -185,7 +167,6 @@ fun NodeDetailList(
             },
         )
 
-        NotesSection(node = node, onSaveNotes = onSaveNotes)
     }
 }
 
@@ -248,12 +229,9 @@ private fun NodeDetailsPreview(@PreviewParameter(NodePreviewParameterProvider::c
         NodeDetailList(
             node = node,
             ourNode = node,
-            lastTracerouteTime = null,
-            lastRequestNeighborsTime = null,
             metricsState = MetricsState.Companion.Empty,
             availableLogs = emptySet(),
             onAction = {},
-            onSaveNotes = { _, _ -> },
         )
     }
 }

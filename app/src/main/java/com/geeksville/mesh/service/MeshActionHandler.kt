@@ -59,6 +59,7 @@ constructor(
     private val databaseManager: DatabaseManager,
     private val serviceNotifications: MeshServiceNotifications,
     private val messageProcessor: Lazy<MeshMessageProcessor>,
+    private val silentNodeDetector: SilentNodeDetector,
 ) {
     private var scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -85,6 +86,7 @@ constructor(
                 is ServiceAction.GetDeviceMetadata -> {
                     commandSender.sendAdmin(action.destNum, wantResponse = true) { getDeviceMetadataRequest = true }
                 }
+                is ServiceAction.LeaveMesh -> silentNodeDetector.broadcastGracefulExit()
             }
         }
     }

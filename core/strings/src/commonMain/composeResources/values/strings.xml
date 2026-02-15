@@ -360,6 +360,9 @@
     <string name="error_duty_cycle">Duty Cycle limit reached. Cannot send messages right now, please try again later.</string>
     <string name="remove">Remove</string>
     <string name="remove_node_text">This node will be removed from your list until your node receives data from it again.</string>
+    <string name="leave_mesh">Leave Mesh</string>
+    <string name="leave_mesh_title">Leave Mesh?</string>
+    <string name="leave_mesh_text">This will announce to nearby nodes that you are intentionally leaving. They will not trigger a silent-node alert for your device.</string>
     <string name="mute_notifications">Mute notifications</string>
     <string name="mute_1_hour">1 hour</string>
     <string name="mute_8_hours">8 hours</string>

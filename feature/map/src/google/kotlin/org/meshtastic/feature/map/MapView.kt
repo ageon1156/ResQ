@@ -82,6 +82,7 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.MapsComposeExperimentalApi
+import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerInfoWindowComposable
 import com.google.maps.android.compose.Polyline
@@ -178,12 +179,21 @@ fun MapView(
     var mapTypeMenuExpanded by remember { mutableStateOf(false) }
     var showCustomTileManagerSheet by remember { mutableStateOf(false) }
 
-    val cameraPositionState = mapViewModel.cameraPositionState
+    val cameraPositionState = remember {
+        CameraPositionState(position = mapViewModel.initialCameraPosition)
+    }
 
     // Save camera position when it stops moving
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             mapViewModel.saveCameraPosition(cameraPositionState.position)
+        }
+    }
+
+    // Handle camera position events from ViewModel (e.g. waypoint centering)
+    LaunchedEffect(Unit) {
+        mapViewModel.cameraPositionEvent.collect { newPosition ->
+            cameraPositionState.position = newPosition
         }
     }
 

@@ -54,8 +54,6 @@ fun NodeDetailScreen(
 
     val metricsState by metricsViewModel.state.collectAsStateWithLifecycle()
     val environmentMetricsState by metricsViewModel.environmentState.collectAsStateWithLifecycle()
-    val lastTracerouteTime by nodeDetailViewModel.lastTraceRouteTime.collectAsStateWithLifecycle()
-    val lastRequestNeighborsTime by nodeDetailViewModel.lastRequestNeighborsTime.collectAsStateWithLifecycle()
     val ourNode by nodeDetailViewModel.ourNodeInfo.collectAsStateWithLifecycle()
 
     val availableLogs by
@@ -98,8 +96,6 @@ fun NodeDetailScreen(
                 node = node,
                 ourNode = ourNode,
                 metricsState = metricsState,
-                lastTracerouteTime = lastTracerouteTime,
-                lastRequestNeighborsTime = lastRequestNeighborsTime,
                 availableLogs = availableLogs,
                 onAction = { action ->
                     handleNodeAction(
@@ -114,7 +110,6 @@ fun NodeDetailScreen(
                     )
                 },
                 modifier = modifier.padding(paddingValues),
-                onSaveNotes = { num, notes -> nodeDetailViewModel.setNodeNotes(num, notes) },
             )
         } else {
             Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
