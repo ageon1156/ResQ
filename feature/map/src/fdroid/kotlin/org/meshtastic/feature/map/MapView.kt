@@ -317,6 +317,13 @@ fun MapView(
         }
     }
 
+    // Auto-enable MyLocation overlay on startup if permission is already granted
+    LaunchedEffect(Unit) {
+        if (locationPermissionsState.allPermissionsGranted && myLocationOverlay == null) {
+            map.toggleMyLocation()
+        }
+    }
+
     val nodes by mapViewModel.nodes.collectAsStateWithLifecycle()
     val waypoints by mapViewModel.waypoints.collectAsStateWithLifecycle(emptyMap())
     val selectedWaypointId by mapViewModel.selectedWaypointId.collectAsStateWithLifecycle()
@@ -554,9 +561,7 @@ fun MapView(
 
             override fun longPressHelper(p: GeoPoint): Boolean {
                 performHapticFeedback()
-                val enabled = isConnected && downloadRegionBoundingBox == null
-
-                if (enabled) {
+                if (downloadRegionBoundingBox == null) {
                     showEditWaypointDialog = waypoint {
                         latitudeI = (p.latitude * 1e7).toInt()
                         longitudeI = (p.longitude * 1e7).toInt()
@@ -897,7 +902,7 @@ fun MapView(
                 showEditWaypointDialog = null
                 mapViewModel.sendWaypoint(
                     waypoint.copy {
-                        if (id == 0) id = mapViewModel.generatePacketId() ?: return@OrganicEditWaypointDialog
+                        if (id == 0) id = mapViewModel.generatePacketId() ?: (System.currentTimeMillis().toInt() or 1)
                         if (name == "") name = "Dropped Pin"
                         if (expire == 0) expire = Int.MAX_VALUE
                         lockedTo = if (waypoint.lockedTo != 0) mapViewModel.myNodeNum ?: 0 else 0

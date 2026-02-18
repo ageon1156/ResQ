@@ -34,12 +34,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -84,6 +88,21 @@ import org.meshtastic.proto.MeshProtos.Waypoint
 import org.meshtastic.proto.copy
 import java.util.Calendar
 import java.util.TimeZone
+
+private data class PlaceType(val label: String, val emoji: Int)
+
+private val PLACE_TYPES = listOf(
+    PlaceType("Hospital",    127973), // 🏥
+    PlaceType("First Aid",     9971), // ⛑
+    PlaceType("Shelter",       9978), // ⛺
+    PlaceType("Food",        127838), // 🍞
+    PlaceType("Water",       128167), // 💧
+    PlaceType("Aid Center",  127384), // 🆘
+    PlaceType("Police",      128148), // 🚔
+    PlaceType("Fire Dept",   128146), // 🚒
+    PlaceType("Danger",        9888), // ⚠
+    PlaceType("Blocked",     128679), // 🚧
+)
 
 /**
  * Organic styled waypoint editing dialog with natural shapes and colors.
@@ -187,6 +206,40 @@ fun OrganicEditWaypointDialog(
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
+
+                    // Quick place type selector
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        PLACE_TYPES.forEach { placeType ->
+                            val selected = waypointInput.name == placeType.label &&
+                                    waypointInput.icon == placeType.emoji
+                            FilterChip(
+                                selected = selected,
+                                onClick = {
+                                    waypointInput = waypointInput.copy {
+                                        name = placeType.label
+                                        icon = placeType.emoji
+                                    }
+                                },
+                                label = {
+                                    Text(
+                                        text = "${String(Character.toChars(placeType.emoji))} ${placeType.label}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                ),
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     // Description field
                     OutlinedTextField(

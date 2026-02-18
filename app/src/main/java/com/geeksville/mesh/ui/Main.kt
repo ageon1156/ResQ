@@ -44,6 +44,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.HealthAndSafety
 import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Sos
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Badge
@@ -99,6 +100,7 @@ import com.geeksville.mesh.navigation.channelsGraph
 import com.geeksville.mesh.navigation.connectionsGraph
 import com.geeksville.mesh.navigation.contactsGraph
 import com.geeksville.mesh.navigation.emergencyGraph
+import com.geeksville.mesh.navigation.mapGraph
 import com.geeksville.mesh.navigation.sosGraph
 import com.geeksville.mesh.navigation.nodesGraph
 import com.geeksville.mesh.repository.radio.MeshActivity
@@ -118,6 +120,7 @@ import org.meshtastic.core.navigation.ConnectionsRoutes
 import org.meshtastic.core.navigation.ContactsRoutes
 import org.meshtastic.core.navigation.EmergencyRoutes
 import org.meshtastic.core.navigation.SOSRoutes
+import org.meshtastic.core.navigation.MapRoutes
 import org.meshtastic.core.navigation.NodesRoutes
 import org.meshtastic.core.navigation.Route
 import org.meshtastic.core.service.ConnectionState
@@ -133,6 +136,7 @@ import org.meshtastic.core.strings.device_sleeping
 import org.meshtastic.core.strings.disconnected
 import org.meshtastic.core.strings.emergency_help
 import org.meshtastic.core.strings.firmware_old
+import org.meshtastic.core.strings.map
 import org.meshtastic.core.strings.firmware_too_old
 import org.meshtastic.core.strings.must_update
 import org.meshtastic.core.strings.neighbor_info
@@ -154,6 +158,7 @@ import org.meshtastic.proto.MeshProtos
 
 enum class TopLevelDestination(val label: StringResource, val icon: ImageVector, val route: Route) {
     Nodes(Res.string.nodes, Icons.Outlined.Hub, NodesRoutes.NodesGraph),
+    Map(Res.string.map, Icons.Outlined.Map, MapRoutes.Map()),
     Conversations(Res.string.conversations, Icons.Outlined.ChatBubbleOutline, ContactsRoutes.ContactsGraph),
     Emergency(Res.string.emergency_help, Icons.Outlined.HealthAndSafety, EmergencyRoutes.EmergencyGraph),
     SOS(Res.string.sos, Icons.Outlined.Sos, SOSRoutes.SOSGraph),
@@ -557,6 +562,7 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
         ) {
             contactsGraph(navController, uIViewModel.scrollToTopEventFlow)
             nodesGraph(navController, uIViewModel.scrollToTopEventFlow)
+            mapGraph(navController)
             channelsGraph(navController)
             connectionsGraph(navController)
             emergencyGraph(navController)

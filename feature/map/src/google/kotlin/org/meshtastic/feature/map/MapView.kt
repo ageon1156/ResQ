@@ -447,13 +447,11 @@ fun MapView(
                 properties =
                 MapProperties(mapType = effectiveGoogleMapType, isMyLocationEnabled = hasLocationPermission),
                 onMapLongClick = { latLng ->
-                    if (isConnected) {
-                        val newWaypoint = waypoint {
-                            latitudeI = (latLng.latitude / DEG_D).toInt()
-                            longitudeI = (latLng.longitude / DEG_D).toInt()
-                        }
-                        editingWaypoint = newWaypoint
+                    val newWaypoint = waypoint {
+                        latitudeI = (latLng.latitude / DEG_D).toInt()
+                        longitudeI = (latLng.longitude / DEG_D).toInt()
                     }
+                    editingWaypoint = newWaypoint
                 },
             ) {
                 key(currentCustomTileProviderUrl) {
@@ -627,7 +625,7 @@ fun MapView(
                     onSendClicked = { updatedWp ->
                         var finalWp = updatedWp
                         if (updatedWp.id == 0) {
-                            finalWp = finalWp.copy { id = mapViewModel.generatePacketId() ?: 0 }
+                            finalWp = finalWp.copy { id = mapViewModel.generatePacketId() ?: (System.currentTimeMillis().toInt() or 1) }
                         }
                         if (updatedWp.icon == 0) {
                             finalWp = finalWp.copy { icon = 0x1F4CD }
