@@ -56,8 +56,6 @@ import org.meshtastic.core.strings.power
 import org.meshtastic.core.strings.signal
 import org.meshtastic.core.strings.traceroute
 import org.meshtastic.core.ui.component.ScrollToTopEvent
-import org.meshtastic.feature.map.node.NodeMapScreen
-import org.meshtastic.feature.map.node.NodeMapViewModel
 import org.meshtastic.feature.node.metrics.DeviceMetricsScreen
 import org.meshtastic.feature.node.metrics.EnvironmentMetricsScreen
 import org.meshtastic.feature.node.metrics.HostMetricsLogScreen
@@ -67,7 +65,6 @@ import org.meshtastic.feature.node.metrics.PositionLogScreen
 import org.meshtastic.feature.node.metrics.PowerMetricsScreen
 import org.meshtastic.feature.node.metrics.SignalMetricsScreen
 import org.meshtastic.feature.node.metrics.TracerouteLogScreen
-import org.meshtastic.feature.node.metrics.TracerouteMapScreen
 import kotlin.reflect.KClass
 
 fun NavGraphBuilder.nodesGraph(navController: NavHostController, scrollToTopEvents: Flow<ScrollToTopEvent>) {
@@ -109,19 +106,6 @@ fun NavGraphBuilder.nodeDetailGraph(navController: NavHostController, scrollToTo
             )
         }
 
-        composable<NodeDetailRoutes.NodeMap>(
-            deepLinks =
-            listOf(
-                navDeepLink<NodeDetailRoutes.NodeMap>(basePath = "$DEEP_LINK_BASE_URI/node/{destNum}/node_map"),
-                navDeepLink<NodeDetailRoutes.NodeMap>(basePath = "$DEEP_LINK_BASE_URI/node/node_map"),
-            ),
-        ) { backStackEntry ->
-            val parentGraphBackStackEntry =
-                remember(backStackEntry) { navController.getBackStackEntry(NodesRoutes.NodeDetailGraph::class) }
-            val vm = hiltViewModel<NodeMapViewModel>(parentGraphBackStackEntry)
-            NodeMapScreen(vm, onNavigateUp = navController::navigateUp)
-        }
-
         composable<NodeDetailRoutes.TracerouteLog>(
             deepLinks =
             listOf(
@@ -140,39 +124,6 @@ fun NavGraphBuilder.nodeDetailGraph(navController: NavHostController, scrollToTo
 
             TracerouteLogScreen(
                 viewModel = metricsViewModel,
-                onNavigateUp = navController::navigateUp,
-                onViewOnMap = { requestId, responseLogUuid ->
-                    navController.navigate(
-                        NodeDetailRoutes.TracerouteMap(
-                            destNum = args.destNum,
-                            requestId = requestId,
-                            logUuid = responseLogUuid,
-                        ),
-                    )
-                },
-            )
-        }
-
-        composable<NodeDetailRoutes.TracerouteMap>(
-            deepLinks =
-            listOf(
-                navDeepLink<NodeDetailRoutes.TracerouteMap>(
-                    basePath = "$DEEP_LINK_BASE_URI/node/{destNum}/traceroute_map",
-                ),
-                navDeepLink<NodeDetailRoutes.TracerouteMap>(basePath = "$DEEP_LINK_BASE_URI/node/traceroute_map"),
-            ),
-        ) { backStackEntry ->
-            val parentGraphBackStackEntry =
-                remember(backStackEntry) { navController.getBackStackEntry(NodesRoutes.NodeDetailGraph::class) }
-            val metricsViewModel = hiltViewModel<MetricsViewModel>(parentGraphBackStackEntry)
-
-            val args = backStackEntry.toRoute<NodeDetailRoutes.TracerouteMap>()
-            metricsViewModel.setNodeId(args.destNum)
-
-            TracerouteMapScreen(
-                metricsViewModel = metricsViewModel,
-                requestId = args.requestId,
-                logUuid = args.logUuid,
                 onNavigateUp = navController::navigateUp,
             )
         }

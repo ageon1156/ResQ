@@ -238,7 +238,6 @@ constructor(
                     NotificationType.NewNode,
                     NotificationType.LowBatteryLocal,
                     NotificationType.LowBatteryRemote,
-                    NotificationType.SilentNode,
                     -> {
                         setShowBadge(true)
                         setSound(
@@ -251,6 +250,7 @@ constructor(
                         if (type == NotificationType.LowBatteryRemote) enableVibration(true)
                     }
 
+                    NotificationType.SilentNode,
                     NotificationType.Alert -> {
                         setShowBadge(true)
                         enableLights(true)
@@ -467,9 +467,10 @@ constructor(
 
     override fun showSilentNodeNotification(nodeNum: Int, title: String, message: String) {
         val notification = commonBuilder(NotificationType.SilentNode)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(Notification.CATEGORY_ALARM)
             .setAutoCancel(true)
+            .setOnlyAlertOnce(true) // Prevents Android from muting as "recently noisy"
             .setContentTitle(title)
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))

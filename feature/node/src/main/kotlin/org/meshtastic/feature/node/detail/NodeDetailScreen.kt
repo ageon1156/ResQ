@@ -62,7 +62,6 @@ fun NodeDetailScreen(
                 buildSet {
                     if (metricsState.hasDeviceMetrics()) add(LogsType.DEVICE)
                     if (metricsState.hasPositionLogs()) {
-                        add(LogsType.NODE_MAP)
                         add(LogsType.POSITIONS)
                     }
                     if (environmentMetricsState.hasEnvironmentMetrics()) add(LogsType.ENVIRONMENT)

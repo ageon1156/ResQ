@@ -20,7 +20,6 @@ include(
     ":core:ui",
     ":feature:intro",
     ":feature:messaging",
-    ":feature:map",
     ":feature:node",
     ":feature:settings",
     ":feature:emergency",

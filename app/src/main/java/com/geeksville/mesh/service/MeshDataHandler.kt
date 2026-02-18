@@ -195,6 +195,7 @@ constructor(
 
     private fun handlePrivateApp(packet: MeshPacket) {
         val text = packet.decoded.payload.toStringUtf8()
+        if (silentNodeDetector.tryParseHeartbeat(text, packet.from)) return
         if (silentNodeDetector.tryParseSilenceReport(text, packet.from)) return
         silentNodeDetector.tryParseGracefulExit(text, packet.from)
     }
@@ -414,6 +415,10 @@ constructor(
         val r = MeshProtos.Routing.parseFrom(packet.decoded.payload)
         if (r.errorReason == MeshProtos.Routing.Error.DUTY_CYCLE_LIMIT) {
             serviceRepository.setErrorMessage(getString(Res.string.error_duty_cycle))
+        }
+        // ACK from a node proves it's alive — update silent node tracker
+        if (r.errorReason == MeshProtos.Routing.Error.NONE) {
+            silentNodeDetector.onPacketReceived(packet.from)
         }
         handleAckNak(
             packet.decoded.requestId,

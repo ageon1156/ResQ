@@ -52,6 +52,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <!-- Required to prevent SmartBackground restriction from killing the app -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <!-- Needed to open our bluetooth connection to our paired device (after reboot) -->
@@ -94,6 +97,11 @@
         android:theme="@style/SplashTheme"
         android:localeConfig="@xml/locales_config"
         android:networkSecurityConfig="@xml/network_security_config">
+
+        <!-- Dummy key to prevent Maps SDK crash; map feature is disabled -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="DISABLED" />
 
         <uses-library
             android:name="org.apache.http.legacy"

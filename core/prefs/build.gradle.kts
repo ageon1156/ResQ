@@ -14,5 +14,5 @@ plugins {
 
 configure<LibraryExtension> { namespace = "org.meshtastic.core.prefs" }
 
-dependencies { googleImplementation(libs.maps.compose) }
+dependencies { }
 

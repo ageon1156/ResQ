@@ -185,7 +185,6 @@ dependencies {
     implementation(projects.core.ui)
     implementation(projects.feature.intro)
     implementation(projects.feature.messaging)
-    implementation(projects.feature.map)
     implementation(projects.feature.node)
     implementation(projects.feature.settings)
     implementation(projects.feature.emergency)

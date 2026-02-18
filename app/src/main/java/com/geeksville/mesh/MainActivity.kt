@@ -19,12 +19,15 @@ package com.geeksville.mesh
 
 import android.app.PendingIntent
 import android.app.TaskStackBuilder
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.hardware.usb.UsbManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -106,6 +109,23 @@ class MainActivity : AppCompatActivity() {
             }
         }
         handleIntent(intent)
+        requestBatteryOptimizationExemption()
+    }
+
+    /**
+     * Request exemption from battery optimization so Android doesn't kill our
+     * background service with SmartBackground restriction. Critical for emergency
+     * features like silent node detection.
+     */
+    private fun requestBatteryOptimizationExemption() {
+        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+            @Suppress("BatteryLife") // Justified: emergency mesh safety app
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

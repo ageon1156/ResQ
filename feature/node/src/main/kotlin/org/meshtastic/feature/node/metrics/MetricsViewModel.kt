@@ -55,7 +55,7 @@ import org.meshtastic.core.service.ServiceRepository
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.fallback_node_name
 import org.meshtastic.core.ui.util.toPosition
-import org.meshtastic.feature.map.model.TracerouteOverlay
+import org.meshtastic.feature.node.model.TracerouteOverlay
 import org.meshtastic.feature.node.model.MetricsState
 import org.meshtastic.feature.node.model.TimeFrame
 import org.meshtastic.proto.ConfigProtos.Config

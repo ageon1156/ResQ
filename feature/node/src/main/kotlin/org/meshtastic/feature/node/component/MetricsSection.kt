@@ -57,7 +57,7 @@ fun MetricsSection(
         PowerCard(node)
     }
 
-    val nonPositionLogs = availableLogs.filter { it != LogsType.NODE_MAP && it != LogsType.POSITIONS }
+    val nonPositionLogs = availableLogs.filter { it != LogsType.POSITIONS }
     if (nonPositionLogs.isNotEmpty()) {
         LogsCard(node, nonPositionLogs, onAction)
     }

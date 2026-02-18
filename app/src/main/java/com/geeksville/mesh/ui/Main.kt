@@ -42,7 +42,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
-import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.HealthAndSafety
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Sos
@@ -101,7 +100,6 @@ import com.geeksville.mesh.navigation.connectionsGraph
 import com.geeksville.mesh.navigation.contactsGraph
 import com.geeksville.mesh.navigation.emergencyGraph
 import com.geeksville.mesh.navigation.sosGraph
-import com.geeksville.mesh.navigation.mapGraph
 import com.geeksville.mesh.navigation.nodesGraph
 import com.geeksville.mesh.repository.radio.MeshActivity
 import com.geeksville.mesh.service.MeshService
@@ -116,20 +114,16 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import org.meshtastic.core.model.DeviceVersion
-import org.meshtastic.core.model.toMessageRes
 import org.meshtastic.core.navigation.ConnectionsRoutes
 import org.meshtastic.core.navigation.ContactsRoutes
 import org.meshtastic.core.navigation.EmergencyRoutes
-import org.meshtastic.core.navigation.MapRoutes
 import org.meshtastic.core.navigation.SOSRoutes
-import org.meshtastic.core.navigation.NodeDetailRoutes
 import org.meshtastic.core.navigation.NodesRoutes
 import org.meshtastic.core.navigation.Route
 import org.meshtastic.core.service.ConnectionState
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.app_too_old
 import org.meshtastic.core.strings.client_notification
-import org.meshtastic.core.strings.close
 import org.meshtastic.core.strings.compromised_keys
 import org.meshtastic.core.strings.connected
 import org.meshtastic.core.strings.connecting
@@ -140,7 +134,6 @@ import org.meshtastic.core.strings.disconnected
 import org.meshtastic.core.strings.emergency_help
 import org.meshtastic.core.strings.firmware_old
 import org.meshtastic.core.strings.firmware_too_old
-import org.meshtastic.core.strings.map
 import org.meshtastic.core.strings.must_update
 import org.meshtastic.core.strings.neighbor_info
 import org.meshtastic.core.strings.nodes
@@ -149,7 +142,6 @@ import org.meshtastic.core.strings.should_update
 import org.meshtastic.core.strings.should_update_firmware
 import org.meshtastic.core.strings.sos
 import org.meshtastic.core.strings.traceroute
-import org.meshtastic.core.strings.view_on_map
 import org.meshtastic.core.ui.component.MultipleChoiceAlertDialog
 import org.meshtastic.core.ui.component.ScrollToTopEvent
 import org.meshtastic.core.ui.component.SimpleAlertDialog
@@ -161,7 +153,6 @@ import org.meshtastic.feature.node.metrics.annotateTraceroute
 import org.meshtastic.proto.MeshProtos
 
 enum class TopLevelDestination(val label: StringResource, val icon: ImageVector, val route: Route) {
-    Map(Res.string.map, Icons.Outlined.Explore, MapRoutes.Map()),
     Nodes(Res.string.nodes, Icons.Outlined.Hub, NodesRoutes.NodesGraph),
     Conversations(Res.string.conversations, Icons.Outlined.ChatBubbleOutline, ContactsRoutes.ContactsGraph),
     Emergency(Res.string.emergency_help, Icons.Outlined.HealthAndSafety, EmergencyRoutes.EmergencyGraph),
@@ -248,7 +239,6 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
     }
 
     val traceRouteResponse by uIViewModel.tracerouteResponse.observeAsState()
-    var tracerouteMapError by remember { mutableStateOf<StringResource?>(null) }
     var dismissedTracerouteRequestId by remember { mutableStateOf<Int?>(null) }
     traceRouteResponse
         ?.takeIf { it.requestId != dismissedTracerouteRequestId }
@@ -260,28 +250,6 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
                         Text(text = annotateTraceroute(response.message))
                     }
                 },
-                confirmText = stringResource(Res.string.view_on_map),
-                onConfirm = {
-                    val availability =
-                        uIViewModel.tracerouteMapAvailability(
-                            forwardRoute = response.forwardRoute,
-                            returnRoute = response.returnRoute,
-                        )
-                    val errorRes = availability.toMessageRes()
-                    if (errorRes == null) {
-                        dismissedTracerouteRequestId = response.requestId
-                        navController.navigate(
-                            NodeDetailRoutes.TracerouteMap(
-                                destNum = response.destinationNodeNum,
-                                requestId = response.requestId,
-                                logUuid = response.logUuid,
-                            ),
-                        )
-                    } else {
-                        tracerouteMapError = errorRes
-                        uIViewModel.clearTracerouteResponse()
-                    }
-                },
                 dismissText = stringResource(Res.string.okay),
                 onDismiss = {
                     uIViewModel.clearTracerouteResponse()
@@ -289,15 +257,6 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
                 },
             )
         }
-    tracerouteMapError?.let { res ->
-        SimpleAlertDialog(
-            title = Res.string.traceroute,
-            text = { Text(text = stringResource(res)) },
-            dismissText = stringResource(Res.string.close),
-            onDismiss = { tracerouteMapError = null },
-        )
-    }
-
     val neighborInfoResponse by uIViewModel.neighborInfoResponse.observeAsState()
     neighborInfoResponse?.let { response ->
         SimpleAlertDialog(
@@ -598,7 +557,6 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
         ) {
             contactsGraph(navController, uIViewModel.scrollToTopEventFlow)
             nodesGraph(navController, uIViewModel.scrollToTopEventFlow)
-            mapGraph(navController)
             channelsGraph(navController)
             connectionsGraph(navController)
             emergencyGraph(navController)

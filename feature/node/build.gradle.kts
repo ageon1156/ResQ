@@ -12,7 +12,6 @@ plugins {
 configure<LibraryExtension> {
     namespace = "org.meshtastic.feature.node"
 
-    defaultConfig { manifestPlaceholders["MAPS_API_KEY"] = "DEBUG_KEY" }
 }
 
 dependencies {
@@ -26,7 +25,6 @@ dependencies {
     implementation(projects.core.strings)
     implementation(projects.core.ui)
     implementation(projects.core.navigation)
-    implementation(projects.feature.map)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material.iconsExtended)
@@ -40,8 +38,6 @@ dependencies {
     implementation(libs.markdown.renderer.m3)
     implementation(libs.markdown.renderer)
 
-    googleImplementation(libs.location.services)
-    googleImplementation(libs.maps.compose)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)

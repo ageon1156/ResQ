@@ -36,6 +36,8 @@ import org.meshtastic.core.data.repository.NodeRepository
 import org.meshtastic.core.model.DataPacket
 import org.meshtastic.core.service.ConnectionState
 import org.meshtastic.core.service.ServiceRepository
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.Portnums
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -84,8 +86,12 @@ class SOSViewModel @Inject constructor(
                 val messageText = formatSOSMessage(location)
                 val packet = DataPacket(
                     to = DataPacket.ID_BROADCAST,
+                    bytes = messageText.toByteArray(Charsets.UTF_8),
+                    dataType = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
                     channel = 0,
-                    text = messageText,
+                    hopLimit = 7, // Maximum hops — reach the entire mesh
+                    wantAck = true,
+                    priority = MeshProtos.MeshPacket.Priority.ALERT_VALUE, // Highest priority
                 )
                 serviceRepository.meshService?.send(packet)
                     ?: run {

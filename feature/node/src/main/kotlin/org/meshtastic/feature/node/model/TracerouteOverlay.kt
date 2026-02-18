@@ -15,15 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.meshtastic.feature.node.metrics
+package org.meshtastic.feature.node.model
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.unit.dp
+data class TracerouteOverlay(
+    val requestId: Int,
+    val forwardRoute: List<Int> = emptyList(),
+    val returnRoute: List<Int> = emptyList(),
+) {
+    val relatedNodeNums: Set<Int> = (forwardRoute + returnRoute).toSet()
 
-internal object TracerouteMapOverlayInsets {
-    val overlayAlignment: Alignment = Alignment.BottomEnd
-    val overlayPadding: PaddingValues = PaddingValues(end = 16.dp, bottom = 16.dp)
-    val contentHorizontalAlignment: Alignment.Horizontal = Alignment.End
+    val hasRoutes: Boolean
+        get() = forwardRoute.isNotEmpty() || returnRoute.isNotEmpty()
 }
-

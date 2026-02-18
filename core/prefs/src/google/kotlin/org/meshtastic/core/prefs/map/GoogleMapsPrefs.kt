@@ -18,7 +18,6 @@
 package org.meshtastic.core.prefs.map
 
 import android.content.SharedPreferences
-import com.google.maps.android.compose.MapType
 import org.meshtastic.core.prefs.DoublePrefDelegate
 import org.meshtastic.core.prefs.FloatPrefDelegate
 import org.meshtastic.core.prefs.NullableStringPrefDelegate
@@ -42,7 +41,7 @@ interface GoogleMapsPrefs {
 @Singleton
 class GoogleMapsPrefsImpl @Inject constructor(@GoogleMapsSharedPreferences prefs: SharedPreferences) : GoogleMapsPrefs {
     override var selectedGoogleMapType: String? by
-        NullableStringPrefDelegate(prefs, "selected_google_map_type", MapType.NORMAL.name)
+        NullableStringPrefDelegate(prefs, "selected_google_map_type", "NORMAL")
     override var selectedCustomTileUrl: String? by NullableStringPrefDelegate(prefs, "selected_custom_tile_url", null)
     override var hiddenLayerUrls: Set<String> by StringSetPrefDelegate(prefs, "hidden_layer_urls", emptySet())
     override var cameraTargetLat: Double by DoublePrefDelegate(prefs, "camera_target_lat", 0.0)
