@@ -41,12 +41,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.kermit)
 
-    fdroidImplementation(libs.osmbonuspack)
-    fdroidImplementation(libs.osmdroid.android)
-
-    googleImplementation(libs.location.services)
-    googleImplementation(libs.maps.compose)
-    googleImplementation(libs.maps.compose.utils)
-    googleImplementation(libs.maps.compose.widgets)
+    implementation(libs.osmbonuspack)
+    implementation(libs.osmdroid.android)
 }
 

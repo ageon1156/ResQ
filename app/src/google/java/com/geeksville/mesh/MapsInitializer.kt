@@ -18,9 +18,9 @@
 package com.geeksville.mesh
 
 import android.content.Context
-import com.google.android.gms.maps.MapsInitializer
 
+@Suppress("UNUSED_PARAMETER")
 fun initializeMaps(context: Context) {
-    MapsInitializer.initialize(context)
+    // No-op: Google Maps replaced with OsmDroid
 }
 

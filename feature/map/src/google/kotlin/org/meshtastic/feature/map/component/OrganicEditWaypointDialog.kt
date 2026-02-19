@@ -23,6 +23,8 @@ import android.widget.TimePicker
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,13 +32,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.AlertDialog
@@ -47,14 +50,11 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -82,12 +82,12 @@ import org.meshtastic.core.strings.send
 import org.meshtastic.core.strings.time
 import org.meshtastic.core.strings.waypoint_edit
 import org.meshtastic.core.strings.waypoint_new
+import org.meshtastic.core.ui.component.EditTextPreference
 import org.meshtastic.core.ui.emoji.EmojiPickerDialog
 import org.meshtastic.core.ui.theme.LeafShape
 import org.meshtastic.proto.MeshProtos.Waypoint
 import org.meshtastic.proto.copy
 import java.util.Calendar
-import java.util.TimeZone
 
 private data class PlaceType(val label: String, val emoji: Int)
 
@@ -106,9 +106,10 @@ private val PLACE_TYPES = listOf(
 
 /**
  * Organic styled waypoint editing dialog with natural shapes and colors.
- * Features LeafShape container, organic text fields, and earthy color palette.
+ * Features LeafShape container, organic toggle rows, and earthy color palette.
  */
-@Suppress("LongMethod", "CyclomaticComplexMethod", "MagicNumber")
+@Suppress("LongMethod")
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun OrganicEditWaypointDialog(
     waypoint: Waypoint,
@@ -119,93 +120,48 @@ fun OrganicEditWaypointDialog(
 ) {
     var waypointInput by remember { mutableStateOf(waypoint) }
     val title = if (waypoint.id == 0) Res.string.waypoint_new else Res.string.waypoint_edit
-    val defaultEmoji = 0x1F4CD // 📍 Round Pushpin
-    val currentEmojiCodepoint = if (waypointInput.icon == 0) defaultEmoji else waypointInput.icon
+
+    @Suppress("MagicNumber")
+    val emoji = if (waypointInput.icon == 0) 128205 else waypointInput.icon
     var showEmojiPickerView by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val calendar = remember { Calendar.getInstance() }
+    val calendar = Calendar.getInstance()
+    val currentTime = System.currentTimeMillis()
+    calendar.timeInMillis = currentTime
+    @Suppress("MagicNumber")
+    calendar.add(Calendar.HOUR_OF_DAY, 8)
 
-    var selectedDateString by remember { mutableStateOf("") }
-    var selectedTimeString by remember { mutableStateOf("") }
-    var isExpiryEnabled by remember {
-        mutableStateOf(waypointInput.expire != 0 && waypointInput.expire != Int.MAX_VALUE)
-    }
+    val year = calendar.get(Calendar.YEAR)
+    val month = calendar.get(Calendar.MONTH)
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+    val hour = calendar.get(Calendar.HOUR_OF_DAY)
+    val minute = calendar.get(Calendar.MINUTE)
 
-    val dateFormat = remember { android.text.format.DateFormat.getDateFormat(context) }
-    val timeFormat = remember { android.text.format.DateFormat.getTimeFormat(context) }
-    dateFormat.timeZone = TimeZone.getDefault()
-    timeFormat.timeZone = TimeZone.getDefault()
+    val dateFormat = android.text.format.DateFormat.getDateFormat(context)
+    val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+    val timeFormat = android.text.format.DateFormat.getTimeFormat(context)
 
-    LaunchedEffect(waypointInput.expire, isExpiryEnabled) {
-        if (isExpiryEnabled) {
-            if (waypointInput.expire != 0 && waypointInput.expire != Int.MAX_VALUE) {
-                calendar.timeInMillis = waypointInput.expire * 1000L
-                selectedDateString = dateFormat.format(calendar.time)
-                selectedTimeString = timeFormat.format(calendar.time)
-            } else {
-                calendar.timeInMillis = System.currentTimeMillis()
-                calendar.add(Calendar.HOUR_OF_DAY, 8)
-                waypointInput = waypointInput.copy { expire = (calendar.timeInMillis / 1000).toInt() }
-            }
-        } else {
-            selectedDateString = ""
-            selectedTimeString = ""
-        }
-    }
-
-    // Organic text field colors
-    val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = MaterialTheme.colorScheme.primary,
-        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-    )
+    var selectedDate by remember { mutableStateOf(dateFormat.format(calendar.time)) }
+    var selectedTime by remember { mutableStateOf(timeFormat.format(calendar.time)) }
+    var epochTime by remember { mutableStateOf<Long?>(null) }
 
     if (!showEmojiPickerView) {
         AlertDialog(
             onDismissRequest = onDismissRequest,
             shape = LeafShape,
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            title = {
-                Text(
-                    text = stringResource(title),
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
             text = {
                 Column(modifier = modifier.fillMaxWidth()) {
-                    // Name field with emoji picker
-                    OutlinedTextField(
-                        value = waypointInput.name,
-                        onValueChange = { waypointInput = waypointInput.copy { name = it.take(29) } },
-                        label = { Text(stringResource(Res.string.name)) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = textFieldColors,
-                        keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Next
+                    Text(
+                        text = stringResource(title),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center,
                         ),
-                        modifier = Modifier.fillMaxWidth(),
-                        trailingIcon = {
-                            IconButton(onClick = { showEmojiPickerView = true }) {
-                                Text(
-                                    text = String(Character.toChars(currentEmojiCodepoint)),
-                                    modifier = Modifier
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primaryContainer)
-                                        .padding(6.dp),
-                                    fontSize = 20.sp,
-                                )
-                            }
-                        },
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     )
-
-                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Quick place type selector
                     Row(
@@ -241,26 +197,51 @@ fun OrganicEditWaypointDialog(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Description field
-                    OutlinedTextField(
-                        value = waypointInput.description,
-                        onValueChange = { waypointInput = waypointInput.copy { description = it.take(99) } },
-                        label = { Text(stringResource(Res.string.description)) },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = textFieldColors,
+                    EditTextPreference(
+                        title = stringResource(Res.string.name),
+                        value = waypointInput.name,
+                        maxSize = 29,
+                        enabled = true,
+                        isError = false,
                         keyboardOptions = KeyboardOptions.Default.copy(
                             keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Done
                         ),
-                        keyboardActions = KeyboardActions(onDone = { }),
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 2,
-                        maxLines = 3,
+                        keyboardActions = KeyboardActions(onDone = {}),
+                        onValueChanged = { waypointInput = waypointInput.copy { name = it } },
+                        trailingIcon = {
+                            IconButton(onClick = { showEmojiPickerView = true }) {
+                                Text(
+                                    text = String(Character.toChars(emoji)),
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primaryContainer)
+                                        .padding(6.dp),
+                                    fontSize = 24.sp,
+                                )
+                            }
+                        },
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    // Locked toggle with organic styling
+                    EditTextPreference(
+                        title = stringResource(Res.string.description),
+                        value = waypointInput.description,
+                        maxSize = 99,
+                        enabled = true,
+                        isError = false,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Text,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(onDone = {}),
+                        onValueChanged = { waypointInput = waypointInput.copy { description = it } },
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Organic toggle row for locked
                     OrganicToggleRow(
                         icon = Icons.Default.Lock,
                         label = stringResource(Res.string.locked),
@@ -268,83 +249,70 @@ fun OrganicEditWaypointDialog(
                         onCheckedChange = { waypointInput = waypointInput.copy { lockedTo = if (it) 1 else 0 } }
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    // Expiry toggle
+                    val datePickerDialog = DatePickerDialog(
+                        context,
+                        { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDay: Int ->
+                            calendar.set(selectedYear, selectedMonth, selectedDay)
+                            epochTime = calendar.timeInMillis
+                            selectedDate = dateFormat.format(calendar.time)
+                        },
+                        year, month, day,
+                    )
+
+                    val timePickerDialog = TimePickerDialog(
+                        context,
+                        { _: TimePicker, selectedHour: Int, selectedMinute: Int ->
+                            calendar.set(Calendar.HOUR_OF_DAY, selectedHour)
+                            calendar.set(Calendar.MINUTE, selectedMinute)
+                            epochTime = calendar.timeInMillis
+                            selectedTime = timeFormat.format(calendar.time)
+                            @Suppress("MagicNumber")
+                            waypointInput = waypointInput.copy { expire = (epochTime!! / 1000).toInt() }
+                        },
+                        hour, minute, is24Hour,
+                    )
+
+                    // Organic toggle row for expires
                     OrganicToggleRow(
                         icon = Icons.Default.CalendarMonth,
                         label = stringResource(Res.string.expires),
-                        checked = isExpiryEnabled,
-                        onCheckedChange = { checked ->
-                            isExpiryEnabled = checked
-                            if (checked) {
-                                if (waypointInput.expire == 0 || waypointInput.expire == Int.MAX_VALUE) {
-                                    val cal = Calendar.getInstance()
-                                    cal.timeInMillis = System.currentTimeMillis()
-                                    cal.add(Calendar.HOUR_OF_DAY, 8)
-                                    waypointInput = waypointInput.copy { expire = (cal.timeInMillis / 1000).toInt() }
-                                }
+                        checked = waypointInput.expire != Int.MAX_VALUE && waypointInput.expire != 0,
+                        onCheckedChange = { isChecked ->
+                            waypointInput = waypointInput.copy {
+                                expire = if (isChecked) {
+                                    @Suppress("MagicNumber")
+                                    calendar.timeInMillis / 1000
+                                } else {
+                                    Int.MAX_VALUE
+                                }.toInt()
+                            }
+                            if (isChecked) {
+                                selectedDate = dateFormat.format(calendar.time)
+                                selectedTime = timeFormat.format(calendar.time)
                             } else {
-                                waypointInput = waypointInput.copy { expire = Int.MAX_VALUE }
+                                selectedDate = ""
+                                selectedTime = ""
                             }
                         }
                     )
 
-                    // Date/Time pickers when expiry is enabled
-                    if (isExpiryEnabled) {
-                        val currentCalendar = Calendar.getInstance().apply {
-                            if (waypointInput.expire != 0 && waypointInput.expire != Int.MAX_VALUE) {
-                                timeInMillis = waypointInput.expire * 1000L
-                            } else {
-                                timeInMillis = System.currentTimeMillis()
-                                add(Calendar.HOUR_OF_DAY, 8)
-                            }
-                        }
-                        val year = currentCalendar.get(Calendar.YEAR)
-                        val month = currentCalendar.get(Calendar.MONTH)
-                        val day = currentCalendar.get(Calendar.DAY_OF_MONTH)
-                        val hour = currentCalendar.get(Calendar.HOUR_OF_DAY)
-                        val minute = currentCalendar.get(Calendar.MINUTE)
-
-                        val datePickerDialog = DatePickerDialog(
-                            context,
-                            { _: DatePicker, selectedYear: Int, selectedMonth: Int, selectedDay: Int ->
-                                calendar.clear()
-                                calendar.set(selectedYear, selectedMonth, selectedDay, hour, minute)
-                                waypointInput = waypointInput.copy { expire = (calendar.timeInMillis / 1000).toInt() }
-                            },
-                            year, month, day,
-                        )
-
-                        val timePickerDialog = TimePickerDialog(
-                            context,
-                            { _: TimePicker, selectedHour: Int, selectedMinute: Int ->
-                                val tempCal = Calendar.getInstance()
-                                tempCal.timeInMillis = waypointInput.expire * 1000L
-                                tempCal.set(Calendar.HOUR_OF_DAY, selectedHour)
-                                tempCal.set(Calendar.MINUTE, selectedMinute)
-                                waypointInput = waypointInput.copy { expire = (tempCal.timeInMillis / 1000).toInt() }
-                            },
-                            hour, minute,
-                            android.text.format.DateFormat.is24HourFormat(context),
-                        )
-
+                    if (waypointInput.expire != Int.MAX_VALUE && waypointInput.expire != 0) {
                         Spacer(modifier = Modifier.height(12.dp))
-
-                        // Organic date/time buttons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             OrganicDateTimeButton(
                                 label = stringResource(Res.string.date),
-                                value = selectedDateString,
+                                value = selectedDate,
                                 onClick = { datePickerDialog.show() }
                             )
                             OrganicDateTimeButton(
                                 label = stringResource(Res.string.time),
-                                value = selectedTimeString,
+                                value = selectedTime,
                                 onClick = { timePickerDialog.show() }
                             )
                         }
@@ -352,48 +320,50 @@ fun OrganicEditWaypointDialog(
                 }
             },
             confirmButton = {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.End,
+                FlowRow(
+                    modifier = modifier.padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    if (waypoint.id != 0) {
-                        TextButton(
-                            onClick = { onDeleteClicked(waypointInput) },
-                            modifier = Modifier.padding(end = 8.dp),
-                        ) {
-                            Text(
-                                stringResource(Res.string.delete),
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.weight(1f))
                     TextButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.padding(end = 8.dp)
+                        modifier = modifier.weight(1f),
+                        onClick = onDismissRequest
                     ) {
                         Text(stringResource(Res.string.cancel))
                     }
+                    if (waypoint.id != 0) {
+                        Button(
+                            modifier = modifier.weight(1f),
+                            onClick = { onDeleteClicked(waypointInput) },
+                            enabled = waypointInput.name.isNotEmpty(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(stringResource(Res.string.delete))
+                        }
+                    }
                     Button(
+                        modifier = modifier.weight(1f),
                         onClick = { onSendClicked(waypointInput) },
-                        enabled = waypointInput.name.isNotBlank(),
-                        shape = RoundedCornerShape(12.dp),
+                        enabled = true,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
+                        ),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(stringResource(Res.string.send))
                     }
                 }
             },
-            dismissButton = null,
-            modifier = modifier,
         )
     } else {
-        EmojiPickerDialog(onDismiss = { showEmojiPickerView = false }) { selectedEmoji ->
+        EmojiPickerDialog(onDismiss = { showEmojiPickerView = false }) {
             showEmojiPickerView = false
-            waypointInput = waypointInput.copy { icon = selectedEmoji.codePointAt(0) }
+            waypointInput = waypointInput.copy { icon = it.codePointAt(0) }
         }
     }
 }
@@ -415,23 +385,21 @@ private fun OrganicToggleRow(
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
         Switch(
+            modifier = Modifier.fillMaxWidth().wrapContentWidth(Alignment.End),
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
@@ -467,9 +435,9 @@ private fun OrganicDateTimeButton(
                 modifier = Modifier.padding(top = 4.dp),
                 text = value,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
             )
         }
     }
 }
-

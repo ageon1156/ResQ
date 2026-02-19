@@ -1,0 +1,1 @@
+02-19 18:26:23.577 D/        (28716): Sending to radio packet {   to: 4294967295   decoded {     portnum: PRIVATE_APP     payload: "{\"pin_id\":\"6f65aecd-bd65-47e9-8de6-3b4a13728439\",\"lat\":12.948130778262339,\"lon\":80.12767226605894,\"triage_level\":\"GREEN\",\"created_by\":\"!db582780\",\"timestamp\":1771505783570}"   }   id: 2838493304   hop_limit: 2   priority: HIGH } 

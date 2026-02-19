@@ -50,7 +50,7 @@ class UiPrefsImpl @Inject constructor(@UiSharedPreferences private val prefs: Sh
                 else ->
                     provideNodeLocationFlows.keys.forEach { nodeNum ->
                         if (key == provideLocationKey(nodeNum)) {
-                            val newValue = sharedPreferences.getBoolean(key, false)
+                            val newValue = sharedPreferences.getBoolean(key, true)
                             provideNodeLocationFlows[nodeNum]?.tryEmit(newValue)
                         }
                     }
@@ -65,7 +65,7 @@ class UiPrefsImpl @Inject constructor(@UiSharedPreferences private val prefs: Sh
     override var showQuickChat: Boolean by PrefDelegate(prefs, "show-quick-chat", false)
 
     override fun shouldProvideNodeLocation(nodeNum: Int): StateFlow<Boolean> = provideNodeLocationFlows
-        .getOrPut(nodeNum) { MutableStateFlow(prefs.getBoolean(provideLocationKey(nodeNum), false)) }
+        .getOrPut(nodeNum) { MutableStateFlow(prefs.getBoolean(provideLocationKey(nodeNum), true)) }
         .asStateFlow()
 
     override fun setShouldProvideNodeLocation(nodeNum: Int, value: Boolean) {

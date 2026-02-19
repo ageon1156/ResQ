@@ -14,329 +14,472 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-@file:Suppress("MagicNumber")
-
 package org.meshtastic.feature.map
 
-import android.app.Activity
-import android.content.Intent
-import android.graphics.Canvas
+import android.Manifest // Added for Accompanist
 import android.graphics.Paint
-import android.net.Uri
-import android.view.WindowManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.foundation.isSystemInDarkTheme
+import android.text.format.DateUtils
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.filled.TripOrigin
-import androidx.compose.material3.Card
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lens
+import androidx.compose.material.icons.filled.LocationDisabled
+import androidx.compose.material.icons.filled.PinDrop
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Layers
+import androidx.compose.material.icons.outlined.MyLocation
+import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.createBitmap
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.JointType
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.maps.android.SphericalUtil
-import com.google.maps.android.compose.ComposeMapColorScheme
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapEffect
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapType
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.MapsComposeExperimentalApi
-import com.google.maps.android.compose.CameraPositionState
-import com.google.maps.android.compose.MarkerComposable
-import com.google.maps.android.compose.MarkerInfoWindowComposable
-import com.google.maps.android.compose.Polyline
-import com.google.maps.android.compose.TileOverlay
-import com.google.maps.android.compose.rememberUpdatedMarkerState
-import com.google.maps.android.compose.widgets.ScaleBar
-import kotlinx.coroutines.flow.map
+import com.google.accompanist.permissions.ExperimentalPermissionsApi // Added for Accompanist
+import com.google.accompanist.permissions.rememberMultiplePermissionsState // Added for Accompanist
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
+import org.meshtastic.core.model.triage.TriageLevel
+import org.meshtastic.core.model.triage.TriagePin
+import org.meshtastic.feature.map.component.MapModeTabRow
+import org.meshtastic.feature.map.component.TriageLevelPickerDialog
+import org.meshtastic.feature.map.component.TriagePinInfoDialog
+import org.meshtastic.feature.map.triage.TriageMapViewModel
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import org.meshtastic.core.common.gpsDisabled
+import org.meshtastic.core.common.hasGps
+import org.meshtastic.core.database.entity.Packet
 import org.meshtastic.core.database.model.Node
-import org.meshtastic.core.model.util.metersIn
-import org.meshtastic.core.model.util.mpsToKmph
-import org.meshtastic.core.model.util.mpsToMph
-import org.meshtastic.core.model.util.toString
+import org.meshtastic.core.model.DataPacket
 import org.meshtastic.core.strings.Res
-import org.meshtastic.core.strings.alt
-import org.meshtastic.core.strings.heading
-import org.meshtastic.core.strings.latitude
-import org.meshtastic.core.strings.longitude
-import org.meshtastic.core.strings.position
-import org.meshtastic.core.strings.sats
-import org.meshtastic.core.strings.speed
-import org.meshtastic.core.strings.timestamp
-import org.meshtastic.core.strings.track_point
-import org.meshtastic.core.ui.component.NodeChip
+import org.meshtastic.core.strings.calculating
+import org.meshtastic.core.strings.cancel
+import org.meshtastic.core.strings.clear
+import org.meshtastic.core.strings.close
+import org.meshtastic.core.strings.delete_for_everyone
+import org.meshtastic.core.strings.delete_for_me
+import org.meshtastic.core.strings.expires
+import org.meshtastic.core.strings.location_disabled
+import org.meshtastic.core.strings.map_cache_info
+import org.meshtastic.core.strings.map_cache_manager
+import org.meshtastic.core.strings.map_cache_size
+import org.meshtastic.core.strings.map_cache_tiles
+import org.meshtastic.core.strings.map_clear_tiles
+import org.meshtastic.core.strings.map_download_complete
+import org.meshtastic.core.strings.map_download_errors
+import org.meshtastic.core.strings.map_download_region
+import org.meshtastic.core.strings.map_filter
+import org.meshtastic.core.strings.map_node_popup_details
+import org.meshtastic.core.strings.map_offline_manager
+import org.meshtastic.core.strings.map_purge_fail
+import org.meshtastic.core.strings.map_purge_success
+import org.meshtastic.core.strings.map_style_selection
+import org.meshtastic.core.strings.map_subDescription
+import org.meshtastic.core.strings.map_tile_source
+import org.meshtastic.core.strings.only_favorites
+import org.meshtastic.core.strings.show_precision_circle
+import org.meshtastic.core.strings.show_waypoints
+import org.meshtastic.core.strings.toggle_my_position
+import org.meshtastic.core.strings.waypoint_delete
+import org.meshtastic.core.strings.you
+import org.meshtastic.core.ui.component.BasicListItem
+import org.meshtastic.core.ui.component.ListItem
 import org.meshtastic.core.ui.theme.TracerouteColors
 import org.meshtastic.core.ui.util.formatAgo
-import org.meshtastic.core.ui.util.formatPositionTime
-import org.meshtastic.feature.map.component.CustomTileProviderManagerSheet
-import org.meshtastic.feature.map.component.OrganicClusterItemsListDialog
-import org.meshtastic.feature.map.component.OrganicCustomMapLayersSheet
+import org.meshtastic.core.ui.util.showToast
+import org.meshtastic.feature.map.cluster.RadiusMarkerClusterer
+import org.meshtastic.feature.map.component.CacheLayout
+import org.meshtastic.feature.map.component.DownloadButton
 import org.meshtastic.feature.map.component.OrganicEditWaypointDialog
-import org.meshtastic.feature.map.component.OrganicMapControlsOverlay
-import org.meshtastic.feature.map.component.NodeClusterMarkers
-import org.meshtastic.feature.map.component.WaypointMarkers
-import org.meshtastic.feature.map.model.NodeClusterItem
+import org.meshtastic.feature.map.component.OrganicMapButton
+import org.meshtastic.feature.map.model.CustomTileSource
+import org.meshtastic.feature.map.model.MarkerWithLabel
 import org.meshtastic.feature.map.model.TracerouteOverlay
-import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DisplayUnits
 import org.meshtastic.proto.MeshProtos.Position
 import org.meshtastic.proto.MeshProtos.Waypoint
 import org.meshtastic.proto.copy
 import org.meshtastic.proto.waypoint
+import org.osmdroid.bonuspack.utils.BonusPackHelper.getBitmapFromVectorDrawable
+import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapEventsReceiver
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
+import org.osmdroid.tileprovider.cachemanager.CacheManager
+import org.osmdroid.tileprovider.modules.SqliteArchiveTileWriter
+import org.osmdroid.tileprovider.tilesource.ITileSource
+import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
+import org.osmdroid.tileprovider.tilesource.TileSourcePolicyException
+import org.osmdroid.util.BoundingBox
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.MapEventsOverlay
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polygon
+import org.osmdroid.views.overlay.Polyline
+import org.osmdroid.views.overlay.infowindow.InfoWindow
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import java.io.File
 import kotlin.math.abs
-import kotlin.math.max
+import kotlin.math.asin
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
-private const val MIN_TRACK_POINT_DISTANCE_METERS = 20f
-private const val DEG_D = 1e-7
-private const val HEADING_DEG = 1e-5
-private const val TRACEROUTE_OFFSET_METERS = 100.0
-private const val TRACEROUTE_BOUNDS_PADDING_PX = 120
+private class TriageMarker(mapView: MapView, val claimed: Boolean) : Marker(mapView) {
+    private val labelPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        textSize = 32f
+        isFakeBoldText = true
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    private val labelBgPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xCC388E3C.toInt()
+    }
 
-@Suppress("CyclomaticComplexMethod", "LongMethod")
-@OptIn(MapsComposeExperimentalApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+    override fun draw(c: android.graphics.Canvas, osmv: MapView?, shadow: Boolean) {
+        super.draw(c, osmv, shadow)
+        if (!claimed) return
+        val px = mPositionPixels
+        val x = px.x.toFloat()
+        val y = px.y.toFloat() - 60f
+        val halfW = labelPaint.measureText("Claimed") / 2 + 10f
+        val rect = android.graphics.RectF(x - halfW, y - 30f, x + halfW, y + 6f)
+        c.drawRoundRect(rect, 8f, 8f, labelBgPaint)
+        c.drawText("Claimed", x, y, labelPaint)
+    }
+}
+
+private fun createTriageMarkerIcon(
+    level: TriageLevel,
+    resources: android.content.res.Resources,
+    isSilentNode: Boolean = false,
+): android.graphics.drawable.BitmapDrawable {
+    val sizePx = 56
+    val bmp = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bmp)
+    val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = if (isSilentNode) {
+            0xFFFF6D00.toInt() // orange — auto-placed silent node pin
+        } else {
+            when (level) {
+                TriageLevel.RED    -> 0xFFD32F2F.toInt()
+                TriageLevel.YELLOW -> 0xFFF9A825.toInt()
+                TriageLevel.GREEN  -> 0xFF2E7D32.toInt()
+                TriageLevel.BLACK  -> 0xFF212121.toInt()
+            }
+        }
+    }
+    val borderPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = 4f
+    }
+    val r = sizePx / 2f - 4f
+    canvas.drawCircle(sizePx / 2f, sizePx / 2f, r, fillPaint)
+    canvas.drawCircle(sizePx / 2f, sizePx / 2f, r, borderPaint)
+    if (isSilentNode) {
+        // Draw a small "!" to distinguish silent-node auto-pins from manual pins
+        val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.WHITE
+            textSize = 26f
+            isFakeBoldText = true
+            textAlign = android.graphics.Paint.Align.CENTER
+        }
+        canvas.drawText("!", sizePx / 2f, sizePx / 2f + 9f, textPaint)
+    }
+    return android.graphics.drawable.BitmapDrawable(resources, bmp)
+}
+
+private fun MapView.updateTriageMarkers(
+    pins: List<TriagePin>,
+    mode: MapMode,
+    onPinTapped: (TriagePin) -> Unit,
+) {
+    overlays.removeAll { it is Marker && (it as Marker).id?.startsWith("triage:") == true }
+    if (mode != MapMode.TriageMap) {
+        invalidate()
+        return
+    }
+    val res = context.resources
+    pins.forEach { pin ->
+        TriageMarker(this, claimed = pin.claimedBy != null).apply {
+            id = "triage:${pin.pinId}"
+            position = GeoPoint(pin.lat, pin.lon)
+            title = "${pin.triageLevel.symbol} ${pin.triageLevel.displayLabel}"
+            snippet = buildString {
+                append("${pin.victimCount} victim(s)")
+                pin.claimedBy?.let { append(" • Claimed: $it") }
+            }
+            icon = createTriageMarkerIcon(pin.triageLevel, res, pin.isSilentNodeConversion)
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+            setOnMarkerClickListener { _, _ ->
+                onPinTapped(pin)
+                true
+            }
+        }.also { overlays.add(it) }
+    }
+    invalidate()
+}
+
+private fun MapView.updateMarkers(
+    nodeMarkers: List<MarkerWithLabel>,
+    waypointMarkers: List<MarkerWithLabel>,
+    nodeClusterer: RadiusMarkerClusterer,
+) {
+    Logger.d { "Showing on map: ${nodeMarkers.size} nodes ${waypointMarkers.size} waypoints" }
+    overlays.removeAll { it is MarkerWithLabel }
+    // overlays.addAll(nodeMarkers + waypointMarkers)
+    overlays.addAll(waypointMarkers)
+    nodeClusterer.items.clear()
+    nodeClusterer.items.addAll(nodeMarkers)
+    nodeClusterer.invalidate()
+}
+
+private fun cacheManagerCallback(onTaskComplete: () -> Unit, onTaskFailed: (Int) -> Unit) =
+    object : CacheManager.CacheManagerCallback {
+        override fun onTaskComplete() {
+            onTaskComplete()
+        }
+
+        override fun onTaskFailed(errors: Int) {
+            onTaskFailed(errors)
+        }
+
+        override fun updateProgress(progress: Int, currentZoomLevel: Int, zoomMin: Int, zoomMax: Int) {
+            // NOOP since we are using the build in UI
+        }
+
+        override fun downloadStarted() {
+            // NOOP since we are using the build in UI
+        }
+
+        override fun setPossibleTilesInArea(total: Int) {
+            // NOOP since we are using the build in UI
+        }
+    }
+
+/**
+ * Main composable for displaying the map view, including nodes, waypoints, and user location. It handles user
+ * interactions for map manipulation, filtering, and offline caching.
+ *
+ * @param mapViewModel The [MapViewModel] providing data and state for the map.
+ * @param navigateToNodeDetails Callback to navigate to the details screen of a selected node.
+ */
+@OptIn(ExperimentalPermissionsApi::class) // Added for Accompanist
+@Suppress("CyclomaticComplexMethod", "LongParameterList", "LongMethod")
 @Composable
 fun MapView(
     mapViewModel: MapViewModel = hiltViewModel(),
     navigateToNodeDetails: (Int) -> Unit,
-    focusedNodeNum: Int? = null,
-    nodeTracks: List<Position>? = null,
     tracerouteOverlay: TracerouteOverlay? = null,
     tracerouteNodePositions: Map<Int, Position> = emptyMap(),
     onTracerouteMappableCountChanged: (shown: Int, total: Int) -> Unit = { _, _ -> },
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val mapLayers by mapViewModel.mapLayers.collectAsStateWithLifecycle()
-    var hasLocationPermission by remember { mutableStateOf(false) }
-    val displayUnits by mapViewModel.displayUnits.collectAsStateWithLifecycle()
+    var mapFilterExpanded by remember { mutableStateOf(false) }
 
-    // Location tracking state
-    var isLocationTrackingEnabled by remember { mutableStateOf(false) }
-    var followPhoneBearing by remember { mutableStateOf(false) }
-
-    LocationPermissionsHandler { isGranted -> hasLocationPermission = isGranted }
-
-    val filePickerLauncher =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == android.app.Activity.RESULT_OK) {
-                result.data?.data?.let { uri ->
-                    val fileName = uri.getFileName(context)
-                    mapViewModel.addMapLayer(uri, fileName)
-                }
-            }
-        }
-
-    var mapFilterMenuExpanded by remember { mutableStateOf(false) }
     val mapFilterState by mapViewModel.mapFilterStateFlow.collectAsStateWithLifecycle()
-    val ourNodeInfo by mapViewModel.ourNodeInfo.collectAsStateWithLifecycle()
-    var editingWaypoint by remember { mutableStateOf<Waypoint?>(null) }
+    val isConnected by mapViewModel.isConnected.collectAsStateWithLifecycle()
 
-    val selectedGoogleMapType by mapViewModel.selectedGoogleMapType.collectAsStateWithLifecycle()
-    val currentCustomTileProviderUrl by mapViewModel.selectedCustomTileProviderUrl.collectAsStateWithLifecycle()
+    var cacheEstimate by remember { mutableStateOf("") }
 
-    var mapTypeMenuExpanded by remember { mutableStateOf(false) }
-    var showCustomTileManagerSheet by remember { mutableStateOf(false) }
+    var zoomLevelMin by remember { mutableDoubleStateOf(0.0) }
+    var zoomLevelMax by remember { mutableDoubleStateOf(0.0) }
 
-    val cameraPositionState = remember {
-        CameraPositionState(position = mapViewModel.initialCameraPosition)
-    }
+    var downloadRegionBoundingBox: BoundingBox? by remember { mutableStateOf(null) }
+    var myLocationOverlay: MyLocationNewOverlay? by remember { mutableStateOf(null) }
 
-    // Save camera position when it stops moving
-    LaunchedEffect(cameraPositionState.isMoving) {
-        if (!cameraPositionState.isMoving) {
-            mapViewModel.saveCameraPosition(cameraPositionState.position)
+    var showDownloadButton: Boolean by remember { mutableStateOf(false) }
+    var showEditWaypointDialog by remember { mutableStateOf<Waypoint?>(null) }
+    var showCacheManagerDialog by remember { mutableStateOf(false) }
+    var showCurrentCacheInfo by remember { mutableStateOf(false) }
+    var showPurgeTileSourceDialog by remember { mutableStateOf(false) }
+    var showMapStyleDialog by remember { mutableStateOf(false) }
+
+    // ── Triage map state ──────────────────────────────────────────────────────
+    val triageMapViewModel: TriageMapViewModel = hiltViewModel()
+    var activeMapMode by remember { mutableStateOf(MapMode.CustomMap) }
+    var pendingTriageLatLng by remember { mutableStateOf<GeoPoint?>(null) }
+    var selectedTriagePin by remember { mutableStateOf<TriagePin?>(null) }
+    val triageMapState by triageMapViewModel.triageMapState.collectAsStateWithLifecycle()
+
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val density = LocalDensity.current
+
+    val haptic = LocalHapticFeedback.current
+    fun performHapticFeedback() = haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+
+    val hasGps = remember { context.hasGps() }
+
+    // Accompanist permissions state for location
+    val locationPermissionsState =
+        rememberMultiplePermissionsState(permissions = listOf(Manifest.permission.ACCESS_FINE_LOCATION))
+    var triggerLocationToggleAfterPermission by remember { mutableStateOf(false) }
+
+    fun loadOnlineTileSourceBase(): ITileSource {
+        val id = mapViewModel.mapStyleId
+        Logger.d { "mapStyleId from prefs: $id" }
+        return CustomTileSource.getTileSource(id).also {
+            zoomLevelMax = it.maximumZoomLevel.toDouble()
+            showDownloadButton = if (it is OnlineTileSourceBase) it.tileSourcePolicy.acceptsBulkDownload() else false
         }
     }
 
-    // Handle camera position events from ViewModel (e.g. waypoint centering)
-    LaunchedEffect(Unit) {
-        mapViewModel.cameraPositionEvent.collect { newPosition ->
-            cameraPositionState.position = newPosition
+    val initialCenter = remember {
+        val nodesWithPosition = mapViewModel.nodes.value.filter { it.validPosition != null }
+        if (nodesWithPosition.isNotEmpty()) {
+            val box = BoundingBox.fromGeoPoints(nodesWithPosition.map { GeoPoint(it.latitude, it.longitude) })
+            GeoPoint(box.centerLatitude, box.centerLongitude)
+        } else {
+            GeoPoint(0.0, 0.0)
         }
     }
+    val map =
+        rememberMapViewWithLifecycle(
+            applicationId = mapViewModel.applicationId,
+            zoomLevel = 17.0,
+            mapCenter = initialCenter,
+            tileSource = loadOnlineTileSourceBase(),
+        )
 
-    // Location tracking functionality
-    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
-    val locationCallback = remember {
-        object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult) {
-                if (isLocationTrackingEnabled) {
-                    locationResult.lastLocation?.let { location ->
-                        val latLng = LatLng(location.latitude, location.longitude)
-                        val cameraUpdate =
-                            if (followPhoneBearing) {
-                                val bearing =
-                                    if (location.hasBearing()) {
-                                        location.bearing
-                                    } else {
-                                        cameraPositionState.position.bearing
-                                    }
-                                CameraUpdateFactory.newCameraPosition(
-                                    CameraPosition.Builder()
-                                        .target(latLng)
-                                        .zoom(cameraPositionState.position.zoom)
-                                        .bearing(bearing)
-                                        .build(),
-                                )
-                            } else {
-                                CameraUpdateFactory.newLatLngZoom(latLng, cameraPositionState.position.zoom)
-                            }
-                        coroutineScope.launch {
-                            try {
-                                cameraPositionState.animate(cameraUpdate)
-                            } catch (e: IllegalStateException) {
-                                Logger.d { "Error animating camera to location: ${e.message}" }
-                            }
+    val nodeClusterer = remember { RadiusMarkerClusterer(context) }
+
+    fun MapView.toggleMyLocation() {
+        if (context.gpsDisabled()) {
+            Logger.d { "Telling user we need location turned on for MyLocationNewOverlay" }
+            scope.launch { context.showToast(Res.string.location_disabled) }
+            return
+        }
+        Logger.d { "user clicked MyLocationNewOverlay ${myLocationOverlay == null}" }
+        if (myLocationOverlay == null) {
+            myLocationOverlay =
+                MyLocationNewOverlay(this).apply {
+                    enableMyLocation()
+                    enableFollowLocation()
+                    getBitmapFromVectorDrawable(context, org.meshtastic.core.ui.R.drawable.ic_map_location_dot_24)
+                        ?.let {
+                            setPersonIcon(it)
+                            setPersonAnchor(0.5f, 0.5f)
                         }
+                    getBitmapFromVectorDrawable(context, org.meshtastic.core.ui.R.drawable.ic_map_navigation_24)?.let {
+                        setDirectionIcon(it)
+                        setDirectionAnchor(0.5f, 0.5f)
                     }
                 }
-            }
-        }
-    }
-
-    // Start/stop location tracking based on state
-    LaunchedEffect(isLocationTrackingEnabled, hasLocationPermission) {
-        if (isLocationTrackingEnabled && hasLocationPermission) {
-            val locationRequest =
-                LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000L)
-                    .setMinUpdateIntervalMillis(2000L)
-                    .build()
-
-            try {
-                @Suppress("MissingPermission")
-                fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null)
-                Logger.d { "Started location tracking" }
-            } catch (e: SecurityException) {
-                Logger.d { "Location permission not available: ${e.message}" }
-                isLocationTrackingEnabled = false
-            }
+            overlays.add(myLocationOverlay)
         } else {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
-            Logger.d { "Stopped location tracking" }
+            myLocationOverlay?.apply {
+                disableMyLocation()
+                disableFollowLocation()
+            }
+            overlays.remove(myLocationOverlay)
+            myLocationOverlay = null
         }
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
-            mapViewModel.clearLoadedLayerData()
+    // Effect to toggle MyLocation after permission is granted
+    LaunchedEffect(locationPermissionsState.allPermissionsGranted) {
+        if (locationPermissionsState.allPermissionsGranted && triggerLocationToggleAfterPermission) {
+            map.toggleMyLocation()
+            triggerLocationToggleAfterPermission = false
         }
     }
 
-    val allNodes by
-        mapViewModel.nodes
-            .map { nodes -> nodes.filter { node -> node.validPosition != null } }
-            .collectAsStateWithLifecycle(listOf())
+    // Auto-enable MyLocation overlay on startup if permission is already granted
+    LaunchedEffect(Unit) {
+        if (locationPermissionsState.allPermissionsGranted && myLocationOverlay == null) {
+            map.toggleMyLocation()
+        }
+    }
+
+    val nodes by mapViewModel.nodes.collectAsStateWithLifecycle()
     val waypoints by mapViewModel.waypoints.collectAsStateWithLifecycle(emptyMap())
-    val displayableWaypoints = waypoints.values.mapNotNull { it.data.waypoint }
     val selectedWaypointId by mapViewModel.selectedWaypointId.collectAsStateWithLifecycle()
+    val myId by mapViewModel.myId.collectAsStateWithLifecycle()
+
+    LaunchedEffect(selectedWaypointId, waypoints) {
+        if (selectedWaypointId != null && waypoints.containsKey(selectedWaypointId)) {
+            waypoints[selectedWaypointId]?.data?.waypoint?.let { pt ->
+                val geoPoint = GeoPoint(pt.latitudeI * 1e-7, pt.longitudeI * 1e-7)
+                map.controller.setCenter(geoPoint)
+                map.controller.setZoom(WAYPOINT_ZOOM)
+            }
+        }
+    }
 
     val tracerouteSelection =
-        remember(tracerouteOverlay, tracerouteNodePositions, allNodes) {
+        remember(tracerouteOverlay, tracerouteNodePositions, nodes) {
             mapViewModel.tracerouteNodeSelection(
                 tracerouteOverlay = tracerouteOverlay,
                 tracerouteNodePositions = tracerouteNodePositions,
-                nodes = allNodes,
+                nodes = nodes,
             )
         }
-
-    val filteredNodes =
-        allNodes
-            .filter { node -> !mapFilterState.onlyFavorites || node.isFavorite || node.num == ourNodeInfo?.num }
-            .filter { node ->
-                mapFilterState.lastHeardFilter.seconds == 0L ||
-                    (System.currentTimeMillis() / 1000 - node.lastHeard) <= mapFilterState.lastHeardFilter.seconds ||
-                    node.num == ourNodeInfo?.num
-            }
-
-    val displayNodes =
-        if (tracerouteOverlay != null) {
-            tracerouteSelection.nodesForMarkers
-        } else {
-            filteredNodes
-        }
-    LaunchedEffect(tracerouteOverlay, displayNodes) {
-        if (tracerouteOverlay != null) {
-            onTracerouteMappableCountChanged(displayNodes.size, tracerouteOverlay.relatedNodeNums.size)
-        }
-    }
-
-    val nodeClusterItems =
-        displayNodes.map { node ->
-            val latLng = LatLng(node.position.latitudeI * DEG_D, node.position.longitudeI * DEG_D)
-            NodeClusterItem(
-                node = node,
-                nodePosition = latLng,
-                nodeTitle = "${node.user.shortName} ${formatAgo(node.position.time)}",
-                nodeSnippet = "${node.user.longName}",
-            )
-        }
-    val isConnected by mapViewModel.isConnected.collectAsStateWithLifecycle()
-    val theme by mapViewModel.theme.collectAsStateWithLifecycle()
-    val dark =
-        when (theme) {
-            AppCompatDelegate.MODE_NIGHT_YES -> true
-            AppCompatDelegate.MODE_NIGHT_NO -> false
-            AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM -> isSystemInDarkTheme()
-            else -> isSystemInDarkTheme()
-        }
-    val mapColorScheme =
-        when (dark) {
-            true -> ComposeMapColorScheme.DARK
-            else -> ComposeMapColorScheme.LIGHT
-        }
+    val overlayNodeNums = tracerouteSelection.overlayNodeNums
+    val nodeLookup = tracerouteSelection.nodeLookup
+    val nodesForMarkers = tracerouteSelection.nodesForMarkers
     val tracerouteForwardPoints =
-        remember(tracerouteOverlay, displayNodes) {
-            val nodeLookup = displayNodes.associateBy { it.num }
-            tracerouteOverlay?.forwardRoute?.mapNotNull { nodeLookup[it]?.toLatLng() } ?: emptyList()
+        remember(tracerouteOverlay, nodeLookup) {
+            tracerouteOverlay?.forwardRoute?.mapNotNull {
+                nodeLookup[it]?.let { node -> GeoPoint(node.latitude, node.longitude) }
+            } ?: emptyList()
         }
     val tracerouteReturnPoints =
-        remember(tracerouteOverlay, displayNodes) {
-            val nodeLookup = displayNodes.associateBy { it.num }
-            tracerouteOverlay?.returnRoute?.mapNotNull { nodeLookup[it]?.toLatLng() } ?: emptyList()
+        remember(tracerouteOverlay, nodeLookup) {
+            tracerouteOverlay?.returnRoute?.mapNotNull {
+                nodeLookup[it]?.let { node -> GeoPoint(node.latitude, node.longitude) }
+            } ?: emptyList()
         }
+    LaunchedEffect(tracerouteOverlay, nodesForMarkers) {
+        if (tracerouteOverlay != null) {
+            onTracerouteMappableCountChanged(nodesForMarkers.size, tracerouteOverlay.relatedNodeNums.size)
+        }
+    }
     val tracerouteHeadingReferencePoints =
         remember(tracerouteForwardPoints, tracerouteReturnPoints) {
             when {
@@ -363,490 +506,787 @@ fun MapView(
                 sideMultiplier = -1.0,
             )
         }
+    val traceroutePolylines = remember { mutableStateListOf<Polyline>() }
     var hasCenteredTraceroute by remember(tracerouteOverlay) { mutableStateOf(false) }
 
-    var showLayersBottomSheet by remember { mutableStateOf(false) }
+    val markerIcon = remember {
+        AppCompatResources.getDrawable(context, org.meshtastic.core.ui.R.drawable.ic_baseline_location_on_24)
+    }
 
-    val onAddLayerClicked = {
-        val intent =
-            Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "*/*"
-                val mimeTypes =
-                    arrayOf(
-                        "application/vnd.google-earth.kml+xml",
-                        "application/vnd.google-earth.kmz",
-                        "application/vnd.geo+json",
-                        "application/geo+json",
-                        "application/json",
-                    )
-                putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+    fun MapView.onNodesChanged(nodes: Collection<Node>): List<MarkerWithLabel> {
+        val nodesWithPosition = nodes.filter { it.validPosition != null }
+        val ourNode = mapViewModel.ourNodeInfo.value
+        val displayUnits = mapViewModel.config.display.units
+        val mapFilterStateValue = mapViewModel.mapFilterStateFlow.value // Access mapFilterState directly
+        return nodesWithPosition.mapNotNull { node ->
+            if (
+                mapFilterStateValue.onlyFavorites &&
+                !node.isFavorite &&
+                !overlayNodeNums.contains(node.num) &&
+                !node.equals(ourNode)
+            ) {
+                return@mapNotNull null
             }
-        filePickerLauncher.launch(intent)
-    }
-    val onRemoveLayer = { layerId: String -> mapViewModel.removeMapLayer(layerId) }
-    val onToggleVisibility = { layerId: String -> mapViewModel.toggleLayerVisibility(layerId) }
 
-    val effectiveGoogleMapType =
-        if (currentCustomTileProviderUrl != null) {
-            MapType.NONE
+            val (p, u) = node.position to node.user
+            val nodePosition = GeoPoint(node.latitude, node.longitude)
+            MarkerWithLabel(mapView = this, label = "${u.shortName} ${formatAgo(p.time)}").apply {
+                id = u.id
+                title = u.longName
+                snippet =
+                    com.meshtastic.core.strings.getString(
+                        Res.string.map_node_popup_details,
+                        node.gpsString(),
+                        formatAgo(node.lastHeard),
+                        formatAgo(p.time),
+                        if (node.batteryStr != "") node.batteryStr else "?",
+                    )
+                ourNode?.distanceStr(node, displayUnits)?.let { dist ->
+                    subDescription =
+                        com.meshtastic.core.strings.getString(
+                            Res.string.map_subDescription,
+                            ourNode.bearing(node).toString(),
+                            dist,
+                        )
+                }
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                position = nodePosition
+                icon = markerIcon
+                setNodeColors(node.colors)
+                if (!mapFilterStateValue.showPrecisionCircle) {
+                    setPrecisionBits(0)
+                } else {
+                    setPrecisionBits(p.precisionBits)
+                }
+                setOnLongClickListener {
+                    navigateToNodeDetails(node.num)
+                    true
+                }
+            }
+        }
+    }
+
+    fun showDeleteMarkerDialog(waypoint: Waypoint) {
+        val builder = MaterialAlertDialogBuilder(context)
+        builder.setTitle(com.meshtastic.core.strings.getString(Res.string.waypoint_delete))
+        builder.setNeutralButton(com.meshtastic.core.strings.getString(Res.string.cancel)) { _, _ ->
+            Logger.d { "User canceled marker delete dialog" }
+        }
+        builder.setNegativeButton(com.meshtastic.core.strings.getString(Res.string.delete_for_me)) { _, _ ->
+            Logger.d { "User deleted waypoint ${waypoint.id} for me" }
+            mapViewModel.deleteWaypoint(waypoint.id)
+        }
+        if (waypoint.lockedTo in setOf(0, mapViewModel.myNodeNum ?: 0) && isConnected) {
+            builder.setPositiveButton(com.meshtastic.core.strings.getString(Res.string.delete_for_everyone)) { _, _ ->
+                Logger.d { "User deleted waypoint ${waypoint.id} for everyone" }
+                mapViewModel.sendWaypoint(waypoint.copy { expire = 1 })
+                mapViewModel.deleteWaypoint(waypoint.id)
+            }
+        }
+        val dialog = builder.show()
+        for (
+        button in
+        setOf(
+            androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL,
+            androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE,
+            androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE,
+        )
+        ) {
+            with(dialog.getButton(button)) {
+                textSize = 12F
+                isAllCaps = false
+            }
+        }
+    }
+
+    fun showMarkerLongPressDialog(id: Int) {
+        performHapticFeedback()
+        Logger.d { "marker long pressed id=$id" }
+        val waypoint = waypoints[id]?.data?.waypoint ?: return
+        // edit only when unlocked or lockedTo myNodeNum
+        if (waypoint.lockedTo in setOf(0, mapViewModel.myNodeNum ?: 0) && isConnected) {
+            showEditWaypointDialog = waypoint
         } else {
-            selectedGoogleMapType
+            showDeleteMarkerDialog(waypoint)
+        }
+    }
+
+    fun getUsername(id: String?) = if (id == DataPacket.ID_LOCAL || (myId != null && id == myId)) {
+        com.meshtastic.core.strings.getString(Res.string.you)
+    } else {
+        mapViewModel.getUser(id).longName
+    }
+
+    @Suppress("MagicNumber")
+    fun MapView.onWaypointChanged(waypoints: Collection<Packet>, selectedWaypointId: Int?): List<MarkerWithLabel> {
+        return waypoints.mapNotNull { waypoint ->
+            val pt = waypoint.data.waypoint ?: return@mapNotNull null
+            if (!mapFilterState.showWaypoints) return@mapNotNull null // Use collected mapFilterState
+            val lock = if (pt.lockedTo != 0) "\uD83D\uDD12" else ""
+            val time =
+                DateUtils.formatDateTime(
+                    context,
+                    waypoint.received_time,
+                    DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_ALL,
+                )
+            val label = pt.name + " " + formatAgo((waypoint.received_time / 1000).toInt())
+            val emoji = String(Character.toChars(if (pt.icon == 0) 128205 else pt.icon))
+            val now = System.currentTimeMillis()
+            val expireTimeMillis = pt.expire * 1000L
+            val expireTimeStr =
+                when {
+                    pt.expire == 0 || pt.expire == Int.MAX_VALUE -> "Never"
+                    expireTimeMillis <= now -> "Expired"
+                    else ->
+                        DateUtils.getRelativeTimeSpanString(
+                            expireTimeMillis,
+                            now,
+                            DateUtils.MINUTE_IN_MILLIS,
+                            DateUtils.FORMAT_ABBREV_RELATIVE,
+                        )
+                            .toString()
+                }
+            MarkerWithLabel(this, label, emoji).apply {
+                id = "${pt.id}"
+                title = "${pt.name} (${getUsername(waypoint.data.from)}$lock)"
+                snippet =
+                    "[$time] ${pt.description}  " +
+                    com.meshtastic.core.strings.getString(Res.string.expires) +
+                    ": $expireTimeStr"
+                position = GeoPoint(pt.latitudeI * 1e-7, pt.longitudeI * 1e-7)
+                if (selectedWaypointId == pt.id) {
+                    showInfoWindow()
+                }
+                setOnLongClickListener {
+                    showMarkerLongPressDialog(pt.id)
+                    true
+                }
+                setOnMarkerClickListener { _, _ ->
+                    showMarkerLongPressDialog(pt.id)
+                    true
+                }
+            }
+        }
+    }
+
+    val mapEventsReceiver =
+        object : MapEventsReceiver {
+            override fun singleTapConfirmedHelper(p: GeoPoint): Boolean {
+                InfoWindow.closeAllInfoWindowsOn(map)
+                return true
+            }
+
+            override fun longPressHelper(p: GeoPoint): Boolean {
+                performHapticFeedback()
+                when (activeMapMode) {
+                    MapMode.CustomMap -> if (downloadRegionBoundingBox == null) {
+                        showEditWaypointDialog = waypoint {
+                            latitudeI = (p.latitude * 1e7).toInt()
+                            longitudeI = (p.longitude * 1e7).toInt()
+                        }
+                    }
+                    MapMode.TriageMap -> pendingTriageLatLng = p
+                }
+                return true
+            }
         }
 
-    var showClusterItemsDialog by remember { mutableStateOf<List<NodeClusterItem>?>(null) }
-
-    LaunchedEffect(isLocationTrackingEnabled) {
-        val activity = context as? Activity ?: return@LaunchedEffect
-        val window = activity.window
-
-        if (isLocationTrackingEnabled) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        } else {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    fun MapView.drawOverlays() {
+        if (overlays.none { it is MapEventsOverlay }) {
+            overlays.add(0, MapEventsOverlay(mapEventsReceiver))
         }
+        if (myLocationOverlay != null && overlays.none { it is MyLocationNewOverlay }) {
+            overlays.add(myLocationOverlay)
+        }
+        if (overlays.none { it is RadiusMarkerClusterer }) {
+            overlays.add(nodeClusterer)
+        }
+
+        addCopyright()
+        addScaleBarOverlay(density)
+        createLatLongGrid(false)
+
+        invalidate()
     }
+
+    fun MapView.updateTracerouteOverlay(forwardPoints: List<GeoPoint>, returnPoints: List<GeoPoint>) {
+        overlays.removeAll(traceroutePolylines)
+        traceroutePolylines.clear()
+
+        fun buildPolyline(points: List<GeoPoint>, color: Int, strokeWidth: Float): Polyline = Polyline().apply {
+            setPoints(points)
+            outlinePaint.apply {
+                this.color = color
+                this.strokeWidth = strokeWidth
+                strokeCap = Paint.Cap.ROUND
+                strokeJoin = Paint.Join.ROUND
+                style = Paint.Style.STROKE
+            }
+        }
+
+        forwardPoints
+            .takeIf { it.size >= 2 }
+            ?.let { points ->
+                traceroutePolylines.add(
+                    buildPolyline(points, TracerouteColors.OutgoingRoute.toArgb(), with(density) { 6.dp.toPx() }),
+                )
+            }
+        returnPoints
+            .takeIf { it.size >= 2 }
+            ?.let { points ->
+                traceroutePolylines.add(
+                    buildPolyline(points, TracerouteColors.ReturnRoute.toArgb(), with(density) { 5.dp.toPx() }),
+                )
+            }
+        overlays.addAll(traceroutePolylines)
+        invalidate()
+    }
+
     LaunchedEffect(tracerouteOverlay, tracerouteForwardPoints, tracerouteReturnPoints) {
         if (tracerouteOverlay == null || hasCenteredTraceroute) return@LaunchedEffect
         val allPoints = (tracerouteForwardPoints + tracerouteReturnPoints).distinct()
         if (allPoints.isNotEmpty()) {
-            val cameraUpdate =
-                if (allPoints.size == 1) {
-                    CameraUpdateFactory.newLatLngZoom(allPoints.first(), max(cameraPositionState.position.zoom, 12f))
-                } else {
-                    val bounds = LatLngBounds.builder()
-                    allPoints.forEach { bounds.include(it) }
-                    CameraUpdateFactory.newLatLngBounds(bounds.build(), TRACEROUTE_BOUNDS_PADDING_PX)
-                }
-            try {
-                cameraPositionState.animate(cameraUpdate)
-                hasCenteredTraceroute = true
-            } catch (e: IllegalStateException) {
-                Logger.d { "Error centering traceroute overlay: ${e.message}" }
+            if (allPoints.size == 1) {
+                map.controller.setCenter(allPoints.first())
+                map.controller.setZoom(TRACEROUTE_SINGLE_POINT_ZOOM)
+            } else {
+                map.zoomToBoundingBox(BoundingBox.fromGeoPoints(allPoints).zoomIn(-TRACEROUTE_ZOOM_OUT_LEVELS), true)
             }
+            hasCenteredTraceroute = true
         }
     }
 
-    Scaffold { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            GoogleMap(
-                mapColorScheme = mapColorScheme,
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                uiSettings =
-                MapUiSettings(
-                    zoomControlsEnabled = true,
-                    mapToolbarEnabled = true,
-                    compassEnabled = false,
-                    myLocationButtonEnabled = false,
-                    rotationGesturesEnabled = true,
-                    scrollGesturesEnabled = true,
-                    tiltGesturesEnabled = true,
-                    zoomGesturesEnabled = true,
+    fun MapView.generateBoxOverlay() {
+        overlays.removeAll { it is Polygon }
+        val zoomFactor = 1.3
+        zoomLevelMin = minOf(zoomLevelDouble, zoomLevelMax)
+        downloadRegionBoundingBox = boundingBox.zoomIn(zoomFactor)
+        val polygon =
+            Polygon().apply {
+                points = Polygon.pointsAsRect(downloadRegionBoundingBox).map { GeoPoint(it.latitude, it.longitude) }
+            }
+        overlays.add(polygon)
+        invalidate()
+        val tileCount: Int =
+            CacheManager(this)
+                .possibleTilesInArea(downloadRegionBoundingBox, zoomLevelMin.toInt(), zoomLevelMax.toInt())
+        cacheEstimate = com.meshtastic.core.strings.getString(Res.string.map_cache_tiles, tileCount)
+    }
+
+    val boxOverlayListener =
+        object : MapListener {
+            override fun onScroll(event: ScrollEvent): Boolean {
+                if (downloadRegionBoundingBox != null) {
+                    event.source.generateBoxOverlay()
+                }
+                return true
+            }
+
+            override fun onZoom(event: ZoomEvent): Boolean = false
+        }
+
+    fun startDownload() {
+        val boundingBox = downloadRegionBoundingBox ?: return
+        try {
+            val outputName = buildString {
+                append(Configuration.getInstance().osmdroidBasePath.absolutePath)
+                append(File.separator)
+                append("mainFile.sqlite")
+            }
+            val writer = SqliteArchiveTileWriter(outputName)
+            val cacheManager = CacheManager(map, writer)
+            cacheManager.downloadAreaAsync(
+                context,
+                boundingBox,
+                zoomLevelMin.toInt(),
+                zoomLevelMax.toInt(),
+                cacheManagerCallback(
+                    onTaskComplete = {
+                        scope.launch { context.showToast(Res.string.map_download_complete) }
+                        writer.onDetach()
+                    },
+                    onTaskFailed = { errors ->
+                        scope.launch { context.showToast(Res.string.map_download_errors, errors) }
+                        writer.onDetach()
+                    },
                 ),
-                properties =
-                MapProperties(mapType = effectiveGoogleMapType, isMyLocationEnabled = hasLocationPermission),
-                onMapLongClick = { latLng ->
-                    val newWaypoint = waypoint {
-                        latitudeI = (latLng.latitude / DEG_D).toInt()
-                        longitudeI = (latLng.longitude / DEG_D).toInt()
+            )
+        } catch (ex: TileSourcePolicyException) {
+            Logger.d { "Tile source does not allow archiving: ${ex.message}" }
+        } catch (ex: Exception) {
+            Logger.d { "Tile source exception: ${ex.message}" }
+        }
+    }
+
+    Scaffold(
+        floatingActionButton = {
+            DownloadButton(showDownloadButton && downloadRegionBoundingBox == null) { showCacheManagerDialog = true }
+        },
+    ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            AndroidView(
+                factory = {
+                    map.apply {
+                        setDestroyMode(false)
+                        addMapListener(boxOverlayListener)
                     }
-                    editingWaypoint = newWaypoint
                 },
-            ) {
-                key(currentCustomTileProviderUrl) {
-                    currentCustomTileProviderUrl?.let { url ->
-                        mapViewModel.createUrlTileProvider(url)?.let { tileProvider ->
-                            TileOverlay(tileProvider = tileProvider, fadeIn = true, transparency = 0f, zIndex = -1f)
-                        }
+                modifier = Modifier.fillMaxSize(),
+                update = { mapView ->
+                    mapView.updateTracerouteOverlay(tracerouteForwardOffsetPoints, tracerouteReturnOffsetPoints)
+                    with(mapView) {
+                        updateMarkers(
+                            onNodesChanged(nodesForMarkers),
+                            onWaypointChanged(waypoints.values, selectedWaypointId),
+                            nodeClusterer,
+                        )
+                        updateTriageMarkers(
+                            pins = triageMapState.pins,
+                            mode = activeMapMode,
+                            onPinTapped = { pin -> selectedTriagePin = pin },
+                        )
                     }
-                }
+                    mapView.drawOverlays()
+                }, // Renamed map to mapView to avoid conflict
+            )
+            // ── Mode toggle always visible at top center ──────────────────────
+            MapModeTabRow(
+                activeMode = activeMapMode,
+                onModeSelected = { activeMapMode = it },
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp),
+            )
 
-                if (tracerouteForwardPoints.size >= 2) {
-                    Polyline(
-                        points = tracerouteForwardOffsetPoints,
-                        jointType = JointType.ROUND,
-                        color = TracerouteColors.OutgoingRoute,
-                        width = 9f,
-                        zIndex = 1.5f,
+            if (downloadRegionBoundingBox != null) {
+                CacheLayout(
+                    cacheEstimate = cacheEstimate,
+                    onExecuteJob = { startDownload() },
+                    onCancelDownload = {
+                        downloadRegionBoundingBox = null
+                        map.overlays.removeAll { it is Polygon }
+                        map.invalidate()
+                    },
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+            } else {
+                Column(
+                    modifier = Modifier.padding(top = 16.dp, end = 16.dp).align(Alignment.TopEnd),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OrganicMapButton(
+                        onClick = { showMapStyleDialog = true },
+                        icon = Icons.Outlined.Layers,
+                        contentDescription = Res.string.map_style_selection,
                     )
-                }
-                if (tracerouteReturnPoints.size >= 2) {
-                    Polyline(
-                        points = tracerouteReturnOffsetPoints,
-                        jointType = JointType.ROUND,
-                        color = TracerouteColors.ReturnRoute,
-                        width = 7f,
-                        zIndex = 1.4f,
-                    )
-                }
-
-                if (nodeTracks != null && focusedNodeNum != null) {
-                    val lastHeardTrackFilter = mapFilterState.lastHeardTrackFilter
-                    val timeFilteredPositions =
-                        nodeTracks.filter {
-                            lastHeardTrackFilter == LastHeardFilter.Any ||
-                                it.time > System.currentTimeMillis() / 1000 - lastHeardTrackFilter.seconds
-                        }
-                    val sortedPositions = timeFilteredPositions.sortedBy { it.time }
-                    allNodes
-                        .find { it.num == focusedNodeNum }
-                        ?.let { focusedNode ->
-                            sortedPositions.forEachIndexed { index, position ->
-                                val markerState = rememberUpdatedMarkerState(position = position.toLatLng())
-                                val alpha = (index.toFloat() / (sortedPositions.size.toFloat() - 1))
-                                val color = Color(focusedNode.colors.second).copy(alpha = alpha)
-                                if (index == sortedPositions.lastIndex) {
-                                    MarkerComposable(state = markerState, zIndex = 1f) { NodeChip(node = focusedNode) }
-                                } else {
-                                    MarkerInfoWindowComposable(
-                                        state = markerState,
-                                        title = stringResource(Res.string.position),
-                                        snippet = formatAgo(position.time),
-                                        zIndex = alpha,
-                                        infoContent = {
-                                            PositionInfoWindowContent(position = position, displayUnits = displayUnits)
-                                        },
+                    Box(modifier = Modifier) {
+                        OrganicMapButton(
+                            onClick = { mapFilterExpanded = true },
+                            icon = Icons.Outlined.Tune,
+                            contentDescription = Res.string.map_filter,
+                        )
+                        DropdownMenu(
+                            expanded = mapFilterExpanded,
+                            onDismissRequest = { mapFilterExpanded = false },
+                            modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Icon(
-                                            imageVector = androidx.compose.material.icons.Icons.Default.TripOrigin,
-                                            contentDescription = stringResource(Res.string.track_point),
-                                            tint = color,
+                                            imageVector = Icons.Default.Star,
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(end = 8.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface,
+                                        )
+                                        Text(
+                                            text = stringResource(Res.string.only_favorites),
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        Checkbox(
+                                            checked = mapFilterState.onlyFavorites,
+                                            onCheckedChange = { mapViewModel.toggleOnlyFavorites() },
+                                            modifier = Modifier.padding(start = 8.dp),
                                         )
                                     }
-                                }
-                            }
-
-                            if (sortedPositions.size > 1) {
-                                val segments = sortedPositions.windowed(size = 2, step = 1, partialWindows = false)
-                                segments.forEachIndexed { index, segmentPoints ->
-                                    val alpha = (index.toFloat() / (segments.size.toFloat() - 1))
-                                    Polyline(
-                                        points = segmentPoints.map { it.toLatLng() },
-                                        jointType = JointType.ROUND,
-                                        color = Color(focusedNode.colors.second).copy(alpha = alpha),
-                                        width = 8f,
-                                    )
-                                }
-                            }
+                                },
+                                onClick = { mapViewModel.toggleOnlyFavorites() },
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.PinDrop,
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(end = 8.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface,
+                                        )
+                                        Text(
+                                            text = stringResource(Res.string.show_waypoints),
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        Checkbox(
+                                            checked = mapFilterState.showWaypoints,
+                                            onCheckedChange = { mapViewModel.toggleShowWaypointsOnMap() },
+                                            modifier = Modifier.padding(start = 8.dp),
+                                        )
+                                    }
+                                },
+                                onClick = { mapViewModel.toggleShowWaypointsOnMap() },
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Lens,
+                                            contentDescription = null,
+                                            modifier = Modifier.padding(end = 8.dp),
+                                            tint = MaterialTheme.colorScheme.onSurface,
+                                        )
+                                        Text(
+                                            text = stringResource(Res.string.show_precision_circle),
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        Checkbox(
+                                            checked = mapFilterState.showPrecisionCircle,
+                                            onCheckedChange = { mapViewModel.toggleShowPrecisionCircleOnMap() },
+                                            modifier = Modifier.padding(start = 8.dp),
+                                        )
+                                    }
+                                },
+                                onClick = { mapViewModel.toggleShowPrecisionCircleOnMap() },
+                            )
                         }
-                } else {
-                    NodeClusterMarkers(
-                        nodeClusterItems = nodeClusterItems,
-                        mapFilterState = mapFilterState,
-                        navigateToNodeDetails = navigateToNodeDetails,
-                        onClusterClick = { cluster ->
-                            val items = cluster.items.toList()
-                            val allSameLocation = items.size > 1 && items.all { it.position == items.first().position }
-
-                            if (allSameLocation) {
-                                showClusterItemsDialog = items
+                    }
+                    if (hasGps) {
+                        OrganicMapButton(
+                            icon =
+                            if (myLocationOverlay == null) {
+                                Icons.Outlined.MyLocation
                             } else {
-                                val bounds = LatLngBounds.builder()
-                                cluster.items.forEach { bounds.include(it.position) }
-                                coroutineScope.launch {
-                                    cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngBounds(bounds.build(), 100),
-                                    )
-                                }
-                                Logger.d { "Cluster clicked! $cluster" }
-                            }
-                            true
-                        },
-                    )
-                }
-
-                if (tracerouteForwardPoints.size >= 2) {
-                    Polyline(
-                        points = tracerouteForwardOffsetPoints,
-                        jointType = JointType.ROUND,
-                        color = TracerouteColors.OutgoingRoute,
-                        width = 9f,
-                        zIndex = 2f,
-                    )
-                }
-                if (tracerouteReturnPoints.size >= 2) {
-                    Polyline(
-                        points = tracerouteReturnOffsetPoints,
-                        jointType = JointType.ROUND,
-                        color = TracerouteColors.ReturnRoute,
-                        width = 7f,
-                        zIndex = 1.5f,
-                    )
-                }
-
-                WaypointMarkers(
-                    displayableWaypoints = displayableWaypoints,
-                    mapFilterState = mapFilterState,
-                    myNodeNum = mapViewModel.myNodeNum ?: 0,
-                    isConnected = isConnected,
-                    unicodeEmojiToBitmapProvider = ::unicodeEmojiToBitmap,
-                    onEditWaypointRequest = { waypointToEdit -> editingWaypoint = waypointToEdit },
-                    selectedWaypointId = selectedWaypointId,
-                )
-
-                MapEffect(mapLayers) { map ->
-                    mapLayers.forEach { layerItem ->
-                        coroutineScope.launch {
-                            mapViewModel.loadMapLayerIfNeeded(map, layerItem)
-                            when (layerItem.layerType) {
-                                LayerType.KML -> {
-                                    layerItem.kmlLayerData?.let { kmlLayer ->
-                                        if (layerItem.isVisible && !kmlLayer.isLayerOnMap) {
-                                            kmlLayer.addLayerToMap()
-                                        } else if (!layerItem.isVisible && kmlLayer.isLayerOnMap) {
-                                            kmlLayer.removeLayerFromMap()
-                                        }
-                                    }
-                                }
-
-                                LayerType.GEOJSON -> {
-                                    layerItem.geoJsonLayerData?.let { geoJsonLayer ->
-                                        if (layerItem.isVisible && !geoJsonLayer.isLayerOnMap) {
-                                            geoJsonLayer.addLayerToMap()
-                                        } else if (!layerItem.isVisible && geoJsonLayer.isLayerOnMap) {
-                                            geoJsonLayer.removeLayerFromMap()
-                                        }
-                                    }
-                                }
+                                Icons.Default.LocationDisabled
+                            },
+                            contentDescription = stringResource(Res.string.toggle_my_position),
+                        ) {
+                            if (locationPermissionsState.allPermissionsGranted) {
+                                map.toggleMyLocation()
+                            } else {
+                                triggerLocationToggleAfterPermission = true
+                                locationPermissionsState.launchMultiplePermissionRequest()
                             }
                         }
                     }
                 }
             }
+        }
+    }
 
-            ScaleBar(
-                cameraPositionState = cameraPositionState,
-                modifier = Modifier.align(Alignment.BottomStart).padding(bottom = 48.dp),
-            )
-            editingWaypoint?.let { waypointToEdit ->
-                OrganicEditWaypointDialog(
-                    waypoint = waypointToEdit,
-                    onSendClicked = { updatedWp ->
-                        var finalWp = updatedWp
-                        if (updatedWp.id == 0) {
-                            finalWp = finalWp.copy { id = mapViewModel.generatePacketId() ?: (System.currentTimeMillis().toInt() or 1) }
-                        }
-                        if (updatedWp.icon == 0) {
-                            finalWp = finalWp.copy { icon = 0x1F4CD }
-                        }
+    if (showMapStyleDialog) {
+        MapStyleDialog(
+            selectedMapStyle = mapViewModel.mapStyleId,
+            onDismiss = { showMapStyleDialog = false },
+            onSelectMapStyle = {
+                mapViewModel.mapStyleId = it
+                map.setTileSource(loadOnlineTileSourceBase())
+            },
+        )
+    }
 
-                        mapViewModel.sendWaypoint(finalWp)
-                        editingWaypoint = null
+    if (showCacheManagerDialog) {
+        CacheManagerDialog(
+            onClickOption = { option ->
+                when (option) {
+                    CacheManagerOption.CurrentCacheSize -> {
+                        scope.launch { context.showToast(Res.string.calculating) }
+                        showCurrentCacheInfo = true
+                    }
+                    CacheManagerOption.DownloadRegion -> map.generateBoxOverlay()
+
+                    CacheManagerOption.ClearTiles -> showPurgeTileSourceDialog = true
+                    CacheManagerOption.Cancel -> Unit
+                }
+                showCacheManagerDialog = false
+            },
+            onDismiss = { showCacheManagerDialog = false },
+        )
+    }
+
+    if (showCurrentCacheInfo) {
+        CacheInfoDialog(mapView = map, onDismiss = { showCurrentCacheInfo = false })
+    }
+
+    if (showPurgeTileSourceDialog) {
+        PurgeTileSourceDialog(onDismiss = { showPurgeTileSourceDialog = false })
+    }
+
+    // ── Triage dialogs ────────────────────────────────────────────────────────
+    pendingTriageLatLng?.let { geoPoint ->
+        TriageLevelPickerDialog(
+            onLevelSelected = { level ->
+                triageMapViewModel.addTriagePin(geoPoint.latitude, geoPoint.longitude, level)
+                pendingTriageLatLng = null
+            },
+            onDismissRequest = { pendingTriageLatLng = null },
+        )
+    }
+
+    selectedTriagePin?.let { pin ->
+        TriagePinInfoDialog(
+            pin = pin,
+            onClaim = {
+                triageMapViewModel.claimPin(pin.pinId)
+                selectedTriagePin = null
+            },
+            onDelete = {
+                triageMapViewModel.deletePin(pin.pinId)
+                selectedTriagePin = null
+            },
+            onDismiss = { selectedTriagePin = null },
+        )
+    }
+
+    if (showEditWaypointDialog != null) {
+        OrganicEditWaypointDialog(
+            waypoint = showEditWaypointDialog ?: return, // Safe call
+            onSendClicked = { waypoint ->
+                Logger.d { "User clicked send waypoint ${waypoint.id}" }
+                showEditWaypointDialog = null
+                mapViewModel.sendWaypoint(
+                    waypoint.copy {
+                        if (id == 0) id = mapViewModel.generatePacketId() ?: (System.currentTimeMillis().toInt() or 1)
+                        if (name == "") name = "Dropped Pin"
+                        if (expire == 0) expire = Int.MAX_VALUE
+                        lockedTo = if (waypoint.lockedTo != 0) mapViewModel.myNodeNum ?: 0 else 0
+                        if (waypoint.icon == 0) icon = 128205
                     },
-                    onDeleteClicked = { wpToDelete ->
-                        if (wpToDelete.lockedTo == 0 && isConnected && wpToDelete.id != 0) {
-                            val deleteMarkerWp = wpToDelete.copy { expire = 1 }
-                            mapViewModel.sendWaypoint(deleteMarkerWp)
-                        }
-                        mapViewModel.deleteWaypoint(wpToDelete.id)
-                        editingWaypoint = null
-                    },
-                    onDismissRequest = { editingWaypoint = null },
                 )
-            }
+            },
+            onDeleteClicked = { waypoint ->
+                Logger.d { "User clicked delete waypoint ${waypoint.id}" }
+                showEditWaypointDialog = null
+                showDeleteMarkerDialog(waypoint)
+            },
+            onDismissRequest = {
+                Logger.d { "User clicked cancel marker edit dialog" }
+                showEditWaypointDialog = null
+            },
+        )
+    }
+}
 
-            OrganicMapControlsOverlay(
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp),
-                mapFilterMenuExpanded = mapFilterMenuExpanded,
-                onMapFilterMenuDismissRequest = { mapFilterMenuExpanded = false },
-                onToggleMapFilterMenu = { mapFilterMenuExpanded = true },
-                mapViewModel = mapViewModel,
-                mapTypeMenuExpanded = mapTypeMenuExpanded,
-                onMapTypeMenuDismissRequest = { mapTypeMenuExpanded = false },
-                onToggleMapTypeMenu = { mapTypeMenuExpanded = true },
-                onManageLayersClicked = { showLayersBottomSheet = true },
-                onManageCustomTileProvidersClicked = {
-                    mapTypeMenuExpanded = false
-                    showCustomTileManagerSheet = true
-                },
-                isNodeMap = focusedNodeNum != null,
-                hasLocationPermission = hasLocationPermission,
-                isLocationTrackingEnabled = isLocationTrackingEnabled,
-                onToggleLocationTracking = {
-                    if (hasLocationPermission) {
-                        isLocationTrackingEnabled = !isLocationTrackingEnabled
-                        if (!isLocationTrackingEnabled) {
-                            followPhoneBearing = false
-                        }
-                    }
-                },
-                bearing = cameraPositionState.position.bearing,
-                onCompassClick = {
-                    if (isLocationTrackingEnabled) {
-                        followPhoneBearing = !followPhoneBearing
-                    } else {
-                        coroutineScope.launch {
-                            try {
-                                val currentPosition = cameraPositionState.position
-                                val newCameraPosition = CameraPosition.Builder(currentPosition).bearing(0f).build()
-                                cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(newCameraPosition))
-                                Logger.d { "Oriented map to north" }
-                            } catch (e: IllegalStateException) {
-                                Logger.d { "Error orienting map to north: ${e.message}" }
-                            }
-                        }
-                    }
-                },
-                followPhoneBearing = followPhoneBearing,
-            )
-        }
-        if (showLayersBottomSheet) {
-            ModalBottomSheet(onDismissRequest = { showLayersBottomSheet = false }) {
-                OrganicCustomMapLayersSheet(mapLayers, onToggleVisibility, onRemoveLayer, onAddLayerClicked)
-            }
-        }
-        showClusterItemsDialog?.let {
-            OrganicClusterItemsListDialog(
-                items = it,
-                onDismiss = { showClusterItemsDialog = null },
-                onItemClick = { item ->
-                    navigateToNodeDetails(item.node.num)
-                    showClusterItemsDialog = null
+@Composable
+private fun MapStyleDialog(selectedMapStyle: Int, onDismiss: () -> Unit, onSelectMapStyle: (Int) -> Unit) {
+    val selected = remember { mutableStateOf(selectedMapStyle) }
+
+    MapsDialog(onDismiss = onDismiss) {
+        CustomTileSource.mTileSources.values.forEachIndexed { index, style ->
+            ListItem(
+                text = style,
+                trailingIcon = if (index == selected.value) Icons.Rounded.Check else null,
+                onClick = {
+                    selected.value = index
+                    onSelectMapStyle(index)
+                    onDismiss()
                 },
             )
         }
-        if (showCustomTileManagerSheet) {
-            ModalBottomSheet(onDismissRequest = { showCustomTileManagerSheet = false }) {
-                CustomTileProviderManagerSheet(mapViewModel = mapViewModel)
+    }
+}
+
+private enum class CacheManagerOption(val label: StringResource) {
+    CurrentCacheSize(label = Res.string.map_cache_size),
+    DownloadRegion(label = Res.string.map_download_region),
+    ClearTiles(label = Res.string.map_clear_tiles),
+    Cancel(label = Res.string.cancel),
+}
+
+@Composable
+private fun CacheManagerDialog(onClickOption: (CacheManagerOption) -> Unit, onDismiss: () -> Unit) {
+    MapsDialog(title = stringResource(Res.string.map_offline_manager), onDismiss = onDismiss) {
+        CacheManagerOption.entries.forEach { option ->
+            ListItem(text = stringResource(option.label), trailingIcon = null) {
+                onClickOption(option)
+                onDismiss()
             }
         }
     }
 }
 
-internal fun convertIntToEmoji(unicodeCodePoint: Int): String = try {
-    String(Character.toChars(unicodeCodePoint))
-} catch (e: IllegalArgumentException) {
-    Logger.w(e) { "Invalid unicode code point: $unicodeCodePoint" }
-    "\uD83D\uDCCD"
-}
-
-internal fun unicodeEmojiToBitmap(icon: Int): BitmapDescriptor {
-    val unicodeEmoji = convertIntToEmoji(icon)
-    val paint =
-        Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textSize = 64f
-            color = android.graphics.Color.BLACK
-            textAlign = Paint.Align.CENTER
+@Composable
+private fun CacheInfoDialog(mapView: MapView, onDismiss: () -> Unit) {
+    val (cacheCapacity, currentCacheUsage) =
+        remember(mapView) {
+            val cacheManager = CacheManager(mapView)
+            cacheManager.cacheCapacity() to cacheManager.currentCacheUsage()
         }
 
-    val baseline = -paint.ascent()
-    val width = (paint.measureText(unicodeEmoji) + 0.5f).toInt()
-    val height = (baseline + paint.descent() + 0.5f).toInt()
-    val image = createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(image)
-    canvas.drawText(unicodeEmoji, width / 2f, baseline, paint)
-
-    return BitmapDescriptorFactory.fromBitmap(image)
-}
-
-@Suppress("NestedBlockDepth")
-fun Uri.getFileName(context: android.content.Context): String {
-    var name = this.lastPathSegment ?: "layer_${System.currentTimeMillis()}"
-    if (this.scheme == "content") {
-        context.contentResolver.query(this, null, null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                val displayNameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                if (displayNameIndex != -1) {
-                    name = cursor.getString(displayNameIndex)
-                }
-            }
-        }
+    MapsDialog(
+        title = stringResource(Res.string.map_cache_manager),
+        onDismiss = onDismiss,
+        negativeButton = { TextButton(onClick = { onDismiss() }) { Text(text = stringResource(Res.string.close)) } },
+    ) {
+        Text(
+            modifier = Modifier.padding(16.dp),
+            text =
+            stringResource(
+                Res.string.map_cache_info,
+                cacheCapacity / (1024.0 * 1024.0),
+                currentCacheUsage / (1024.0 * 1024.0),
+            ),
+        )
     }
-    return name
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-@Suppress("LongMethod")
-private fun PositionInfoWindowContent(position: Position, displayUnits: DisplayUnits = DisplayUnits.METRIC) {
-    @Composable
-    fun PositionRow(label: String, value: String) {
-        Row(modifier = Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(label, style = MaterialTheme.typography.labelMedium)
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(value, style = MaterialTheme.typography.labelMediumEmphasized)
-        }
-    }
+private fun PurgeTileSourceDialog(onDismiss: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val cache = SqlTileWriterExt()
 
-    Card {
-        Column(modifier = Modifier.padding(8.dp)) {
-            PositionRow(label = stringResource(Res.string.latitude), value = "%.5f".format(position.latitudeI * DEG_D))
+    val sourceList by derivedStateOf { cache.sources.map { it.source as String } }
 
-            PositionRow(
-                label = stringResource(Res.string.longitude),
-                value = "%.5f".format(position.longitudeI * DEG_D),
-            )
+    val selected = remember { mutableStateListOf<Int>() }
 
-            PositionRow(label = stringResource(Res.string.sats), value = position.satsInView.toString())
+    MapsDialog(
+        title = stringResource(Res.string.map_tile_source),
+        positiveButton = {
+            TextButton(
+                enabled = selected.isNotEmpty(),
+                onClick = {
+                    selected.forEach { selectedIndex ->
+                        val source = sourceList[selectedIndex]
+                        scope.launch {
+                            context.showToast(
+                                if (cache.purgeCache(source)) {
+                                    getString(Res.string.map_purge_success, source)
+                                } else {
+                                    getString(Res.string.map_purge_fail)
+                                },
+                            )
+                        }
+                    }
 
-            PositionRow(
-                label = stringResource(Res.string.alt),
-                value = position.altitude.metersIn(displayUnits).toString(displayUnits),
-            )
-
-            PositionRow(label = stringResource(Res.string.speed), value = speedFromPosition(position, displayUnits))
-
-            PositionRow(
-                label = stringResource(Res.string.heading),
-                value = "%.0f°".format(position.groundTrack * HEADING_DEG),
-            )
-
-            PositionRow(label = stringResource(Res.string.timestamp), value = position.formatPositionTime())
-        }
-    }
-}
-
-@Composable
-private fun speedFromPosition(position: Position, displayUnits: DisplayUnits): String {
-    val speedInMps = position.groundSpeed
-    val mpsText = "%d m/s".format(speedInMps)
-    val speedText =
-        if (speedInMps > 10) {
-            when (displayUnits) {
-                DisplayUnits.METRIC -> "%.1f Km/h".format(position.groundSpeed.mpsToKmph())
-                DisplayUnits.IMPERIAL -> "%.1f mph".format(position.groundSpeed.mpsToMph())
-                else -> mpsText // Fallback or handle UNRECOGNIZED
+                    onDismiss()
+                },
+            ) {
+                Text(text = stringResource(Res.string.clear))
             }
-        } else {
-            mpsText
+        },
+        negativeButton = { TextButton(onClick = onDismiss) { Text(text = stringResource(Res.string.cancel)) } },
+        onDismiss = onDismiss,
+    ) {
+        sourceList.forEachIndexed { index, source ->
+            val isSelected = selected.contains(index)
+            BasicListItem(
+                text = source,
+                trailingContent = { Checkbox(checked = isSelected, onCheckedChange = {}) },
+                onClick = {
+                    if (isSelected) {
+                        selected.remove(index)
+                    } else {
+                        selected.add(index)
+                    }
+                },
+            ) {}
         }
-    return speedText
+    }
 }
 
-internal fun Position.toLatLng(): LatLng = LatLng(this.latitudeI * DEG_D, this.longitudeI * DEG_D)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MapsDialog(
+    title: String? = null,
+    onDismiss: () -> Unit,
+    positiveButton: (@Composable () -> Unit)? = null,
+    negativeButton: (@Composable () -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier.wrapContentWidth().wrapContentHeight(),
+            shape = MaterialTheme.shapes.large,
+            color = AlertDialogDefaults.containerColor,
+            tonalElevation = AlertDialogDefaults.TonalElevation,
+        ) {
+            Column {
+                title?.let {
+                    Text(
+                        modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
+                        text = it,
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                }
 
-private fun Node.toLatLng(): LatLng? = this.position.toLatLng()
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) { content() }
+                if (positiveButton != null || negativeButton != null) {
+                    Row(Modifier.align(Alignment.End)) {
+                        positiveButton?.invoke()
+                        negativeButton?.invoke()
+                    }
+                }
+            }
+        }
+    }
+}
 
-private fun Waypoint.toLatLng(): LatLng = LatLng(this.latitudeI * DEG_D, this.longitudeI * DEG_D)
+private const val EARTH_RADIUS_METERS = 6_371_000.0
+private const val TRACEROUTE_OFFSET_METERS = 100.0
+private const val TRACEROUTE_SINGLE_POINT_ZOOM = 12.0
+private const val TRACEROUTE_ZOOM_OUT_LEVELS = 0.5
+private const val WAYPOINT_ZOOM = 15.0
+
+private fun Double.toRad(): Double = Math.toRadians(this)
+
+private fun bearingRad(from: GeoPoint, to: GeoPoint): Double {
+    val lat1 = from.latitude.toRad()
+    val lat2 = to.latitude.toRad()
+    val dLon = (to.longitude - from.longitude).toRad()
+    return atan2(sin(dLon) * cos(lat2), cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon))
+}
+
+private fun GeoPoint.offsetPoint(headingRad: Double, offsetMeters: Double): GeoPoint {
+    val distanceByRadius = offsetMeters / EARTH_RADIUS_METERS
+    val lat1 = latitude.toRad()
+    val lon1 = longitude.toRad()
+    val lat2 = asin(sin(lat1) * cos(distanceByRadius) + cos(lat1) * sin(distanceByRadius) * cos(headingRad))
+    val lon2 =
+        lon1 + atan2(sin(headingRad) * sin(distanceByRadius) * cos(lat1), cos(distanceByRadius) - sin(lat1) * sin(lat2))
+    return GeoPoint(Math.toDegrees(lat2), Math.toDegrees(lon2))
+}
 
 private fun offsetPolyline(
-    points: List<LatLng>,
+    points: List<GeoPoint>,
     offsetMeters: Double,
-    headingReferencePoints: List<LatLng> = points,
+    headingReferencePoints: List<GeoPoint> = points,
     sideMultiplier: Double = 1.0,
-): List<LatLng> {
+): List<GeoPoint> {
     val headingPoints = headingReferencePoints.takeIf { it.size >= 2 } ?: points
     if (points.size < 2 || headingPoints.size < 2 || offsetMeters == 0.0) return points
 
     val headings =
         headingPoints.mapIndexed { index, _ ->
             when (index) {
-                0 -> SphericalUtil.computeHeading(headingPoints[0], headingPoints[1])
+                0 -> bearingRad(headingPoints[0], headingPoints[1])
                 headingPoints.lastIndex ->
-                    SphericalUtil.computeHeading(
-                        headingPoints[headingPoints.lastIndex - 1],
-                        headingPoints[headingPoints.lastIndex],
-                    )
+                    bearingRad(headingPoints[headingPoints.lastIndex - 1], headingPoints[headingPoints.lastIndex])
 
-                else -> SphericalUtil.computeHeading(headingPoints[index - 1], headingPoints[index + 1])
+                else -> bearingRad(headingPoints[index - 1], headingPoints[index + 1])
             }
         }
 
     return points.mapIndexed { index, point ->
         val heading = headings[index.coerceIn(0, headings.lastIndex)]
-        val perpendicularHeading = heading + (90.0 * sideMultiplier)
-        SphericalUtil.computeOffset(point, abs(offsetMeters), perpendicularHeading)
+        val perpendicularHeading = heading + (Math.PI / 2 * sideMultiplier)
+        point.offsetPoint(perpendicularHeading, abs(offsetMeters))
     }
 }
-

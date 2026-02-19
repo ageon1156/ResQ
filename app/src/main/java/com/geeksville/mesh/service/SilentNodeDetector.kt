@@ -29,7 +29,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.meshtastic.core.common.hasLocationPermission
+import org.meshtastic.core.data.repository.TriagePinRepository
 import org.meshtastic.core.model.DataPacket
+import org.meshtastic.core.model.triage.ManualTriagePinPacket
+import org.meshtastic.core.model.triage.TriageLevel
+import org.meshtastic.core.model.triage.TriagePin
+import org.meshtastic.core.model.triage.toDataPacket
 import org.meshtastic.core.model.util.latLongToMeter
 import org.meshtastic.core.service.MeshServiceNotifications
 import org.meshtastic.proto.MeshProtos
@@ -73,6 +78,7 @@ constructor(
     private val commandSender: MeshCommandSender,
     private val dataHandler: Lazy<MeshDataHandler>,
     private val serviceBroadcasts: MeshServiceBroadcasts,
+    private val triagePinRepository: TriagePinRepository,
 ) {
     private var scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var scanJob: Job? = null
@@ -95,6 +101,7 @@ constructor(
         pingJob?.cancel()
         scanJob = scope.launch { scanLoop() }
         pingJob = scope.launch { pingLoop() }
+        scope.launch { cleanupStalePinsOnConnect() }
         Logger.i { "SilentNodeDetector started" }
     }
 
@@ -103,6 +110,32 @@ constructor(
         pingJob?.cancel()
         scanJob = null
         pingJob = null
+        // Clear all stale tracking state — timestamps from before the disconnect are
+        // meaningless. Detection must restart from a clean slate after reconnect.
+        trackedNodes.clear()
+        remoteReports.clear()
+        gracefullyExitedNodes.clear()
+    }
+
+    /**
+     * Called each time the detector starts (radio reconnect).
+     * Removes any lingering silent-node triage pins for nodes that are
+     * already heard in the DB — handles the case where the radio was off
+     * while the node came back and no packet was received to trigger cleanup.
+     */
+    private suspend fun cleanupStalePinsOnConnect() {
+        // Short delay to let myNodeNum and nodeDB populate after reconnect
+        delay(5_000L)
+        val myNum = nodeManager.myNodeNum ?: return
+        val now = System.currentTimeMillis()
+        for ((nodeNum, _) in nodeManager.nodeDBbyNodeNum) {
+            if (nodeNum == myNum) continue
+            val lastHeardMs = getNodeLastHeardMs(nodeNum)
+            if (lastHeardMs > 0 && (now - lastHeardMs) < SILENCE_TIMEOUT_MS) {
+                autoRemoveTriagePin(nodeNum)
+            }
+        }
+        Logger.d { "cleanupStalePinsOnConnect complete" }
     }
 
     // ── 1. Record heartbeat (call from MeshDataHandler on every incoming packet) ──
@@ -138,6 +171,9 @@ constructor(
             remoteReports.remove(fromNodeNum)
         }
         gracefullyExitedNodes.remove(fromNodeNum)
+        // Always attempt removal — covers the case where trackedNodes was reset
+        // (e.g. service restart) while a triage pin was still persisted for this node.
+        autoRemoveTriagePin(fromNodeNum)
     }
 
     // ── 2. Receive silence report from a neighbor node ──────────────
@@ -161,6 +197,9 @@ constructor(
     }
 
     private fun checkAllNodes() {
+        // Device is not connected to a radio — don't process stale cached nodes
+        if (nodeManager.myNodeNum == null) return
+
         val now = System.currentTimeMillis()
 
         // Expire old graceful exit entries so nodes get tracked again
@@ -247,6 +286,7 @@ constructor(
 
                         if (!tracked.notificationFired) {
                             fireNotification(tracked)
+                            autoPlaceTriagePin(tracked)
                             tracked.notificationFired = true
                         }
                     }
@@ -321,6 +361,69 @@ constructor(
         }
     }
 
+    // ── 4c. Auto-triage-pin for silent nodes ──────────────────────────
+
+    /**
+     * Places a RED triage pin at the node's last known location and broadcasts it
+     * on LongFast so every device on the mesh receives and saves it.
+     * The pin uses a deterministic ID ("silent-<nodeNum>") so any device can delete
+     * it by ID when the node comes back.
+     */
+    private fun autoPlaceTriagePin(tracked: TrackedNode) {
+        if (tracked.lastLatitude == 0.0 && tracked.lastLongitude == 0.0) {
+            Logger.d { "autoPlaceTriagePin: skipping node ${tracked.nodeNum} — no location" }
+            return
+        }
+
+        val myNodeNum = nodeManager.myNodeNum ?: return
+        val myNodeId = nodeManager.nodeDBbyNodeNum[myNodeNum]?.user?.id
+            ?: DataPacket.nodeNumToDefaultId(myNodeNum)
+        val pinId = "silent-${tracked.nodeNum}"
+        val now = System.currentTimeMillis()
+
+        val pin = TriagePin(
+            pinId = pinId,
+            lat = tracked.lastLatitude,
+            lon = tracked.lastLongitude,
+            triageLevel = TriageLevel.RED,
+            createdBy = myNodeId,
+            timestamp = now,
+            isSilentNodeConversion = true,
+            sourceNodeNum = tracked.nodeNum,
+        )
+
+        // Save locally
+        scope.launch { triagePinRepository.upsertPin(pin) }
+
+        // Broadcast to LongFast so all devices receive it via handlePrivateApp
+        val packet = ManualTriagePinPacket(
+            pinId = pinId,
+            lat = tracked.lastLatitude,
+            lon = tracked.lastLongitude,
+            triageLevel = TriageLevel.RED.name,
+            createdBy = myNodeId,
+            timestamp = now,
+        ).toDataPacket(channel = LONGFAST_CHANNEL_INDEX)
+
+        try {
+            commandSender.sendData(packet)
+            Logger.i { "Auto-placed RED triage pin $pinId for silent node ${tracked.nodeNum}" }
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            Logger.e(e) { "Failed to broadcast auto-triage pin for node ${tracked.nodeNum}" }
+        }
+    }
+
+    /**
+     * Removes the auto-placed triage pin for [nodeNum] when the node comes back online.
+     * Safe to call even if no pin exists (deletePin is a no-op on missing rows).
+     */
+    private fun autoRemoveTriagePin(nodeNum: Int) {
+        scope.launch {
+            triagePinRepository.deletePin("silent-$nodeNum")
+            Logger.i { "Auto-removed triage pin for recovered node $nodeNum" }
+        }
+    }
+
     private fun computeDistanceString(tracked: TrackedNode): String {
         // Get our position: try node DB first, then phone GPS
         val myNode = nodeManager.myNodeNum?.let { nodeManager.nodeDBbyNodeNum[it] }
@@ -383,6 +486,9 @@ constructor(
     }
 
     private fun pingAllTrackedNodes() {
+        // Device is not connected to a radio — don't send pings
+        if (nodeManager.myNodeNum == null) return
+
         val now = System.currentTimeMillis()
         for ((nodeNum, tracked) in trackedNodes) {
             if (nodeNum == nodeManager.myNodeNum) continue

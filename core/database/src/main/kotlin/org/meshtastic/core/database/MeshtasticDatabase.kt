@@ -32,6 +32,7 @@ import org.meshtastic.core.database.dao.NodeInfoDao
 import org.meshtastic.core.database.dao.PacketDao
 import org.meshtastic.core.database.dao.QuickChatActionDao
 import org.meshtastic.core.database.dao.TracerouteNodePositionDao
+import org.meshtastic.core.database.dao.TriagePinDao
 import org.meshtastic.core.database.entity.ContactSettings
 import org.meshtastic.core.database.entity.DeviceHardwareEntity
 import org.meshtastic.core.database.entity.FirmwareReleaseEntity
@@ -43,6 +44,7 @@ import org.meshtastic.core.database.entity.Packet
 import org.meshtastic.core.database.entity.QuickChatAction
 import org.meshtastic.core.database.entity.ReactionEntity
 import org.meshtastic.core.database.entity.TracerouteNodePositionEntity
+import org.meshtastic.core.database.entity.TriagePinEntity
 
 @Database(
     entities =
@@ -58,6 +60,7 @@ import org.meshtastic.core.database.entity.TracerouteNodePositionEntity
         DeviceHardwareEntity::class,
         FirmwareReleaseEntity::class,
         TracerouteNodePositionEntity::class,
+        TriagePinEntity::class,
     ],
     autoMigrations =
     [
@@ -90,8 +93,9 @@ import org.meshtastic.core.database.entity.TracerouteNodePositionEntity
         AutoMigration(from = 29, to = 30, spec = AutoMigration29to30::class),
         AutoMigration(from = 30, to = 31),
         AutoMigration(from = 31, to = 32),
+        AutoMigration(from = 32, to = 33),
     ],
-    version = 32,
+    version = 33,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -109,6 +113,8 @@ abstract class MeshtasticDatabase : RoomDatabase() {
     abstract fun firmwareReleaseDao(): FirmwareReleaseDao
 
     abstract fun tracerouteNodePositionDao(): TracerouteNodePositionDao
+
+    abstract fun triagePinDao(): TriagePinDao
 
     companion object {
         fun getDatabase(context: Context): MeshtasticDatabase =

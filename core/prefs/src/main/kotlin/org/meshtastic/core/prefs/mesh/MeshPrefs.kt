@@ -42,7 +42,7 @@ class MeshPrefsImpl @Inject constructor(@MeshSharedPreferences private val prefs
     override var deviceAddress: String? by NullableStringPrefDelegate(prefs, "device_address", NO_DEVICE_SELECTED)
 
     override fun shouldProvideNodeLocation(nodeNum: Int?): Boolean =
-        prefs.getBoolean(provideLocationKey(nodeNum), false)
+        prefs.getBoolean(provideLocationKey(nodeNum), true)
 
     override fun setShouldProvideNodeLocation(nodeNum: Int?, value: Boolean) {
         prefs.edit { putBoolean(provideLocationKey(nodeNum), value) }

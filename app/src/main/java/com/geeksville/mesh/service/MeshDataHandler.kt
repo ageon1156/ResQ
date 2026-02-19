@@ -32,6 +32,12 @@ import org.meshtastic.core.analytics.DataPair
 import org.meshtastic.core.analytics.platform.PlatformAnalytics
 import org.meshtastic.core.data.repository.PacketRepository
 import org.meshtastic.core.data.repository.RadioConfigRepository
+import org.meshtastic.core.data.repository.TriagePinRepository
+import org.meshtastic.core.model.triage.ClaimPinPacket
+import org.meshtastic.core.model.triage.ManualTriagePinPacket
+import org.meshtastic.core.model.triage.TriageLevel
+import org.meshtastic.core.model.triage.TriagePin
+import org.meshtastic.core.model.triage.decodeTriagePacket
 import org.meshtastic.core.database.entity.Packet
 import org.meshtastic.core.database.entity.ReactionEntity
 import org.meshtastic.core.model.DataPacket
@@ -82,6 +88,7 @@ constructor(
     private val neighborInfoHandler: MeshNeighborInfoHandler,
     private val radioConfigRepository: RadioConfigRepository,
     private val silentNodeDetector: SilentNodeDetector,
+    private val triagePinRepository: TriagePinRepository,
 ) {
     private var scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -197,7 +204,34 @@ constructor(
         val text = packet.decoded.payload.toStringUtf8()
         if (silentNodeDetector.tryParseHeartbeat(text, packet.from)) return
         if (silentNodeDetector.tryParseSilenceReport(text, packet.from)) return
-        silentNodeDetector.tryParseGracefulExit(text, packet.from)
+        if (silentNodeDetector.tryParseGracefulExit(text, packet.from)) return
+
+        Logger.d { "handlePrivateApp: possible triage packet from ${packet.from}, len=${packet.decoded.payload.size()}" }
+        scope.handledLaunch {
+            val decoded = packet.decoded.payload.toByteArray().decodeTriagePacket()
+            Logger.d { "handlePrivateApp: decoded=${decoded?.javaClass?.simpleName ?: "null"}" }
+            when (decoded) {
+                is ManualTriagePinPacket -> {
+                    Logger.i { "Received triage pin ${decoded.pinId} level=${decoded.triageLevel} from=${decoded.createdBy}" }
+                    triagePinRepository.upsertPin(
+                        TriagePin(
+                            pinId       = decoded.pinId,
+                            lat         = decoded.lat,
+                            lon         = decoded.lon,
+                            triageLevel = TriageLevel.fromString(decoded.triageLevel),
+                            victimCount = decoded.victimCount,
+                            createdBy   = decoded.createdBy,
+                            timestamp   = decoded.timestamp,
+                        )
+                    )
+                }
+                is ClaimPinPacket -> {
+                    Logger.i { "Received claim for pin ${decoded.pinId} by ${decoded.rescuerId}" }
+                    triagePinRepository.claimPin(decoded.pinId, decoded.rescuerId)
+                }
+                else -> Logger.d { "handlePrivateApp: not a triage packet (text prefix=${text.take(20)})" }
+            }
+        }
     }
 
     private fun handleRangeTest(dataPacket: DataPacket, myNodeNum: Int) {

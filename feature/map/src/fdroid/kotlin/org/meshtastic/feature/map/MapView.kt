@@ -81,6 +81,12 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi // Added fo
 import com.google.accompanist.permissions.rememberMultiplePermissionsState // Added for Accompanist
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
+import org.meshtastic.core.model.triage.TriageLevel
+import org.meshtastic.core.model.triage.TriagePin
+import org.meshtastic.feature.map.component.MapModeTabRow
+import org.meshtastic.feature.map.component.TriageLevelPickerDialog
+import org.meshtastic.feature.map.component.TriagePinInfoDialog
+import org.meshtastic.feature.map.triage.TriageMapViewModel
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -164,6 +170,102 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
+private class TriageMarker(mapView: MapView, val claimed: Boolean) : Marker(mapView) {
+    private val labelPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        textSize = 32f
+        isFakeBoldText = true
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    private val labelBgPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xCC388E3C.toInt()
+    }
+
+    override fun draw(c: android.graphics.Canvas, osmv: MapView?, shadow: Boolean) {
+        super.draw(c, osmv, shadow)
+        if (!claimed) return
+        val px = mPositionPixels
+        val x = px.x.toFloat()
+        val y = px.y.toFloat() - 60f
+        val halfW = labelPaint.measureText("Claimed") / 2 + 10f
+        val rect = android.graphics.RectF(x - halfW, y - 30f, x + halfW, y + 6f)
+        c.drawRoundRect(rect, 8f, 8f, labelBgPaint)
+        c.drawText("Claimed", x, y, labelPaint)
+    }
+}
+
+private fun createTriageMarkerIcon(
+    level: TriageLevel,
+    resources: android.content.res.Resources,
+    isSilentNode: Boolean = false,
+): android.graphics.drawable.BitmapDrawable {
+    val sizePx = 56
+    val bmp = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bmp)
+    val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = if (isSilentNode) {
+            0xFFFF6D00.toInt() // orange — auto-placed silent node pin
+        } else {
+            when (level) {
+                TriageLevel.RED    -> 0xFFD32F2F.toInt()
+                TriageLevel.YELLOW -> 0xFFF9A825.toInt()
+                TriageLevel.GREEN  -> 0xFF2E7D32.toInt()
+                TriageLevel.BLACK  -> 0xFF212121.toInt()
+            }
+        }
+    }
+    val borderPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = 4f
+    }
+    val r = sizePx / 2f - 4f
+    canvas.drawCircle(sizePx / 2f, sizePx / 2f, r, fillPaint)
+    canvas.drawCircle(sizePx / 2f, sizePx / 2f, r, borderPaint)
+    if (isSilentNode) {
+        // Draw a small "!" to distinguish silent-node auto-pins from manual pins
+        val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.WHITE
+            textSize = 26f
+            isFakeBoldText = true
+            textAlign = android.graphics.Paint.Align.CENTER
+        }
+        canvas.drawText("!", sizePx / 2f, sizePx / 2f + 9f, textPaint)
+    }
+    return android.graphics.drawable.BitmapDrawable(resources, bmp)
+}
+
+private fun MapView.updateTriageMarkers(
+    pins: List<TriagePin>,
+    mode: MapMode,
+    onPinTapped: (TriagePin) -> Unit,
+) {
+    overlays.removeAll { it is Marker && (it as Marker).id?.startsWith("triage:") == true }
+    if (mode != MapMode.TriageMap) {
+        invalidate()
+        return
+    }
+    val res = context.resources
+    pins.forEach { pin ->
+        TriageMarker(this, claimed = pin.claimedBy != null).apply {
+            id = "triage:${pin.pinId}"
+            position = GeoPoint(pin.lat, pin.lon)
+            title = "${pin.triageLevel.symbol} ${pin.triageLevel.displayLabel}"
+            snippet = buildString {
+                append("${pin.victimCount} victim(s)")
+                pin.claimedBy?.let { append(" • Claimed: $it") }
+            }
+            icon = createTriageMarkerIcon(pin.triageLevel, res, pin.isSilentNodeConversion)
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+            setOnMarkerClickListener { _, _ ->
+                onPinTapped(pin)
+                true
+            }
+        }.also { overlays.add(it) }
+    }
+    invalidate()
+}
+
 private fun MapView.updateMarkers(
     nodeMarkers: List<MarkerWithLabel>,
     waypointMarkers: List<MarkerWithLabel>,
@@ -238,6 +340,13 @@ fun MapView(
     var showPurgeTileSourceDialog by remember { mutableStateOf(false) }
     var showMapStyleDialog by remember { mutableStateOf(false) }
 
+    // ── Triage map state ──────────────────────────────────────────────────────
+    val triageMapViewModel: TriageMapViewModel = hiltViewModel()
+    var activeMapMode by remember { mutableStateOf(MapMode.CustomMap) }
+    var pendingTriageLatLng by remember { mutableStateOf<GeoPoint?>(null) }
+    var selectedTriagePin by remember { mutableStateOf<TriagePin?>(null) }
+    val triageMapState by triageMapViewModel.triageMapState.collectAsStateWithLifecycle()
+
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -261,16 +370,20 @@ fun MapView(
         }
     }
 
-    val initialCameraView = remember {
-        val nodes = mapViewModel.nodes.value
-        val nodesWithPosition = nodes.filter { it.validPosition != null }
-        val geoPoints = nodesWithPosition.map { GeoPoint(it.latitude, it.longitude) }
-        BoundingBox.fromGeoPoints(geoPoints)
+    val initialCenter = remember {
+        val nodesWithPosition = mapViewModel.nodes.value.filter { it.validPosition != null }
+        if (nodesWithPosition.isNotEmpty()) {
+            val box = BoundingBox.fromGeoPoints(nodesWithPosition.map { GeoPoint(it.latitude, it.longitude) })
+            GeoPoint(box.centerLatitude, box.centerLongitude)
+        } else {
+            GeoPoint(0.0, 0.0)
+        }
     }
     val map =
         rememberMapViewWithLifecycle(
             applicationId = mapViewModel.applicationId,
-            box = initialCameraView,
+            zoomLevel = 17.0,
+            mapCenter = initialCenter,
             tileSource = loadOnlineTileSourceBase(),
         )
 
@@ -548,6 +661,10 @@ fun MapView(
                     showMarkerLongPressDialog(pt.id)
                     true
                 }
+                setOnMarkerClickListener { _, _ ->
+                    showMarkerLongPressDialog(pt.id)
+                    true
+                }
             }
         }
     }
@@ -561,11 +678,14 @@ fun MapView(
 
             override fun longPressHelper(p: GeoPoint): Boolean {
                 performHapticFeedback()
-                if (downloadRegionBoundingBox == null) {
-                    showEditWaypointDialog = waypoint {
-                        latitudeI = (p.latitude * 1e7).toInt()
-                        longitudeI = (p.longitude * 1e7).toInt()
+                when (activeMapMode) {
+                    MapMode.CustomMap -> if (downloadRegionBoundingBox == null) {
+                        showEditWaypointDialog = waypoint {
+                            latitudeI = (p.latitude * 1e7).toInt()
+                            longitudeI = (p.longitude * 1e7).toInt()
+                        }
                     }
+                    MapMode.TriageMap -> pendingTriageLatLng = p
                 }
                 return true
             }
@@ -720,10 +840,24 @@ fun MapView(
                             onWaypointChanged(waypoints.values, selectedWaypointId),
                             nodeClusterer,
                         )
+                        updateTriageMarkers(
+                            pins = triageMapState.pins,
+                            mode = activeMapMode,
+                            onPinTapped = { pin -> selectedTriagePin = pin },
+                        )
                     }
                     mapView.drawOverlays()
                 }, // Renamed map to mapView to avoid conflict
             )
+            // ── Mode toggle always visible at top center ──────────────────────
+            MapModeTabRow(
+                activeMode = activeMapMode,
+                onModeSelected = { activeMapMode = it },
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp),
+            )
+
             if (downloadRegionBoundingBox != null) {
                 CacheLayout(
                     cacheEstimate = cacheEstimate,
@@ -892,6 +1026,32 @@ fun MapView(
 
     if (showPurgeTileSourceDialog) {
         PurgeTileSourceDialog(onDismiss = { showPurgeTileSourceDialog = false })
+    }
+
+    // ── Triage dialogs ────────────────────────────────────────────────────────
+    pendingTriageLatLng?.let { geoPoint ->
+        TriageLevelPickerDialog(
+            onLevelSelected = { level ->
+                triageMapViewModel.addTriagePin(geoPoint.latitude, geoPoint.longitude, level)
+                pendingTriageLatLng = null
+            },
+            onDismissRequest = { pendingTriageLatLng = null },
+        )
+    }
+
+    selectedTriagePin?.let { pin ->
+        TriagePinInfoDialog(
+            pin = pin,
+            onClaim = {
+                triageMapViewModel.claimPin(pin.pinId)
+                selectedTriagePin = null
+            },
+            onDelete = {
+                triageMapViewModel.deletePin(pin.pinId)
+                selectedTriagePin = null
+            },
+            onDismiss = { selectedTriagePin = null },
+        )
     }
 
     if (showEditWaypointDialog != null) {

@@ -225,11 +225,9 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    googleImplementation(libs.location.services)
-    googleImplementation(libs.play.services.maps)
+    googleImplementation(libs.osmdroid.android)
 
     fdroidImplementation(libs.osmdroid.android)
-    fdroidImplementation(libs.osmdroid.geopackage) { exclude(group = "com.j256.ormlite") }
 
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.hilt.android.testing)

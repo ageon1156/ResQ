@@ -67,7 +67,7 @@ private fun PowerManager.WakeLock.safeRelease() {
 
 private const val MIN_ZOOM_LEVEL = 1.5
 private const val MAX_ZOOM_LEVEL = 20.0
-private const val DEFAULT_ZOOM_LEVEL = 15.0
+private const val DEFAULT_ZOOM_LEVEL = 17.0
 
 @Suppress("MagicNumber")
 @Composable

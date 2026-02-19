@@ -46,7 +46,7 @@ class GoogleMapsPrefsImpl @Inject constructor(@GoogleMapsSharedPreferences prefs
     override var hiddenLayerUrls: Set<String> by StringSetPrefDelegate(prefs, "hidden_layer_urls", emptySet())
     override var cameraTargetLat: Double by DoublePrefDelegate(prefs, "camera_target_lat", 0.0)
     override var cameraTargetLng: Double by DoublePrefDelegate(prefs, "camera_target_lng", 0.0)
-    override var cameraZoom: Float by FloatPrefDelegate(prefs, "camera_zoom", 7f)
+    override var cameraZoom: Float by FloatPrefDelegate(prefs, "camera_zoom", 17f)
     override var cameraTilt: Float by FloatPrefDelegate(prefs, "camera_tilt", 0f)
     override var cameraBearing: Float by FloatPrefDelegate(prefs, "camera_bearing", 0f)
 }
