@@ -36,6 +36,7 @@ import org.meshtastic.core.model.triage.TriageLevel
 import org.meshtastic.core.model.triage.TriagePin
 import org.meshtastic.core.model.triage.toDataPacket
 import org.meshtastic.core.model.util.latLongToMeter
+import org.meshtastic.core.service.ConnectionState
 import org.meshtastic.core.service.MeshServiceNotifications
 import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.Portnums
@@ -79,6 +80,7 @@ constructor(
     private val dataHandler: Lazy<MeshDataHandler>,
     private val serviceBroadcasts: MeshServiceBroadcasts,
     private val triagePinRepository: TriagePinRepository,
+    private val connectionStateHolder: ConnectionStateHandler,
 ) {
     private var scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var scanJob: Job? = null
@@ -99,6 +101,12 @@ constructor(
         this.scope = scope
         scanJob?.cancel()
         pingJob?.cancel()
+        // Always clear stale tracking state on (re)start — timestamps from a
+        // previous connection are meaningless and would cause false-positive
+        // silence alerts on nodes that were perfectly fine before disconnect.
+        trackedNodes.clear()
+        remoteReports.clear()
+        gracefullyExitedNodes.clear()
         scanJob = scope.launch { scanLoop() }
         pingJob = scope.launch { pingLoop() }
         scope.launch { cleanupStalePinsOnConnect() }
@@ -133,6 +141,19 @@ constructor(
             val lastHeardMs = getNodeLastHeardMs(nodeNum)
             if (lastHeardMs > 0 && (now - lastHeardMs) < SILENCE_TIMEOUT_MS) {
                 autoRemoveTriagePin(nodeNum)
+                // Seed trackedNodes from the firmware's lastHeard so nodes the
+                // radio recently heard are given their proper remaining timeout
+                // window.  Without this, trackedNodes starts empty after a
+                // reconnect and nodes get ping-tested immediately, which can
+                // produce false-positive silence alerts if ACKs are slow while
+                // the mesh re-stabilises.
+                val tracked = trackedNodes.getOrPut(nodeNum) { TrackedNode(nodeNum = nodeNum) }
+                if (tracked.lastSeenMs < lastHeardMs) {
+                    tracked.lastSeenMs = lastHeardMs
+                }
+                tracked.state = NodePresenceState.ONLINE
+                tracked.missedPings = 0
+                tracked.notificationFired = false
             }
         }
         Logger.d { "cleanupStalePinsOnConnect complete" }
@@ -197,7 +218,9 @@ constructor(
     }
 
     private fun checkAllNodes() {
-        // Device is not connected to a radio — don't process stale cached nodes
+        // Radio is not fully connected — skip silence checks to avoid false positives
+        // during DeviceSleep / reconnect gaps.
+        if (connectionStateHolder.connectionState.value !is ConnectionState.Connected) return
         if (nodeManager.myNodeNum == null) return
 
         val now = System.currentTimeMillis()
@@ -486,7 +509,9 @@ constructor(
     }
 
     private fun pingAllTrackedNodes() {
-        // Device is not connected to a radio — don't send pings
+        // Radio is not fully connected — skip pinging entirely so that a DeviceSleep
+        // blip or reconnect gap does NOT increment missedPings and trigger false alerts.
+        if (connectionStateHolder.connectionState.value !is ConnectionState.Connected) return
         if (nodeManager.myNodeNum == null) return
 
         val now = System.currentTimeMillis()
