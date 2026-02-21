@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.component
 
@@ -88,11 +73,6 @@ private const val PRESSED_UNSELECTED_ALPHA = .6f
 
 private val BACKGROUND_SHAPE = RoundedCornerShape(8.dp)
 
-/**
- * Provides the user with a set of options they can choose from.
- *
- * (Inspired by https://gist.github.com/zach-klippenstein/7ae8874db304f957d6bb91263e292117)
- */
 @Composable
 fun <T : Any> SlidingSelector(
     options: List<T>,
@@ -106,7 +86,6 @@ fun <T : Any> SlidingSelector(
     state.selectedOption = options.indexOf(selectedOption)
     state.onOptionSelected = { onOptionSelected(options[it]) }
 
-    /* Animate between whole-number indices so we don't need to do pixel calculations. */
     val selectedIndexOffset by animateFloatAsState(state.selectedOption.toFloat(), label = "Selected Index Offset")
 
     Layout(
@@ -124,11 +103,9 @@ fun <T : Any> SlidingSelector(
     ) { measurables, constraints ->
         val (indicatorMeasurable, dividersMeasurable, optionsMeasurable) = measurables
 
-        /* Measure the options first so we know how tall to make the indicator. */
         val optionsPlaceable = optionsMeasurable.measure(constraints)
         state.updatePressedScale(optionsPlaceable.height, this)
 
-        /* Measure the indicator and dividers to be the right size. */
         val indicatorPlaceable =
             indicatorMeasurable.measure(
                 Constraints.fixed(width = optionsPlaceable.width / options.size, height = optionsPlaceable.height),
@@ -142,7 +119,6 @@ fun <T : Any> SlidingSelector(
         layout(optionsPlaceable.width, optionsPlaceable.height) {
             val optionWidth = optionsPlaceable.width / options.size
 
-            /* Place the indicator first so that it's below the option labels. */
             indicatorPlaceable.placeRelative(x = (selectedIndexOffset * optionWidth).toInt(), y = 0)
             dividersPlaceable.placeRelative(IntOffset.Zero)
             optionsPlaceable.placeRelative(IntOffset.Zero)
@@ -150,13 +126,11 @@ fun <T : Any> SlidingSelector(
     }
 }
 
-/** Visual representation of the option the user may select. */
 @Composable
 fun OptionLabel(text: String) {
     Text(text, maxLines = 1, overflow = Ellipsis)
 }
 
-/** Draws the selected indicator on the [SlidingSelector] track. */
 @Composable
 private fun SelectedIndicator(state: SelectorState) {
     Box(
@@ -171,10 +145,9 @@ private fun SelectedIndicator(state: SelectorState) {
     )
 }
 
-/** Draws dividers between [OptionLabel]s. */
 @Composable
 private fun Dividers(state: SelectorState) {
-    /* Animate each divider independently. */
+    
     val alphas =
         (0 until state.optionCount).map { i ->
             val selectionAdjacent = i == state.selectedOption || i - 1 == state.selectedOption
@@ -197,7 +170,6 @@ private fun Dividers(state: SelectorState) {
     }
 }
 
-/** Draws the options available to the user. */
 @Composable
 private fun <T> Options(state: SelectorState, options: List<T>, content: @Composable (T) -> Unit) {
     CompositionLocalProvider(LocalTextStyle provides TextStyle(fontWeight = FontWeight.Medium)) {
@@ -206,7 +178,6 @@ private fun <T> Options(state: SelectorState, options: List<T>, content: @Compos
                 val isSelected = i == state.selectedOption
                 val isPressed = i == state.pressedOption
 
-                /* Unselected presses are represented by fading. */
                 val alpha by
                     animateFloatAsState(
                         if (!isSelected && isPressed) PRESSED_UNSELECTED_ALPHA else 1f,
@@ -226,15 +197,15 @@ private fun <T> Options(state: SelectorState, options: List<T>, content: @Compos
 
                 Box(
                     Modifier
-                        /* Divide space evenly between all options. */
+                        
                         .weight(1f)
                         .then(semanticsModifier)
                         .padding(OPTION_PADDING)
-                        /* Draw pressed indication when not selected. */
+                        
                         .alpha(alpha)
-                        /* Selected presses are represented by scaling. */
+                        
                         .then(state.optionScaleModifier(isPressed && isSelected, i))
-                        /* Center the option content. */
+                        
                         .wrapContentWidth(),
                 ) {
                     content(timeFrame)
@@ -244,21 +215,15 @@ private fun <T> Options(state: SelectorState, options: List<T>, content: @Compos
     }
 }
 
-/** Contains and handles the state necessary to present the [SlidingSelector] to the user. */
 private class SelectorState {
     var optionCount by mutableIntStateOf(0)
     var selectedOption by mutableIntStateOf(0)
     var onOptionSelected: (Int) -> Unit by mutableStateOf({})
     var pressedOption by mutableIntStateOf(NO_OPTION_INDEX)
 
-    /**
-     * Scale factor that should be used to scale pressed option. When this scale is applied, exactly
-     * [PRESSED_TRACK_PADDING] will be added around the element's usual size.
-     */
     var pressedSelectedScale by mutableFloatStateOf(1f)
         private set
 
-    /** Calculates the scale factor we need to use for pressed options to get the desired padding. */
     fun updatePressedScale(controlHeight: Int, density: Density) {
         with(density) {
             val pressedPadding = PRESSED_TRACK_PADDING * 2
@@ -267,14 +232,6 @@ private class SelectorState {
         }
     }
 
-    /**
-     * Returns a [Modifier] that will scale an element so that it gets [PRESSED_TRACK_PADDING] extra padding around it.
-     * The scale will be animated.
-     *
-     * The scale is also performed around either the left or right edge of the element if the option is the first or
-     * last option, respectively. In those cases, the scale will also be translated so that [PRESSED_TRACK_PADDING] will
-     * be added on the left or right edge.
-     */
     @SuppressLint("ModifierFactoryExtensionFunction")
     fun optionScaleModifier(pressed: Boolean, option: Int): Modifier = Modifier.composed {
         val scale by animateFloatAsState(if (pressed) pressedSelectedScale else 1f, label = "Scale")
@@ -284,7 +241,6 @@ private class SelectorState {
             this.scaleX = scale
             this.scaleY = scale
 
-            /* Scales on the ends should gravitate to that edge. */
             this.transformOrigin =
                 TransformOrigin(
                     pivotFractionX =
@@ -296,7 +252,6 @@ private class SelectorState {
                     pivotFractionY = .5f,
                 )
 
-            /* But should still move inwards to keep the pressed padding consistent with top and bottom. */
             this.translationX =
                 when (option) {
                     0 -> xOffset.toPx()
@@ -306,15 +261,10 @@ private class SelectorState {
         }
     }
 
-    /**
-     * A [Modifier] that will listen for touch gestures and update the selected and pressed properties of this state
-     * appropriately.
-     */
     val inputModifier =
         Modifier.pointerInput(optionCount) {
             val optionWidth = size.width / optionCount
 
-            /* Helper to calculate which option an event occurred in. */
             fun optionIndex(change: PointerInputChange): Int =
                 ((change.position.x / size.width.toFloat()) * optionCount).toInt().coerceIn(0, optionCount - 1)
 
@@ -341,7 +291,7 @@ private class SelectorState {
                     }
                 } else {
                     waitForUpOrCancellation(inBounds = optionBounds)
-                        /* Null means the gesture was cancelled (e.g. dragged out of bounds). */
+                        
                         ?.let { onOptionSelected(pressedOption) }
                 }
                 pressedOption = NO_OPTION_INDEX
@@ -349,18 +299,17 @@ private class SelectorState {
         }
 }
 
-/** Works with bounds that may not be at 0,0. */
 @Suppress("ReturnCount")
 private suspend fun AwaitPointerEventScope.waitForUpOrCancellation(inBounds: Rect): PointerInputChange? {
     while (true) {
         val event = awaitPointerEvent(PointerEventPass.Main)
         if (event.changes.all { it.changedToUp() }) {
-            /* All pointers are up */
+            
             return event.changes[0]
         }
 
         if (event.changes.any { it.isConsumed || !inBounds.contains(it.position) }) {
-            /* Canceled */
+            
             return null
         }
 
@@ -370,24 +319,4 @@ private suspend fun AwaitPointerEventScope.waitForUpOrCancellation(inBounds: Rec
         }
     }
 }
-
-/*@Preview
-@Composable
-fun SlidingSelectorPreview() {
-    MaterialTheme {
-        Surface {
-            Column(Modifier.padding(8.dp)) {
-
-                var selectedOption by remember { mutableStateOf(TimeFrame.TWENTY_FOUR_HOURS) }
-                SlidingSelector(
-                    TimeFrame.entries.toList(),
-                    selectedOption,
-                    onOptionSelected = { selectedOption = it }
-                ) {
-                    OptionLabel(stringResource(it.strRes))
-                }
-            }
-        }
-    }
-}*/
 

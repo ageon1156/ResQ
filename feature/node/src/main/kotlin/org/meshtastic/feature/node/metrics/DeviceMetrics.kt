@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.metrics
 
@@ -166,7 +151,6 @@ fun DeviceMetricsScreen(viewModel: MetricsViewModel = hiltViewModel(), onNavigat
                 OptionLabel(stringResource(it.strRes))
             }
 
-            /* Device Metric Cards */
             LazyColumn(modifier = Modifier.fillMaxSize()) { items(data) { telemetry -> OrganicDeviceMetricsCard(telemetry) } }
         }
     }
@@ -193,15 +177,14 @@ private fun DeviceMetricsChart(
     val screenWidth = LocalWindowInfo.current.containerSize.width
     val dp by remember(key1 = selectedTime) { mutableStateOf(selectedTime.dp(screenWidth, time = timeDiff.toLong())) }
 
-    // Calculate visible time range based on scroll position and chart width
     val visibleTimeRange = run {
         val totalWidthPx = with(LocalDensity.current) { dp.toPx() }
         val scrollPx = scrollState.value.toFloat()
-        // Calculate visible width based on actual weight distribution
+        
         val visibleWidthPx = screenWidth * CHART_WIDTH_RATIO
         val leftRatio = (scrollPx / totalWidthPx).coerceIn(0f, 1f)
         val rightRatio = ((scrollPx + visibleWidthPx) / totalWidthPx).coerceIn(0f, 1f)
-        // With reverseScrolling = true, scrolling right shows older data (left side of chart)
+        
         val visibleOldest = oldest.time + (timeDiff * (1f - rightRatio)).toInt()
         val visibleNewest = oldest.time + (timeDiff * (1f - leftRatio)).toInt()
         visibleOldest to visibleNewest
@@ -216,11 +199,7 @@ private fun DeviceMetricsChart(
             contentAlignment = Alignment.TopStart,
             modifier = Modifier.horizontalScroll(state = scrollState, reverseScrolling = true).weight(weight = 1f),
         ) {
-            /*
-             * The order of the colors are with respect to the ChUtil.
-             * 25 - 49  Orange
-             * 50 - 100 Red
-             */
+            
             HorizontalLinesOverlay(
                 modifier.width(dp),
                 lineColors = listOf(graphColor, Color.Yellow, Color.Red, graphColor, graphColor),
@@ -228,18 +207,15 @@ private fun DeviceMetricsChart(
 
             TimeAxisOverlay(modifier.width(dp), oldest = oldest.time, newest = newest.time, selectedTime.lineInterval())
 
-            /* Plot Battery Line, ChUtil, and AirUtilTx */
             Canvas(modifier = modifier.width(dp)) {
                 val height = size.height
                 val width = size.width
                 for (i in telemetries.indices) {
                     val telemetry = telemetries[i]
 
-                    /* x-value time */
                     val xRatio = (telemetry.time - oldest.time).toFloat() / timeDiff
                     val x = xRatio * width
 
-                    /* Channel Utilization */
                     plotPoint(
                         drawContext = drawContext,
                         color = Device.CH_UTIL.color,
@@ -248,7 +224,6 @@ private fun DeviceMetricsChart(
                         divisor = MAX_PERCENT_VALUE,
                     )
 
-                    /* Air Utilization Transmit */
                     plotPoint(
                         drawContext = drawContext,
                         color = Device.AIR_UTIL.color,
@@ -258,7 +233,6 @@ private fun DeviceMetricsChart(
                     )
                 }
 
-                /* Battery Line */
                 var index = 0
                 while (index < telemetries.size) {
                     val path = Path()
@@ -294,7 +268,7 @@ private fun DeviceMetricsChart(
     Spacer(modifier = Modifier.height(16.dp))
 }
 
-@Suppress("detekt:MagicNumber") // fake data
+@Suppress("detekt:MagicNumber") 
 @PreviewLightDark
 @Composable
 private fun DeviceMetricsChartPreview() {
@@ -302,7 +276,7 @@ private fun DeviceMetricsChartPreview() {
     val telemetries =
         List(20) { i ->
             Telemetry.newBuilder()
-                .setTime(now - (19 - i) * 60 * 60) // 1-hour intervals, oldest first
+                .setTime(now - (19 - i) * 60 * 60) 
                 .setDeviceMetrics(
                     TelemetryProtos.DeviceMetrics.newBuilder()
                         .setBatteryLevel(80 - i)
@@ -331,7 +305,7 @@ private fun DeviceMetricsCard(telemetry: Telemetry) {
         Surface {
             SelectionContainer {
                 Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-                    /* Time, Battery, and Voltage */
+                    
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(
                             text = DATE_TIME_FORMAT.format(time),
@@ -344,7 +318,6 @@ private fun DeviceMetricsCard(telemetry: Telemetry) {
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    /* Channel Utilization and Air Utilization Tx */
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         val text =
                             stringResource(Res.string.channel_air_util)
@@ -361,7 +334,7 @@ private fun DeviceMetricsCard(telemetry: Telemetry) {
     }
 }
 
-@Suppress("detekt:MagicNumber") // fake data
+@Suppress("detekt:MagicNumber") 
 @PreviewLightDark
 @Composable
 private fun DeviceMetricsCardPreview() {
@@ -381,7 +354,7 @@ private fun DeviceMetricsCardPreview() {
     AppTheme { OrganicDeviceMetricsCard(telemetry = telemetry) }
 }
 
-@Suppress("detekt:MagicNumber") // fake data
+@Suppress("detekt:MagicNumber") 
 @PreviewLightDark
 @Composable
 private fun DeviceMetricsScreenPreview() {
@@ -389,14 +362,14 @@ private fun DeviceMetricsScreenPreview() {
     val telemetries =
         List(24) { i ->
             Telemetry.newBuilder()
-                .setTime(now - (23 - i) * 60 * 60) // 1-hour intervals, oldest first
+                .setTime(now - (23 - i) * 60 * 60) 
                 .setDeviceMetrics(
                     TelemetryProtos.DeviceMetrics.newBuilder()
-                        .setBatteryLevel(85 - i * 2) // Battery decreases over time
-                        .setVoltage(3.8f - i * 0.01f) // Voltage decreases slightly
-                        .setChannelUtilization(15f + i * 1.5f) // Channel utilization increases
-                        .setAirUtilTx(8f + i * 0.8f) // Air utilization increases
-                        .setUptimeSeconds(3600 + i * 3600), // Uptime increases by 1 hour each
+                        .setBatteryLevel(85 - i * 2) 
+                        .setVoltage(3.8f - i * 0.01f) 
+                        .setChannelUtilization(15f + i * 1.5f) 
+                        .setAirUtilTx(8f + i * 0.8f) 
+                        .setUptimeSeconds(3600 + i * 3600), 
                 )
                 .build()
         }
@@ -427,12 +400,11 @@ private fun DeviceMetricsScreenPreview() {
                 SlidingSelector(
                     TimeFrame.entries.toList(),
                     TimeFrame.TWENTY_FOUR_HOURS,
-                    onOptionSelected = { /* Preview only */ },
+                    onOptionSelected = {  },
                 ) {
                     OptionLabel(stringResource(it.strRes))
                 }
 
-                /* Device Metric Cards */
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(telemetries) { telemetry -> DeviceMetricsCard(telemetry) }
                 }

@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.service
 
 import io.mockk.mockk
@@ -57,8 +42,6 @@ class SilentNodeDetectorTest {
         )
     }
 
-    // ── 1. Heartbeat tracking ───────────────────────────────────────
-
     @Test
     fun `onPacketReceived creates tracked entry`() {
         detector.onPacketReceived(NODE_A)
@@ -88,7 +71,7 @@ class SilentNodeDetectorTest {
 
     @Test
     fun `onPacketReceived snapshots GPS from nodeDB`() {
-        // Pre-populate nodeDB with position data
+        
         nodeManager.updateNodeInfo(NODE_A) { entity ->
             entity.latitude = 34.052
             entity.longitude = -118.244
@@ -116,17 +99,13 @@ class SilentNodeDetectorTest {
         assertEquals(72, detector.trackedNodes[NODE_A]!!.lastBatteryPercent)
     }
 
-    // ── 2. Silence detection ────────────────────────────────────────
-
     @Test
     fun `node marked SILENT after timeout`() {
         detector.onPacketReceived(NODE_A)
 
-        // Simulate time passing beyond threshold
         detector.trackedNodes[NODE_A]!!.lastSeenMs =
             System.currentTimeMillis() - SilentNodeDetector.SILENCE_TIMEOUT_MS - 1000
 
-        // Trigger the check manually (same logic as scanLoop)
         invokeCheckAllNodes()
 
         assertEquals(NodePresenceState.SILENT, detector.trackedNodes[NODE_A]!!.state)
@@ -136,7 +115,6 @@ class SilentNodeDetectorTest {
     fun `node stays ONLINE before timeout`() {
         detector.onPacketReceived(NODE_A)
 
-        // Only 10 seconds ago — under the 20s threshold
         detector.trackedNodes[NODE_A]!!.lastSeenMs =
             System.currentTimeMillis() - 10_000
 
@@ -149,36 +127,29 @@ class SilentNodeDetectorTest {
     fun `node stays ONLINE if DB lastHeard is fresh`() {
         detector.onPacketReceived(NODE_A)
 
-        // Our tracker thinks it's been too long
         detector.trackedNodes[NODE_A]!!.lastSeenMs =
             System.currentTimeMillis() - SilentNodeDetector.SILENCE_TIMEOUT_MS - 1000
 
-        // But the node DB says it was heard recently (firmware updated lastHeard)
         val nowSecs = (System.currentTimeMillis() / 1000).toInt()
         nodeManager.updateNodeInfo(NODE_A) { entity ->
-            entity.lastHeard = nowSecs - 30 // 30 seconds ago — well within timeout
+            entity.lastHeard = nowSecs - 30 
         }
 
         invokeCheckAllNodes()
 
-        // Should stay ONLINE because DB says node is still fresh
         assertEquals(NodePresenceState.ONLINE, detector.trackedNodes[NODE_A]!!.state)
     }
-
-    // ── 3. Low battery exemption (Rule 6) ───────────────────────────
 
     @Test
     fun `node with battery below 5 percent is ignored`() {
         detector.onPacketReceived(NODE_A)
 
-        // Set battery to 3% before timeout
         detector.trackedNodes[NODE_A]!!.lastBatteryPercent = 3
         detector.trackedNodes[NODE_A]!!.lastSeenMs =
             System.currentTimeMillis() - SilentNodeDetector.SILENCE_TIMEOUT_MS - 1000
 
         invokeCheckAllNodes()
 
-        // Should stay ONLINE — low battery exemption
         assertEquals(NodePresenceState.ONLINE, detector.trackedNodes[NODE_A]!!.state)
     }
 
@@ -192,7 +163,6 @@ class SilentNodeDetectorTest {
 
         invokeCheckAllNodes()
 
-        // 5% is NOT below threshold, so it SHOULD be marked SILENT
         assertEquals(NodePresenceState.SILENT, detector.trackedNodes[NODE_A]!!.state)
     }
 
@@ -200,7 +170,6 @@ class SilentNodeDetectorTest {
     fun `node with unknown battery is NOT exempt`() {
         detector.onPacketReceived(NODE_A)
 
-        // -1 means unknown battery
         detector.trackedNodes[NODE_A]!!.lastBatteryPercent = -1
         detector.trackedNodes[NODE_A]!!.lastSeenMs =
             System.currentTimeMillis() - SilentNodeDetector.SILENCE_TIMEOUT_MS - 1000
@@ -210,18 +179,15 @@ class SilentNodeDetectorTest {
         assertEquals(NodePresenceState.SILENT, detector.trackedNodes[NODE_A]!!.state)
     }
 
-    // ── 4. Neighbor confirmation ────────────────────────────────────
-
     @Test
     fun `SILENT promoted to CONFIRMED_SILENT with remote report`() {
-        // Get NODE_A into SILENT state
+        
         detector.onPacketReceived(NODE_A)
         detector.trackedNodes[NODE_A]!!.lastSeenMs =
             System.currentTimeMillis() - SilentNodeDetector.SILENCE_TIMEOUT_MS - 1000
         invokeCheckAllNodes()
         assertEquals(NodePresenceState.SILENT, detector.trackedNodes[NODE_A]!!.state)
 
-        // Another node reports NODE_A as silent
         detector.onSilenceReportReceived(
             SilenceReport(
                 reporterNodeNum = NODE_B,
@@ -230,7 +196,6 @@ class SilentNodeDetectorTest {
             ),
         )
 
-        // Run check again — should now confirm
         invokeCheckAllNodes()
 
         assertEquals(NodePresenceState.CONFIRMED_SILENT, detector.trackedNodes[NODE_A]!!.state)
@@ -243,10 +208,8 @@ class SilentNodeDetectorTest {
             System.currentTimeMillis() - SilentNodeDetector.SILENCE_TIMEOUT_MS - 1000
         invokeCheckAllNodes()
 
-        // No remote reports added — run check again
         invokeCheckAllNodes()
 
-        // Should stay SILENT, not promoted
         assertEquals(NodePresenceState.SILENT, detector.trackedNodes[NODE_A]!!.state)
     }
 
@@ -258,7 +221,6 @@ class SilentNodeDetectorTest {
         invokeCheckAllNodes()
         assertEquals(NodePresenceState.SILENT, detector.trackedNodes[NODE_A]!!.state)
 
-        // Simulate the unconfirmed promote timeout elapsing
         detector.trackedNodes[NODE_A]!!.silentSinceMs =
             System.currentTimeMillis() - SilentNodeDetector.UNCONFIRMED_PROMOTE_MS - 1000
 
@@ -306,8 +268,8 @@ class SilentNodeDetectorTest {
             SilenceReport(NODE_B, NODE_A, System.currentTimeMillis()),
         )
         invokeCheckAllNodes()
-        invokeCheckAllNodes() // second pass
-        invokeCheckAllNodes() // third pass
+        invokeCheckAllNodes() 
+        invokeCheckAllNodes() 
 
         verify(exactly = 1) {
             notifications.showSilentNodeNotification(
@@ -318,11 +280,9 @@ class SilentNodeDetectorTest {
         }
     }
 
-    // ── 5. Recovery ─────────────────────────────────────────────────
-
     @Test
     fun `node recovers to ONLINE when packet received again`() {
-        // Get to CONFIRMED_SILENT
+        
         detector.onPacketReceived(NODE_A)
         detector.trackedNodes[NODE_A]!!.lastSeenMs =
             System.currentTimeMillis() - SilentNodeDetector.SILENCE_TIMEOUT_MS - 1000
@@ -333,14 +293,11 @@ class SilentNodeDetectorTest {
         invokeCheckAllNodes()
         assertEquals(NodePresenceState.CONFIRMED_SILENT, detector.trackedNodes[NODE_A]!!.state)
 
-        // Node comes back
         detector.onPacketReceived(NODE_A)
 
         assertEquals(NodePresenceState.ONLINE, detector.trackedNodes[NODE_A]!!.state)
         assertFalse(detector.trackedNodes[NODE_A]!!.notificationFired)
     }
-
-    // ── 6. Silence report parsing ───────────────────────────────────
 
     @Test
     fun `tryParseSilenceReport parses valid report`() {
@@ -366,7 +323,6 @@ class SilentNodeDetectorTest {
             MY_NODE,
         )
 
-        // Returns true (consumed) but doesn't add to remote reports
         assertTrue(result)
     }
 
@@ -379,36 +335,29 @@ class SilentNodeDetectorTest {
             SilenceReport(NODE_B, NODE_A, System.currentTimeMillis()),
         )
 
-        // Should still count as 1 unique reporter
-        // Verify by: get NODE_A to SILENT, then check it confirms (needs >=1 report)
         detector.onPacketReceived(NODE_A)
         detector.trackedNodes[NODE_A]!!.lastSeenMs =
             System.currentTimeMillis() - SilentNodeDetector.SILENCE_TIMEOUT_MS - 1000
-        invokeCheckAllNodes() // → SILENT
-        invokeCheckAllNodes() // → should confirm with the 1 unique report
+        invokeCheckAllNodes() 
+        invokeCheckAllNodes() 
 
         assertEquals(NodePresenceState.CONFIRMED_SILENT, detector.trackedNodes[NODE_A]!!.state)
     }
-
-    // ── 7. Graceful exit ────────────────────────────────────────────
 
     @Test
     fun `graceful exit prevents silence detection`() {
         detector.onPacketReceived(NODE_A)
 
-        // NODE_A announces graceful exit
         detector.tryParseGracefulExit(
             "MESH_EXIT|$NODE_A|${System.currentTimeMillis()}",
             NODE_A,
         )
 
-        // Simulate timeout
         detector.trackedNodes[NODE_A]!!.lastSeenMs =
             System.currentTimeMillis() - SilentNodeDetector.SILENCE_TIMEOUT_MS - 1000
 
         invokeCheckAllNodes()
 
-        // Should stay ONLINE — graceful exit exemption
         assertEquals(NodePresenceState.ONLINE, detector.trackedNodes[NODE_A]!!.state)
     }
 
@@ -437,32 +386,24 @@ class SilentNodeDetectorTest {
             MY_NODE,
         )
 
-        // Returns true (consumed) but doesn't add to graceful exits
         assertTrue(result)
         assertFalse(detector.gracefullyExitedNodes.containsKey(MY_NODE))
     }
 
     @Test
     fun `graceful exit cleared when node comes back`() {
-        // NODE_A announces exit
+        
         detector.tryParseGracefulExit(
             "MESH_EXIT|$NODE_A|${System.currentTimeMillis()}",
             NODE_A,
         )
         assertTrue(detector.gracefullyExitedNodes.containsKey(NODE_A))
 
-        // NODE_A comes back
         detector.onPacketReceived(NODE_A)
 
         assertFalse(detector.gracefullyExitedNodes.containsKey(NODE_A))
     }
 
-    // ── Helper ──────────────────────────────────────────────────────
-
-    /**
-     * Calls the private checkAllNodes() method via reflection.
-     * This avoids needing to wait for the coroutine scan loop in tests.
-     */
     private fun invokeCheckAllNodes() {
         val method = SilentNodeDetector::class.java.getDeclaredMethod("checkAllNodes")
         method.isAccessible = true

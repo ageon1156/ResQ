@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.map.cluster;
 
@@ -37,18 +22,6 @@ import org.osmdroid.views.MapView;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-/**
- * Radius-based Clustering algorithm:
- * create a cluster using the first point from the cloned list.
- * All points that are found within the neighborhood are added to this cluster.
- * Then all the neighbors and the main point are removed from the list of points.
- * It continues until the list is empty.
- *
- * Largely inspired from GridMarkerClusterer by M.Kergall
- *
- * @author sidorovroman92@gmail.com
- */
-
 public class RadiusMarkerClusterer extends MarkerClusterer {
 
     protected int mMaxClusteringZoomLevel = 7;
@@ -59,9 +32,8 @@ public class RadiusMarkerClusterer extends MarkerClusterer {
     protected boolean mAnimated;
     int mDensityDpi;
 
-    /** cluster icon anchor */
     public float mAnchorU = MarkerWithLabel.ANCHOR_CENTER, mAnchorV = MarkerWithLabel.ANCHOR_CENTER;
-    /** anchor point to draw the number of markers inside the cluster icon */
+    
     public float mTextAnchorU = MarkerWithLabel.ANCHOR_CENTER, mTextAnchorV = MarkerWithLabel.ANCHOR_CENTER;
 
     public RadiusMarkerClusterer(Context ctx) {
@@ -79,29 +51,24 @@ public class RadiusMarkerClusterer extends MarkerClusterer {
         mDensityDpi = ctx.getResources().getDisplayMetrics().densityDpi;
     }
 
-    /** If you want to change the default text paint (color, size, font) */
     public Paint getTextPaint(){
         return mTextPaint;
     }
 
-    /** Set the radius of clustering in pixels. Default is 100px. */
     public void setRadius(int radius){
         mRadiusInPixels = radius;
     }
 
-    /** Set max zoom level with clustering. When zoom is higher or equal to this level, clustering is disabled. 
-     * You can put a high value to disable this feature. */
     public void setMaxClusteringZoomLevel(int zoom){
         mMaxClusteringZoomLevel = zoom;
     }
 
-    /** Radius-Based clustering algorithm */
     @Override public ArrayList<StaticCluster> clusterer(MapView mapView) {
 
         ArrayList<StaticCluster> clusters = new ArrayList<StaticCluster>();
         convertRadiusToMeters(mapView);
 
-        mClonedMarkers = new ArrayList<MarkerWithLabel>(mItems); //shallow copy
+        mClonedMarkers = new ArrayList<MarkerWithLabel>(mItems); 
         while (!mClonedMarkers.isEmpty()) {
             MarkerWithLabel m = mClonedMarkers.get(0);
             StaticCluster cluster = createCluster(m, mapView);
@@ -119,7 +86,7 @@ public class RadiusMarkerClusterer extends MarkerClusterer {
         mClonedMarkers.remove(m);
         
         if (mapView.getZoomLevel() > mMaxClusteringZoomLevel) {
-        	//above max level => block clustering:
+        	
         	return cluster;
         }
         
@@ -160,10 +127,10 @@ public class RadiusMarkerClusterer extends MarkerClusterer {
     @Override public void renderer(ArrayList<StaticCluster> clusters, Canvas canvas, MapView mapView) {
         for (StaticCluster cluster : clusters) {
             if (cluster.getSize() == 1) {
-                //cluster has only 1 marker => use it as it is:
+                
                 cluster.setMarker(cluster.getItem(0));
             } else {
-                //only draw 1 Marker at Cluster center, displaying number of Markers contained
+                
                 MarkerWithLabel m = buildClusterMarker(cluster, mapView);
                 cluster.setMarker(m);
             }
@@ -195,7 +162,7 @@ public class RadiusMarkerClusterer extends MarkerClusterer {
         if (bb.getLatNorth()!=bb.getLatSouth() || bb.getLonEast()!=bb.getLonWest()) {
             bb = bb.increaseByScale(2.3f);
             mapView.zoomToBoundingBox(bb, true);
-        } else //all points exactly at the same place:
+        } else 
             mapView.setExpectedCenter(bb.getCenterWithDateLine());
     }
 

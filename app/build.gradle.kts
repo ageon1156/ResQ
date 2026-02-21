@@ -1,6 +1,4 @@
-/*
- * Licensed under GPL-3.0
- */
+
 
 import com.android.build.api.dsl.ApplicationExtension
 import com.mikepenz.aboutlibraries.plugin.DuplicateMode
@@ -60,9 +58,7 @@ configure<ApplicationExtension> {
                 )
         buildConfigField("String", "MIN_FW_VERSION", "\"${configProperties.getProperty("MIN_FW_VERSION")}\"")
         buildConfigField("String", "ABS_MIN_FW_VERSION", "\"${configProperties.getProperty("ABS_MIN_FW_VERSION")}\"")
-        // We have to list all translated languages here,
-        // because some of our libs have bogus languages that google play
-        // doesn't like and we need to strip them (gr)
+
         @Suppress("UnstableApiUsage")
         androidResources.localeFilters.addAll(
             listOf(
@@ -110,15 +106,13 @@ configure<ApplicationExtension> {
         ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64") }
 
         dependenciesInfo {
-            // Disables dependency metadata when building APKs (for IzzyOnDroid/F-Droid)
+            
             includeInApk = false
-            // Disables dependency metadata when building Android App Bundles (for Google Play)
+            
             includeInBundle = false
         }
     }
 
-    // Configure existing product flavors (defined by convention plugin)
-    // with their dynamic version names.
     productFlavors {
         named("google") { versionName = "${defaultConfig.versionName} (${defaultConfig.versionCode}) google" }
         named("fdroid") { versionName = "${defaultConfig.versionName} (${defaultConfig.versionCode}) fdroid" }

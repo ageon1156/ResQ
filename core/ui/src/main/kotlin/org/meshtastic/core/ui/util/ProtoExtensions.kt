@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.ui.util
 
 import android.text.format.DateUtils
@@ -57,14 +42,6 @@ fun MeshPacket.toPosition(): Position? = if (!decoded.wantResponse) {
     null
 }
 
-/**
- * Builds a [Channel] list from the difference between two [ChannelSettings] lists. Only changes are included in the
- * resulting list.
- *
- * @param new The updated [ChannelSettings] list.
- * @param old The current [ChannelSettings] list (required when disabling unused channels).
- * @return A [Channel] list containing only the modified channels.
- */
 fun getChannelList(new: List<ChannelSettings>, old: List<ChannelSettings>): List<ChannelProtos.Channel> = buildList {
     for (i in 0..maxOf(old.lastIndex, new.lastIndex)) {
         if (old.getOrNull(i) != new.getOrNull(i)) {

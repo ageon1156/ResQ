@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.intro
 
@@ -51,11 +36,6 @@ import org.meshtastic.core.strings.share_your_location_in_real_time
 import org.meshtastic.core.strings.stay_connected_anywhere
 import org.meshtastic.core.strings.track_and_share_locations
 
-/**
- * The initial welcome screen for the app introduction flow. It displays a brief overview of the app's key features.
- *
- * @param onGetStarted Callback invoked when the user proceeds from the welcome screen.
- */
 @Composable
 internal fun WelcomeScreen(onGetStarted: () -> Unit) {
     val features = remember {
@@ -81,11 +61,11 @@ internal fun WelcomeScreen(onGetStarted: () -> Unit) {
     Scaffold(
         bottomBar = {
             IntroBottomBar(
-                onSkip = {}, // No skip on welcome
+                onSkip = {}, 
                 onConfigure = onGetStarted,
-                skipButtonText = "", // Not shown
+                skipButtonText = "", 
                 configureButtonText = stringResource(Res.string.get_started),
-                showSkipButton = false, // Explicitly hide skip for welcome
+                showSkipButton = false, 
             )
         },
     ) { innerPadding ->

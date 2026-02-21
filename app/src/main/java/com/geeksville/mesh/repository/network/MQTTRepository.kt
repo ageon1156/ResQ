@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh.repository.network
 
@@ -51,13 +36,7 @@ constructor(
 ) {
 
     companion object {
-        /**
-         * Quality of Service (QoS) levels in MQTT:
-         * - QoS 0: "at most once". Packets are sent once without validation if it has been received.
-         * - QoS 1: "at least once". Packets are sent and stored until the client receives confirmation from the server.
-         *   MQTT ensures delivery, but duplicates may occur.
-         * - QoS 2: "exactly once". Similar to QoS 1, but with no duplicates.
-         */
+        
         private const val DEFAULT_QOS = 1
         private const val DEFAULT_TOPIC_ROOT = "msh"
         private const val DEFAULT_TOPIC_LEVEL = "/2/e/"
@@ -82,7 +61,7 @@ constructor(
         val mqttConfig = radioConfigRepository.moduleConfigFlow.first().mqtt
 
         val sslContext = SSLContext.getInstance("TLS")
-        // Use system default trust managers so TLS certificates are properly validated
+        
         sslContext.init(null, null, null)
 
         val rootTopic = mqttConfig.root.ifEmpty { DEFAULT_TOPIC_ROOT }

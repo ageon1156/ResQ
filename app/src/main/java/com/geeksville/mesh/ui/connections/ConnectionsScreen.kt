@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.ui.connections
 
 import android.net.InetAddresses
@@ -88,10 +73,6 @@ fun String?.isValidAddress(): Boolean = if (this.isNullOrBlank()) {
     InetAddresses.isNumericAddress(this) || Patterns.DOMAIN_NAME.matcher(this).matches()
 }
 
-/**
- * Composable screen for managing device connections (BLE, TCP, USB). It handles permission requests for location and
- * displays connection status.
- */
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Suppress("CyclomaticComplexMethod", "LongMethod", "MagicNumber", "ModifierMissing", "ComposableParamOrder")
 @Composable
@@ -115,7 +96,6 @@ fun ConnectionsScreen(
     val recentTcpDevices by scanModel.recentTcpDevicesForUi.collectAsStateWithLifecycle()
     val usbDevices by scanModel.usbDevicesForUi.collectAsStateWithLifecycle()
 
-    // when scanning is true - wait 10000ms and then stop scanning
     LaunchedEffect(scanning) {
         if (scanning) {
             delay(SCAN_PERIOD)
@@ -260,7 +240,6 @@ fun ConnectionsScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Warning Not Paired
                     val hasShownNotPairedWarning by
                         connectionsViewModel.hasShownNotPairedWarning.collectAsStateWithLifecycle()
                     val (bonded, _) = bleDevices.partition { it.bonded }
@@ -299,5 +278,5 @@ fun ConnectionsScreen(
     }
 }
 
-private const val SCAN_PERIOD: Long = 10000 // 10 seconds
+private const val SCAN_PERIOD: Long = 10000 
 

@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh.ui.contact
 
@@ -66,18 +51,6 @@ import org.meshtastic.core.ui.theme.RiverShape
 import org.meshtastic.core.ui.theme.organicSpring
 import org.meshtastic.proto.AppOnlyProtos
 
-/**
- * Organic Contact Item
- *
- * A redesigned contact card with organic styling:
- * - Gradient avatar based on contact name
- * - Asymmetric RiverShape for visual interest
- * - Better visual hierarchy
- * - Smooth organic animations
- * - More prominent unread indicators
- *
- * Maintains all existing functionality while providing enhanced visuals.
- */
 @Composable
 fun OrganicContactItem(
     contact: Contact,
@@ -89,7 +62,7 @@ fun OrganicContactItem(
     onNodeChipClick: () -> Unit = {},
     channels: AppOnlyProtos.ChannelSet? = null,
 ) = with(contact) {
-    // Animate selection/active state
+    
     val scale by animateFloatAsState(
         targetValue = if (selected) 0.95f else 1f,
         animationSpec = organicSpring(),
@@ -109,7 +82,7 @@ fun OrganicContactItem(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
             .semantics { contentDescription = shortName },
-        shape = RiverShape,  // Organic asymmetric shape
+        shape = RiverShape,  
         colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -120,7 +93,7 @@ fun OrganicContactItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Organic gradient avatar
+            
             OrganicContactAvatar(
                 name = longName,
                 shortName = shortName,
@@ -130,12 +103,11 @@ fun OrganicContactItem(
                 contact = contact
             )
 
-            // Contact info
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Name and time row
+                
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -161,7 +133,6 @@ fun OrganicContactItem(
                     }
                 }
 
-                // Last message and badges row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -176,12 +147,11 @@ fun OrganicContactItem(
                         maxLines = 1
                     )
 
-                    // Badges
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Muted indicator
+                        
                         AnimatedVisibility(
                             visible = isMuted,
                             enter = scaleIn() + fadeIn(),
@@ -195,7 +165,6 @@ fun OrganicContactItem(
                             )
                         }
 
-                        // Unread count badge
                         AnimatedVisibility(
                             visible = unreadCount > 0,
                             enter = scaleIn() + fadeIn(),
@@ -210,9 +179,6 @@ fun OrganicContactItem(
     }
 }
 
-/**
- * Organic avatar with gradient background
- */
 @Composable
 private fun OrganicContactAvatar(
     name: String,
@@ -222,7 +188,7 @@ private fun OrganicContactAvatar(
     channels: AppOnlyProtos.ChannelSet?,
     contact: Contact
 ) {
-    // Generate deterministic gradient from seed
+    
     val gradient = remember(seed) {
         val hue = (seed % 360).toFloat()
         val color1 = android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.5f, 0.7f))
@@ -240,7 +206,7 @@ private fun OrganicContactAvatar(
             .combinedClickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        // Get initials
+        
         val initials = remember(name) {
             name.split(" ")
                 .take(2)
@@ -258,7 +224,6 @@ private fun OrganicContactAvatar(
             textAlign = TextAlign.Center
         )
 
-        // Show security icon for broadcast channels
         val isBroadcast = with(contact.contactKey) {
             getOrNull(1) == '^' || endsWith("^all") || endsWith("^broadcast")
         }
@@ -278,9 +243,6 @@ private fun OrganicContactAvatar(
     }
 }
 
-/**
- * Organic unread count badge
- */
 @Composable
 private fun OrganicUnreadBadge(count: Int) {
     val displayText = if (count > 99) "99+" else count.toString()

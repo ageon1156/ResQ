@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh.ui.sharing
 
@@ -135,10 +120,6 @@ import org.meshtastic.proto.ConfigProtos
 import org.meshtastic.proto.channelSet
 import org.meshtastic.proto.copy
 
-/**
- * Composable screen for managing and sharing Meshtastic channels. Allows users to view, edit, and share channel
- * configurations via QR codes or URLs.
- */
 @OptIn(ExperimentalPermissionsApi::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -165,7 +146,6 @@ fun ChannelScreen(
 
     val requestChannelSet by viewModel.requestChannelSet.collectAsStateWithLifecycle()
 
-    /* Animate waiting for the configurations */
     var isWaiting by remember { mutableStateOf(false) }
     if (isWaiting) {
         PacketResponseStateDialog(
@@ -184,7 +164,6 @@ fun ChannelScreen(
         )
     }
 
-    /* Holds selections made by the user for QR generation. */
     val channelSelections =
         rememberSaveable(saver = listSaver(save = { it.toList() }, restore = { it.toMutableStateList() })) {
             mutableStateListOf(elements = Array(size = 8, init = { true }))
@@ -222,25 +201,20 @@ fun ChannelScreen(
 
     LaunchedEffect(cameraPermissionState.status) {
         if (cameraPermissionState.status.isGranted) {
-            // If permission was granted as a result of a request, and not initially,
-            // we might want to trigger the scan. However, simple auto-triggering on grant
-            // might not always be desired UX. For now, rely on user re-click if needed.
-            // If auto-scan is desired after grant: add a flag to track if request was made.
+
         }
     }
 
-    // Send new channel settings to the device
     fun installSettings(newChannelSet: ChannelSet) {
-        // Try to change the radio, if it fails, tell the user why and throw away their edits
+        
         try {
             viewModel.setChannels(newChannelSet)
-            // Since we are writing to DeviceConfig, that will trigger the rest of the GUI update (QR code etc)
+            
         } catch (ex: RemoteException) {
             Logger.e(ex) { "ignoring channel problem" }
 
-            channelSet = channels // Throw away user edits
+            channelSet = channels 
 
-            // Tell the user to try again
             scope.launch { context.showToast(Res.string.cant_change_no_radio) }
         }
     }
@@ -256,7 +230,7 @@ fun ChannelScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = {
-                channelSet = channels // throw away any edits
+                channelSet = channels 
                 showResetDialog = false
             },
             title = { Text(text = stringResource(Res.string.reset_to_defaults)) },
@@ -281,7 +255,7 @@ fun ChannelScreen(
             dismissButton = {
                 TextButton(
                     onClick = {
-                        channelSet = channels // throw away any edits
+                        channelSet = channels 
                         showResetDialog = false
                     },
                 ) {
@@ -396,7 +370,6 @@ private fun EditChannelUrl(
     var valueState by remember(channelUrl) { mutableStateOf(channelUrl) }
     var isError by remember { mutableStateOf(false) }
 
-    // Trigger dialog automatically when users paste a new valid URL
     LaunchedEffect(valueState, isError) {
         if (!isError && valueState != channelUrl) {
             onConfirm(valueState)
@@ -435,7 +408,7 @@ private fun EditChannelUrl(
                         }
 
                         else -> {
-                            // track how many times users share channels
+                            
                             onTrackShare()
                             coroutineScope.launch {
                                 clipboardManager.setClipEntry(

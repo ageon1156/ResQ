@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.messaging.component
 
 import androidx.compose.foundation.layout.Column
@@ -51,7 +36,7 @@ private fun RetryDialogContent(retryEvent: RetryEvent, timeRemaining: Int) {
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         when (retryEvent) {
             is RetryEvent.MessageRetry -> {
-                // Show message preview
+                
                 if (retryEvent.text.isNotEmpty()) {
                     Text(
                         text =
@@ -77,7 +62,7 @@ private fun RetryDialogContent(retryEvent: RetryEvent, timeRemaining: Int) {
                 )
             }
             is RetryEvent.ReactionRetry -> {
-                // Show emoji preview
+                
                 Text(
                     text = retryEvent.emoji,
                     modifier = Modifier.padding(bottom = 8.dp),
@@ -111,17 +96,17 @@ fun RetryConfirmationDialog(
     var timeRemaining by remember { mutableIntStateOf(countdownSeconds) }
 
     LaunchedEffect(retryEvent.packetId) {
-        timeRemaining = countdownSeconds // Reset countdown for new event
+        timeRemaining = countdownSeconds 
         while (timeRemaining > 0) {
             delay(COUNTDOWN_DELAY_MS)
             timeRemaining--
         }
-        // Countdown reached 0, auto-retry
+        
         onTimeout()
     }
 
     AlertDialog(
-        onDismissRequest = { /* Prevent dismissal by clicking outside */ },
+        onDismissRequest = {  },
         dismissButton = {
             FilledTonalButton(onClick = onCancel) { Text(text = stringResource(Res.string.retry_dialog_cancel)) }
         },

@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.prefs.analytics
 
@@ -29,26 +14,18 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Interface for managing analytics-related preferences. */
 interface AnalyticsPrefs {
-    /** Preference for whether analytics collection is allowed by the user. */
+    
     var analyticsAllowed: Boolean
 
-    /**
-     * Provides a [Flow] that emits the current state of [analyticsAllowed] and subsequent changes.
-     *
-     * @return A [Flow] of [Boolean] indicating if analytics are allowed.
-     */
     fun getAnalyticsAllowedChangesFlow(): Flow<Boolean>
 
-    /** Unique installation ID for analytics purposes. */
     val installId: String
 
     companion object {
-        /** Key for the analyticsAllowed preference. */
+        
         const val KEY_ANALYTICS_ALLOWED = "allowed"
 
-        /** Name of the SharedPreferences file where analytics preferences are stored. */
         const val ANALYTICS_PREFS_NAME = "analytics-prefs"
     }
 }
@@ -75,7 +52,7 @@ constructor(
                     trySend(analyticsAllowed)
                 }
             }
-        // Emit the initial value
+        
         trySend(analyticsAllowed)
         analyticsSharedPreferences.registerOnSharedPreferenceChangeListener(listener)
         awaitClose { analyticsSharedPreferences.unregisterOnSharedPreferenceChangeListener(listener) }

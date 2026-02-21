@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.database
 
 import android.app.Application
@@ -38,7 +23,6 @@ import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Manages per-device Room database instances for node data, with LRU eviction. */
 @Singleton
 class DatabaseManager @Inject constructor(private val app: Application, private val dispatchers: CoroutineDispatchers) {
     val prefs: SharedPreferences = app.getSharedPreferences("db-manager-prefs", Context.MODE_PRIVATE)
@@ -46,11 +30,9 @@ class DatabaseManager @Inject constructor(private val app: Application, private 
 
     private val mutex = Mutex()
 
-    // Expose the DB cache limit as a reactive stream so UI can observe changes.
     private val _cacheLimit = MutableStateFlow(getCacheLimit())
     val cacheLimit: StateFlow<Int> = _cacheLimit
 
-    // Keep cache-limit StateFlow in sync if some other component updates SharedPreferences.
     private val prefsListener =
         SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             if (key == DatabaseConstants.CACHE_LIMIT_KEY) {
@@ -69,27 +51,22 @@ class DatabaseManager @Inject constructor(private val app: Application, private 
     private val _currentAddress = MutableStateFlow<String?>(null)
     val currentAddress: StateFlow<String?> = _currentAddress
 
-    private val dbCache = mutableMapOf<String, MeshtasticDatabase>() // key = dbName
+    private val dbCache = mutableMapOf<String, MeshtasticDatabase>() 
 
-    /** Initialize the active database for [address]. */
     suspend fun init(address: String?) {
         switchActiveDatabase(address)
     }
 
-    /** Switch active database to the one associated with [address]. Serialized via mutex. */
     suspend fun switchActiveDatabase(address: String?) = mutex.withLock {
         val dbName = buildDbName(address)
 
-        // Remember the previously active DB name (any) so we can record its last-used time as well.
         val previousDbName = _currentDb.value?.openHelper?.databaseName
 
-        // Fast path: no-op if already on this address
         if (_currentAddress.value == address && _currentDb.value != null) {
             markLastUsed(dbName)
             return@withLock
         }
 
-        // Build/open Room DB off the main thread
         val db =
             dbCache[dbName]
                 ?: withContext(dispatchers.io) { buildRoomDb(app, dbName) }.also { dbCache[dbName] = it }
@@ -97,20 +74,16 @@ class DatabaseManager @Inject constructor(private val app: Application, private 
         _currentDb.value = db
         _currentAddress.value = address
         markLastUsed(dbName)
-        // Also mark the previous DB as used "just now" so LRU has an accurate, recent timestamp
-        // even on first run after upgrade where no timestamp might exist yet.
+
         previousDbName?.let { markLastUsed(it) }
 
-        // Defer LRU eviction so switch is not blocked by filesystem work
         managerScope.launch(dispatchers.io) { enforceCacheLimit(activeDbName = dbName) }
 
-        // One-time cleanup: remove legacy DB if present and not active
         managerScope.launch(dispatchers.io) { cleanupLegacyDbIfNeeded(activeDbName = dbName) }
 
         Logger.i { "Switched active DB to ${anonymizeDbName(dbName)} for address ${anonymizeAddress(address)}" }
     }
 
-    /** Execute [block] with the current DB instance. */
     inline fun <T> withDb(block: (MeshtasticDatabase) -> T): T = block(currentDb.value)
 
     private fun markLastUsed(dbName: String) {
@@ -136,7 +109,7 @@ class DatabaseManager @Inject constructor(private val app: Application, private 
     private suspend fun enforceCacheLimit(activeDbName: String) = mutex.withLock {
         val limit = getCacheLimit()
         val all = listExistingDbNames()
-        // Only enforce the limit over device-specific DBs; exclude legacy and default DBs
+        
         val deviceDbs =
             all.filterNot { it == DatabaseConstants.LEGACY_DB_NAME || it == DatabaseConstants.DEFAULT_DB_NAME }
         Logger.d {
@@ -173,7 +146,7 @@ class DatabaseManager @Inject constructor(private val app: Application, private 
         if (clamped == getCacheLimit()) return
         prefs.edit().putInt(DatabaseConstants.CACHE_LIMIT_KEY, clamped).apply()
         _cacheLimit.value = clamped
-        // Enforce asynchronously with current active DB protected
+        
         val active = _currentDb.value?.openHelper?.databaseName ?: defaultDbName()
         managerScope.launch(dispatchers.io) { enforceCacheLimit(activeDbName = active) }
     }
@@ -182,7 +155,7 @@ class DatabaseManager @Inject constructor(private val app: Application, private 
         if (prefs.getBoolean(DatabaseConstants.LEGACY_DB_CLEANED_KEY, false)) return@withLock
         val legacy = DatabaseConstants.LEGACY_DB_NAME
         if (legacy == activeDbName) {
-            // Never delete the active DB; mark as cleaned to avoid repeated checks
+            
             prefs.edit().putBoolean(DatabaseConstants.LEGACY_DB_CLEANED_KEY, true).apply()
             return@withLock
         }
@@ -213,17 +186,14 @@ object DatabaseConstants {
 
     const val LEGACY_DB_CLEANED_KEY: String = "legacy_db_cleaned"
 
-    // Display/truncation and hash sizing for DB names
     const val DB_NAME_HASH_LEN: Int = 10
     const val DB_NAME_SEPARATOR_LEN: Int = 1
     const val DB_NAME_SUFFIX_LEN: Int = 3
 
-    // Address anonymization sizing
     const val ADDRESS_ANON_SHORT_LEN: Int = 4
     const val ADDRESS_ANON_EDGE_LEN: Int = 2
 }
 
-// File-private helpers (kept outside the class to reduce class function count)
 private fun defaultDbName(): String = DatabaseConstants.DEFAULT_DB_NAME
 
 private fun normalizeAddress(addr: String?): String {
@@ -277,17 +247,6 @@ private fun buildRoomDb(app: Application, dbName: String): MeshtasticDatabase =
 
 private fun getDbFile(app: Application, dbName: String): File? = app.getDatabasePath(dbName).takeIf { it.exists() }
 
-/**
- * Compute which DBs to evict using LRU policy.
- *
- * Rules:
- * - Only consider device-specific DBs (exclude legacy and default)
- * - Never evict the active DB
- * - If number of device DBs is within the limit, evict none
- * - Otherwise evict the (size - limit) least-recently-used DBs
- *
- * Pass a precomputed [lastUsedMsByDb] snapshot to avoid redundant IO/lookups.
- */
 internal fun selectEvictionVictims(
     dbNames: List<String>,
     activeDbName: String,

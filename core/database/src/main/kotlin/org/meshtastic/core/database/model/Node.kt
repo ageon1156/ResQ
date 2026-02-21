@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.database.model
 
 import android.graphics.Color
@@ -41,7 +26,7 @@ data class Node(
     val position: MeshProtos.Position = MeshProtos.Position.getDefaultInstance(),
     val snr: Float = Float.MAX_VALUE,
     val rssi: Int = Int.MAX_VALUE,
-    val lastHeard: Int = 0, // the last time we've seen this node in secs since 1970
+    val lastHeard: Int = 0, 
     val deviceMetrics: DeviceMetrics = DeviceMetrics.getDefaultInstance(),
     val channel: Int = 0,
     val viaMqtt: Boolean = false,
@@ -59,7 +44,7 @@ data class Node(
     val capabilities: Capabilities by lazy { Capabilities(metadata?.firmwareVersion) }
 
     val colors: Pair<Int, Int>
-        get() { // returns foreground and background @ColorInt for each 'num'
+        get() { 
             val r = (num and 0xFF0000) shr 16
             val g = (num and 0x00FF00) shr 8
             val b = num and 0x0000FF
@@ -105,17 +90,14 @@ data class Node(
     val validPosition: MeshProtos.Position?
         get() = position.takeIf { hasValidPosition() }
 
-    // @return distance in meters to some other node (or null if unknown)
     fun distance(o: Node): Int? = when {
         validPosition == null || o.validPosition == null -> null
         else -> latLongToMeter(latitude, longitude, o.latitude, o.longitude).toInt()
     }
 
-    // @return formatted distance string to another node, using the given display units
     fun distanceStr(o: Node, displayUnits: DisplayConfig.DisplayUnits): String? =
         distance(o)?.toDistanceString(displayUnits)
 
-    // @return bearing to the other position in degrees
     fun bearing(o: Node?): Int? = when {
         validPosition == null || o?.validPosition == null -> null
         else -> org.meshtastic.core.model.util.bearing(latitude, longitude, o.latitude, o.longitude).toInt()

@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.component
 
@@ -36,15 +21,6 @@ import androidx.compose.ui.unit.dp
 import org.meshtastic.core.ui.theme.organicSpring
 import org.meshtastic.core.ui.theme.organicTweenShort
 
-/**
- * Organic Navigation Bar
- *
- * A custom bottom navigation bar with organic styling:
- * - Rounded top corners
- * - Smooth spring animations
- * - Nature-inspired color transitions
- * - Larger tap targets for accessibility
- */
 @Composable
 fun OrganicNavigationBar(
     destinations: List<NavigationDestination>,
@@ -62,7 +38,7 @@ fun OrganicNavigationBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)  // Taller for organic, spacious feel
+                .height(80.dp)  
                 .padding(horizontal = 8.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
@@ -79,9 +55,6 @@ fun OrganicNavigationBar(
     }
 }
 
-/**
- * Single navigation item with organic styling
- */
 @Composable
 private fun OrganicNavigationItem(
     destination: NavigationDestination,
@@ -114,9 +87,6 @@ private fun OrganicNavigationItem(
     )
 }
 
-/**
- * Data class representing a navigation destination
- */
 data class NavigationDestination(
     val label: String,
     val icon: ImageVector,

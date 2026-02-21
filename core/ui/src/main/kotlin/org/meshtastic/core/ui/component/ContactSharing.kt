@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.ui.component
 
 import android.Manifest
@@ -66,12 +51,6 @@ import org.meshtastic.proto.AdminProtos
 import org.meshtastic.proto.MeshProtos
 import java.net.MalformedURLException
 
-/**
- * Composable FloatingActionButton to initiate scanning a QR code for adding a contact. Handles camera permission
- * requests using Accompanist Permissions.
- *
- * @param modifier Modifier for this composable.
- */
 @OptIn(ExperimentalPermissionsApi::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -152,12 +131,6 @@ private fun SharedContact(contactUri: Uri) {
     }
 }
 
-/**
- * Displays a dialog with the contact's information as a QR code and URI.
- *
- * @param contact The node representing the contact to share. Null if no contact is selected.
- * @param onDismiss Callback invoked when the dialog is dismissed.
- */
 @Composable
 fun SharedContactDialog(contact: Node?, onDismiss: () -> Unit) {
     if (contact == null) return
@@ -181,7 +154,6 @@ private fun ShareContactPreview() {
     SharedContact(contactUri = "https://example.com".toUri())
 }
 
-/** Bitmap representation of the Uri as a QR code, or null if generation fails. */
 val Uri.qrCode: Bitmap?
     get() =
         try {
@@ -199,16 +171,10 @@ private const val BARCODE_PIXEL_SIZE = 960
 private const val MESHTASTIC_HOST = "meshtastic.org"
 private const val CONTACT_SHARE_PATH = "/v/"
 
-/** Prefix for Meshtastic contact sharing URLs. */
 internal const val URL_PREFIX = "https://$MESHTASTIC_HOST$CONTACT_SHARE_PATH#"
 private const val BASE64FLAGS = Base64.URL_SAFE + Base64.NO_WRAP + Base64.NO_PADDING
 private const val CAMERA_ID = 0
 
-/**
- * Converts a URI to a [AdminProtos.SharedContact].
- *
- * @throws MalformedURLException if the URI is not a valid Meshtastic contact sharing URL.
- */
 @Suppress("MagicNumber")
 @Throws(MalformedURLException::class)
 fun Uri.toSharedContact(): AdminProtos.SharedContact {
@@ -219,18 +185,15 @@ fun Uri.toSharedContact(): AdminProtos.SharedContact {
     return url.toBuilder().build()
 }
 
-/** Converts a [AdminProtos.SharedContact] to its corresponding URI representation. */
 fun AdminProtos.SharedContact.getSharedContactUrl(): Uri {
     val bytes = this.toByteArray() ?: ByteArray(0)
     val enc = Base64.encodeToString(bytes, BASE64FLAGS)
     return "$URL_PREFIX$enc".toUri()
 }
 
-/** Compares two [MeshProtos.User] objects and returns a string detailing the differences. */
 fun compareUsers(oldUser: MeshProtos.User, newUser: MeshProtos.User): String {
     val changes = mutableListOf<String>()
 
-    // Iterate over all fields in the User message descriptor
     for (fieldDescriptor: Descriptors.FieldDescriptor in MeshProtos.User.getDescriptor().fields) {
         val fieldName = fieldDescriptor.name
         val oldValue = if (oldUser.hasField(fieldDescriptor)) oldUser.getField(fieldDescriptor) else null
@@ -250,7 +213,6 @@ fun compareUsers(oldUser: MeshProtos.User, newUser: MeshProtos.User): String {
     }
 }
 
-/** Converts a [MeshProtos.User] object to a string representation of its fields and values. */
 fun userFieldsToString(user: MeshProtos.User): String {
     val fieldLines = mutableListOf<String>()
 
@@ -258,13 +220,13 @@ fun userFieldsToString(user: MeshProtos.User): String {
         val fieldName = fieldDescriptor.name
         if (user.hasField(fieldDescriptor)) {
             val value = user.getField(fieldDescriptor)
-            val valueString = valueToString(value, fieldDescriptor) // Using the helper from previous example
+            val valueString = valueToString(value, fieldDescriptor) 
             fieldLines.add("$fieldName: $valueString")
         } else if (fieldDescriptor.isRepeated || fieldDescriptor.hasDefaultValue() || fieldDescriptor.isOptional) {
             val defaultValue = fieldDescriptor.defaultValue
             val valueString =
                 if (fieldDescriptor.isRepeated) {
-                    "[]" // Empty list
+                    "[]" 
                 } else if (user.hasField(fieldDescriptor)) {
                     valueToString(user.getField(fieldDescriptor), fieldDescriptor)
                 } else {
@@ -287,15 +249,14 @@ private fun valueToString(value: Any?, fieldDescriptor: Descriptors.FieldDescrip
     }
     return when (fieldDescriptor.type) {
         Descriptors.FieldDescriptor.Type.BYTES -> {
-            // For ByteString, you might want to display it as hex or Base64
-            // For simplicity, here we'll just show its size.
+
             if (value is ByteString) {
                 Base64.encodeToString(value.toByteArray(), Base64.DEFAULT).trim()
             } else {
                 value.toString().trim()
             }
         }
-        // Add more custom formatting for other types if needed
+        
         else -> value.toString().trim()
     }
 }

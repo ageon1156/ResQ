@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.data.repository
 
 import androidx.paging.Pager
@@ -179,7 +164,7 @@ constructor(
             }
 
         packets.forEach { packet ->
-            // For sent messages, from is stored as ID_LOCAL, but SFPP packet has node number
+            
             val fromMatches =
                 packet.data.from == fromId || (isFromLocalNode && packet.data.from == DataPacket.ID_LOCAL)
             co.touchlab.kermit.Logger.d {
@@ -188,7 +173,7 @@ constructor(
                     "packetTo=${packet.data.to} toId=$toId toMatches=${packet.data.to == toId}"
             }
             if (fromMatches && packet.data.to == toId) {
-                // If it's already confirmed, don't downgrade it to routing
+                
                 if (packet.data.status == MessageStatus.SFPP_CONFIRMED && status == MessageStatus.SFPP_ROUTING) {
                     return@forEach
                 }
@@ -200,7 +185,7 @@ constructor(
 
         reactions.forEach { reaction ->
             val reactionFrom = reaction.userId
-            // For sent reactions, from is stored as ID_LOCAL, but SFPP packet has node number
+            
             val fromMatches = reactionFrom == fromId || (isFromLocalNode && reactionFrom == DataPacket.ID_LOCAL)
 
             val toMatches = reaction.to == toId
@@ -229,7 +214,7 @@ constructor(
     ) = withContext(dispatchers.io) {
         val dao = dbManager.currentDb.value.packetDao()
         dao.findPacketBySfppHash(hash)?.let { packet ->
-            // If it's already confirmed, don't downgrade it
+            
             if (packet.data.status == MessageStatus.SFPP_CONFIRMED && status == MessageStatus.SFPP_ROUTING) {
                 return@let
             }
@@ -250,7 +235,7 @@ constructor(
 
     suspend fun deleteMessages(uuidList: List<Long>) = withContext(dispatchers.io) {
         for (chunk in uuidList.chunked(DELETE_CHUNK_SIZE)) {
-            // Fetch DAO per chunk to avoid holding a stale reference if the active DB switches
+            
             dbManager.currentDb.value.packetDao().deleteMessages(chunk)
         }
     }

@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.datastore
 
 import androidx.datastore.core.DataStore
@@ -28,12 +13,11 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Class that handles saving and retrieving [ChannelSet] data. */
 @Singleton
 class ChannelSetDataSource @Inject constructor(private val channelSetStore: DataStore<ChannelSet>) {
     val channelSetFlow: Flow<ChannelSet> =
         channelSetStore.data.catch { exception ->
-            // dataStore.data throws an IOException when an error is encountered when reading data
+            
             if (exception is IOException) {
                 Logger.e { "Error reading DeviceConfig settings: ${exception.message}" }
                 emit(ChannelSet.getDefaultInstance())
@@ -46,23 +30,21 @@ class ChannelSetDataSource @Inject constructor(private val channelSetStore: Data
         channelSetStore.updateData { preference -> preference.toBuilder().clear().build() }
     }
 
-    /** Replaces all [ChannelSettings] in a single atomic operation. */
     suspend fun replaceAllSettings(settingsList: List<ChannelSettings>) {
         channelSetStore.updateData { preference ->
             preference.toBuilder().clearSettings().addAllSettings(settingsList).build()
         }
     }
 
-    /** Updates the [ChannelSettings] list with the provided channel. */
     suspend fun updateChannelSettings(channel: Channel) {
         if (channel.role == Channel.Role.DISABLED) return
         channelSetStore.updateData { preference ->
             val builder = preference.toBuilder()
-            // Resize to fit channel
+            
             while (builder.settingsCount <= channel.index) {
                 builder.addSettings(ChannelSettings.getDefaultInstance())
             }
-            // use setSettings() to ensure settingsList and channel indexes match
+            
             builder.setSettings(channel.index, channel.settings).build()
         }
     }

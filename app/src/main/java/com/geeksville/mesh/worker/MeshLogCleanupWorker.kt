@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.worker
 
 import android.content.Context
@@ -40,7 +25,6 @@ constructor(
     private val meshLogPrefs: MeshLogPrefs,
 ) : CoroutineWorker(appContext, workerParams) {
 
-    // Fallback constructor for cases where HiltWorkerFactory is not used (e.g., some WorkManager initializations)
     constructor(
         appContext: Context,
         workerParams: WorkerParameters,

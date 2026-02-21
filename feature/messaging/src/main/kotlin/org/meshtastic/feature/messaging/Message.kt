@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 @file:Suppress("TooManyFunctions")
 
 package org.meshtastic.feature.messaging
@@ -146,16 +131,7 @@ private const val MESSAGE_CHARACTER_LIMIT_BYTES = 200
 private const val SNIPPET_CHARACTER_LIMIT = 50
 private const val ROUNDED_CORNER_PERCENT = 100
 
-/**
- * The main screen for displaying and sending messages to a contact or channel.
- *
- * @param contactKey A unique key identifying the contact or channel.
- * @param message An optional message to pre-fill in the input field.
- * @param viewModel The [MessageViewModel] instance for handling business logic and state.
- * @param navigateToNodeDetails Callback to navigate to a node's detail screen.
- * @param onNavigateBack Callback to navigate back from this screen.
- */
-@Suppress("LongMethod", "CyclomaticComplexMethod") // Due to multiple states and event handling
+@Suppress("LongMethod", "CyclomaticComplexMethod") 
 @Composable
 fun MessageScreen(
     contactKey: String,
@@ -178,7 +154,6 @@ fun MessageScreen(
     val pagedMessages = viewModel.getMessagesFromPaged(contactKey).collectAsLazyPagingItems()
     val contactSettings by viewModel.contactSettings.collectAsStateWithLifecycle(initialValue = emptyMap())
 
-    // UI State managed within this Composable
     var replyingToPacketId by rememberSaveable { mutableStateOf<Int?>(null) }
     var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
     var sharedContact by rememberSaveable { mutableStateOf<Node?>(null) }
@@ -187,26 +162,21 @@ fun MessageScreen(
     var selectedPriority by rememberSaveable { mutableStateOf(MeshPacket.Priority.DEFAULT_VALUE) }
     val showQuickChat by viewModel.showQuickChat.collectAsStateWithLifecycle()
 
-    // Retry dialog state
     var currentRetryEvent by remember { mutableStateOf<RetryEvent?>(null) }
 
-    // Observe retry events from the service
-    // Key on contactKey to restart collection when navigating between conversations
     LaunchedEffect(contactKey) {
         viewModel.retryEvents.collect { event ->
             currentRetryEvent = event
         }
     }
 
-    // Prevent the message TextField from stealing focus when the screen opens
     LaunchedEffect(contactKey) { focusManager.clearFocus() }
 
-    // Derived state, memoized for performance
     val channelInfo =
         remember(contactKey, channels) {
             val index = contactKey.firstOrNull()?.digitToIntOrNull()
             val id = contactKey.substring(1)
-            val name = index?.let { channels.getChannel(it)?.name } // channels can be null initially
+            val name = index?.let { channels.getChannel(it)?.name } 
             Triple(index, id, name)
         }
     val (channelIndex, nodeId, rawChannelName) = channelInfo
@@ -235,14 +205,12 @@ fun MessageScreen(
             derivedStateOf { contactSettings[contactKey]?.lastReadMessageTimestamp }
         }
 
-    // Track unread messages using lightweight metadata queries
     val hasUnreadMessages by viewModel.hasUnreadMessages(contactKey).collectAsStateWithLifecycle(initialValue = false)
     val firstUnreadMessageUuid by
         viewModel.getFirstUnreadMessageUuid(contactKey).collectAsStateWithLifecycle(initialValue = null)
 
     var hasPerformedInitialScroll by rememberSaveable(contactKey) { mutableStateOf(false) }
 
-    // Find the index of the first unread message in the paged list
     val firstUnreadIndex by
         remember(pagedMessages.itemCount, firstUnreadMessageUuid) {
             derivedStateOf {
@@ -252,7 +220,6 @@ fun MessageScreen(
             }
         }
 
-    // Scroll to first unread message on initial load
     LaunchedEffect(hasPerformedInitialScroll, firstUnreadIndex, pagedMessages.itemCount) {
         if (hasPerformedInitialScroll || pagedMessages.itemCount == 0) return@LaunchedEffect
 
@@ -262,7 +229,7 @@ fun MessageScreen(
             listState.smartScrollToIndex(coroutineScope = coroutineScope, targetIndex = targetIndex)
             hasPerformedInitialScroll = true
         } else if (!hasUnreadMessages) {
-            // If no unread messages, just scroll to bottom (most recent)
+            
             listState.scrollToItem(0)
             hasPerformedInitialScroll = true
         }
@@ -315,23 +282,22 @@ fun MessageScreen(
 
     sharedContact?.let { contact -> SharedContactDialog(contact = contact, onDismiss = { sharedContact = null }) }
 
-    // Show retry confirmation dialog
     currentRetryEvent?.let { event ->
         RetryConfirmationDialog(
             retryEvent = event,
             countdownSeconds = 5,
             onConfirm = {
-                // User clicked "Retry Now" - proceed immediately
+                
                 viewModel.respondToRetry(event.packetId, shouldRetry = true)
                 currentRetryEvent = null
             },
             onCancel = {
-                // User clicked "Cancel Retry" - stop retrying
+                
                 viewModel.respondToRetry(event.packetId, shouldRetry = false)
                 currentRetryEvent = null
             },
             onTimeout = {
-                // Countdown reached 0 - auto-retry
+                
                 viewModel.respondToRetry(event.packetId, shouldRetry = true)
                 currentRetryEvent = null
             },
@@ -358,9 +324,7 @@ fun MessageScreen(
                             MessageMenuAction.Delete -> showDeleteDialog = true
                             MessageMenuAction.Dismiss -> selectedMessageIds.value = emptySet()
                             MessageMenuAction.SelectAll -> {
-                                // Note: Select All is disabled with pagination since we don't have
-                                // access to the full message list. This would need to be reworked
-                                // to select all currently loaded items instead.
+
                                 selectedMessageIds.value =
                                     if (selectedMessageIds.value.size == pagedMessages.itemCount) {
                                         emptySet()
@@ -415,7 +379,7 @@ fun MessageScreen(
                     ),
                     quickEmojis = viewModel.frequentEmojis,
                 )
-                // Show FAB if we can scroll towards the newest messages (index 0).
+                
                 if (listState.canScrollBackward) {
                     ScrollToBottomFab(coroutineScope, listState)
                 }
@@ -459,7 +423,7 @@ fun MessageScreen(
                     val messageText = messageInputState.text.toString().trim()
                     if (messageText.isNotEmpty()) {
                         onEvent(MessageScreenEvent.SendMessage(messageText, replyingToPacketId, selectedPriority))
-                        selectedPriority = MeshPacket.Priority.DEFAULT_VALUE // reset after send
+                        selectedPriority = MeshPacket.Priority.DEFAULT_VALUE 
                     }
                 },
             )
@@ -467,19 +431,13 @@ fun MessageScreen(
     }
 }
 
-/**
- * A FloatingActionButton that scrolls the message list to the bottom (most recent messages).
- *
- * @param coroutineScope The coroutine scope for launching the scroll animation.
- * @param listState The [LazyListState] of the message list.
- */
 @Composable
 private fun BoxScope.ScrollToBottomFab(coroutineScope: CoroutineScope, listState: LazyListState) {
     FloatingActionButton(
         modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
         onClick = {
             coroutineScope.launch {
-                // Assuming messages are ordered with the newest at index 0
+                
                 listState.animateScrollToItem(0)
             }
         },
@@ -491,13 +449,6 @@ private fun BoxScope.ScrollToBottomFab(coroutineScope: CoroutineScope, listState
     }
 }
 
-/**
- * Displays a snippet of the message being replied to.
- *
- * @param originalMessage The message being replied to, or null if not replying.
- * @param onClearReply Callback to clear the reply state.
- * @param ourNode The current user's node information, to display "You" if replying to self.
- */
 @Composable
 private fun ReplySnippet(originalMessage: Message?, onClearReply: () -> Unit, ourNode: Node?) {
     AnimatedVisibility(visible = originalMessage != null) {
@@ -517,7 +468,7 @@ private fun ReplySnippet(originalMessage: Message?, onClearReply: () -> Unit, ou
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Default.Reply,
-                    contentDescription = stringResource(Res.string.reply), // Decorative
+                    contentDescription = stringResource(Res.string.reply), 
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
@@ -534,7 +485,7 @@ private fun ReplySnippet(originalMessage: Message?, onClearReply: () -> Unit, ou
                 IconButton(onClick = onClearReply) {
                     Icon(
                         Icons.Filled.Close,
-                        contentDescription = stringResource(Res.string.cancel_reply), // Specific action
+                        contentDescription = stringResource(Res.string.cancel_reply), 
                     )
                 }
             }
@@ -542,22 +493,8 @@ private fun ReplySnippet(originalMessage: Message?, onClearReply: () -> Unit, ou
     }
 }
 
-/**
- * Ellipsizes a string if its length exceeds [maxLength].
- *
- * @param maxLength The maximum number of characters to display before adding "…".
- * @return The ellipsized string.
- * @receiver The string to ellipsize.
- */
 private fun String.ellipsize(maxLength: Int): String = if (length > maxLength) "${take(maxLength)}…" else this
 
-/**
- * Handles a quick chat action, either appending its message to the input field or sending it directly.
- *
- * @param action The [QuickChatAction] to handle.
- * @param messageInputState The [TextFieldState] of the message input field.
- * @param onSendMessage Lambda to call when a message needs to be sent.
- */
 private fun handleQuickChatAction(
     action: QuickChatAction,
     messageInputState: TextFieldState,
@@ -566,7 +503,7 @@ private fun handleQuickChatAction(
     when (action.mode) {
         QuickChatAction.Mode.Append -> {
             val originalText = messageInputState.text.toString()
-            // Avoid appending if the exact message is already present (simple check)
+            
             if (!originalText.contains(action.message)) {
                 val newText =
                     buildString {
@@ -582,21 +519,12 @@ private fun handleQuickChatAction(
         }
 
         QuickChatAction.Mode.Instant -> {
-            // Byte limit for 'Send' mode messages is handled by the backend/transport layer.
+            
             onSendMessage(action.message)
         }
     }
 }
 
-/**
- * Truncates a string to ensure its UTF-8 byte representation does not exceed [maxBytes].
- *
- * This implementation iterates by characters and checks byte length to avoid splitting multi-byte characters.
- *
- * @param maxBytes The maximum allowed byte length.
- * @return The truncated string, or the original string if it's within the byte limit.
- * @receiver The string to limit.
- */
 private fun String.limitBytes(maxBytes: Int): String {
     val bytes = this.toByteArray(StandardCharsets.UTF_8)
     if (bytes.size <= maxBytes) {
@@ -617,13 +545,6 @@ private fun String.limitBytes(maxBytes: Int): String {
     return this.substring(0, validCharCount)
 }
 
-/**
- * A dialog confirming the deletion of messages.
- *
- * @param count The number of messages to be deleted.
- * @param onConfirm Callback invoked when the user confirms the deletion.
- * @param onDismiss Callback invoked when the dialog is dismissed.
- */
 @Composable
 private fun DeleteMessageDialog(count: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     val deleteMessagesString = pluralStringResource(Res.plurals.delete_messages, count, count)
@@ -638,7 +559,6 @@ private fun DeleteMessageDialog(count: Int, onConfirm: () -> Unit, onDismiss: ()
     )
 }
 
-/** Actions available in the message selection mode's top bar. */
 internal sealed class MessageMenuAction {
     data object ClipboardCopy : MessageMenuAction()
 
@@ -649,12 +569,6 @@ internal sealed class MessageMenuAction {
     data object SelectAll : MessageMenuAction()
 }
 
-/**
- * The top app bar displayed when in message selection mode.
- *
- * @param selectedCount The number of currently selected messages.
- * @param onAction Callback for when a menu action is triggered.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ActionModeTopBar(selectedCount: Int, onAction: (MessageMenuAction) -> Unit) = TopAppBar(
@@ -680,16 +594,6 @@ private fun ActionModeTopBar(selectedCount: Int, onAction: (MessageMenuAction) -
     },
 )
 
-/**
- * The default top app bar for the message screen.
- *
- * @param title The title to display (contact or channel name).
- * @param channelIndex The index of the current channel, if applicable.
- * @param mismatchKey True if there's a key mismatch for the current PKC.
- * @param onNavigateBack Callback for the navigation icon.
- * @param channels The set of all channels, used for the [SecurityIcon].
- * @param channelIndexParam The specific channel index for the [SecurityIcon].
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MessageTopBar(
@@ -827,13 +731,6 @@ private fun OverFlowMenu(
     }
 }
 
-/**
- * A row of quick chat action buttons.
- *
- * @param enabled Whether the buttons should be enabled.
- * @param actions The list of [QuickChatAction]s to display.
- * @param onClick Callback when a quick chat button is clicked.
- */
 @Composable
 private fun QuickChatRow(
     modifier: Modifier = Modifier,
@@ -844,12 +741,12 @@ private fun QuickChatRow(
     val alertActionMessage = stringResource(Res.string.alert_bell_text)
     val alertAction =
         remember(alertActionMessage) {
-            // Memoize if content is static
+            
             QuickChatAction(
                 name = "🔔",
-                message = "🔔 $alertActionMessage  ", // Bell character added to message
+                message = "🔔 $alertActionMessage  ", 
                 mode = QuickChatAction.Mode.Append,
-                position = -1, // Assuming -1 means it's a special prepended action
+                position = -1, 
             )
         }
 
@@ -862,11 +759,6 @@ private fun QuickChatRow(
     }
 }
 
-/**
- * A row of filter chips allowing the user to select the message priority level.
- * Defaults to no selection (UNSET → firmware treats as DEFAULT/64).
- * Selecting "Critical Alert" shows a red warning chip to indicate reserved airtime usage.
- */
 @Composable
 private fun MessagePrioritySelector(
     selectedPriority: Int,
@@ -881,8 +773,6 @@ private fun MessagePrioritySelector(
         )
     }
 
-    // Only show the selector row when a non-default priority is active,
-    // or always show so the user can pick one.
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -929,16 +819,7 @@ private fun MessagePrioritySelector(
 
 private const val MAX_LINES = 3
 
-/**
- * The text input field for composing messages.
- *
- * @param isEnabled Whether the input field should be enabled.
- * @param textFieldState The [TextFieldState] managing the input's text.
- * @param modifier The modifier for this composable.
- * @param maxByteSize The maximum allowed size of the message in bytes.
- * @param onSendMessage Callback invoked when the send button is pressed or send IME action is triggered.
- */
-@Suppress("LongMethod") // Due to multiple parts of the OutlinedTextField
+@Suppress("LongMethod") 
 @Composable
 private fun MessageInput(
     isEnabled: Boolean,
@@ -950,7 +831,7 @@ private fun MessageInput(
     val currentText = textFieldState.text.toString()
     val currentByteLength =
         remember(currentText) {
-            // Recalculate only when text changes
+            
             currentText.toByteArray(StandardCharsets.UTF_8).size
         }
 
@@ -968,7 +849,7 @@ private fun MessageInput(
         placeholder = { Text(stringResource(Res.string.type_a_message)) },
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         supportingText = {
-            if (isEnabled) { // Only show supporting text if input is enabled
+            if (isEnabled) { 
                 Text(
                     text = "$currentByteLength/$maxByteSize",
                     style = MaterialTheme.typography.bodySmall,
@@ -983,10 +864,7 @@ private fun MessageInput(
                 )
             }
         },
-        // Direct byte limiting via inputTransformation in TextFieldState is complex.
-        // The current approach (show error, disable send) is generally preferred for UX.
-        // If strict real-time byte trimming is required, it needs careful handling of
-        // cursor position and multi-byte characters, likely outside simple inputTransformation.
+
         trailingIcon = {
             IconButton(onClick = { if (canSend) onSendMessage() }, enabled = canSend) {
                 Icon(
@@ -1016,17 +894,16 @@ private fun MessageInputPreview() {
                             "and cause an error state display for the user to see clearly.",
                     ),
                     onSendMessage = {},
-                    maxByteSize = 50, // Test with a smaller limit
+                    maxByteSize = 50, 
                 )
                 Spacer(Modifier.size(16.dp))
-                // Test Japanese characters (multi-byte)
+                
                 MessageInput(
                     isEnabled = true,
-                    textFieldState = rememberTextFieldState("こんにちは世界"), // Hello World in Japanese
+                    textFieldState = rememberTextFieldState("こんにちは世界"), 
                     onSendMessage = {},
                     maxByteSize = 10,
-                    // Each char is 3 bytes, so "こん" (6 bytes) is ok, "こんに" (9 bytes) is ok, "こんにち"
-                    // (12 bytes) is over
+
                 )
             }
         }

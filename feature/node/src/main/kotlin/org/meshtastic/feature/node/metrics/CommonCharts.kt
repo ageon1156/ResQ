@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.metrics
 
@@ -107,20 +92,15 @@ fun ChartHeader(amount: Int) {
     }
 }
 
-/**
- * Draws chart lines with respect to the Y-axis.
- *
- * @param lineColors A list of 5 [Color]s for the chart lines, 0 being the lowest line on the chart.
- */
 @Composable
 fun HorizontalLinesOverlay(modifier: Modifier, lineColors: List<Color>) {
-    /* 100 is a good number to divide into quarters */
+    
     val verticalSpacing = MAX_PERCENT_VALUE / LINE_LIMIT
     Canvas(modifier = modifier) {
         val lineStart = 0f
         val height = size.height
         val width = size.width
-        /* Horizontal Lines */
+        
         var lineY = 0f
         for (i in 0..LINE_LIMIT) {
             val ratio = lineY / MAX_PERCENT_VALUE
@@ -138,7 +118,6 @@ fun HorizontalLinesOverlay(modifier: Modifier, lineColors: List<Color>) {
     }
 }
 
-/** Draws labels on the Y-axis with respect to the range. Defined by (`maxValue` - `minValue`). */
 @Composable
 fun YAxisLabels(modifier: Modifier, labelColor: Color, minValue: Float, maxValue: Float) {
     val range = maxValue - minValue
@@ -147,7 +126,6 @@ fun YAxisLabels(modifier: Modifier, labelColor: Color, minValue: Float, maxValue
     Canvas(modifier = modifier) {
         val height = size.height
 
-        /* Y Labels */
         val textPaint =
             Paint().apply {
                 color = labelColor.toArgb()
@@ -169,7 +147,6 @@ fun YAxisLabels(modifier: Modifier, labelColor: Color, minValue: Float, maxValue
     }
 }
 
-/** Draws the vertical lines to help the user relate the plotted data within a time frame. */
 @Composable
 fun TimeAxisOverlay(modifier: Modifier, oldest: Int, newest: Int, timeInterval: Long) {
     val range = newest - oldest
@@ -179,7 +156,6 @@ fun TimeAxisOverlay(modifier: Modifier, oldest: Int, newest: Int, timeInterval: 
         val height = size.height
         val width = size.width
 
-        /* Cut out the time remaining in order to place the lines on the dot. */
         val timeRemaining = oldest % timeInterval
         var current = oldest.toLong()
         current -= timeRemaining
@@ -194,7 +170,6 @@ fun TimeAxisOverlay(modifier: Modifier, oldest: Int, newest: Int, timeInterval: 
                 alpha = TEXT_PAINT_ALPHA
             }
 
-        /* Vertical Lines with labels */
         drawContext.canvas.nativeCanvas.apply {
             while (current <= newest) {
                 val ratio = (current - oldest).toFloat() / range
@@ -208,9 +183,8 @@ fun TimeAxisOverlay(modifier: Modifier, oldest: Int, newest: Int, timeInterval: 
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(LINE_ON, LINE_OFF), 0f),
                 )
 
-                /* Time */
                 drawText(TIME_FORMAT.format(current * MS_PER_SEC), x, 0f, textPaint)
-                /* Date */
+                
                 drawText(DATE_FORMAT.format(current * MS_PER_SEC), x, DATE_Y, textPaint)
                 current += timeInterval
             }
@@ -218,7 +192,6 @@ fun TimeAxisOverlay(modifier: Modifier, oldest: Int, newest: Int, timeInterval: 
     }
 }
 
-/** Draws the `oldest` and `newest` times for the respective telemetry data. Expects time in seconds. */
 @Composable
 fun TimeLabels(oldest: Int, newest: Int) {
     Row {
@@ -238,12 +211,6 @@ fun TimeLabels(oldest: Int, newest: Int) {
     }
 }
 
-/**
- * Creates the legend that identifies the colors used for the graph.
- *
- * @param legendData A list containing the `LegendData` to build the labels.
- * @param promptInfoDialog Executes when the user presses the info icon.
- */
 @Composable
 fun Legend(legendData: List<LegendData>, displayInfoIcon: Boolean = true, promptInfoDialog: () -> Unit = {}) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -268,12 +235,6 @@ fun Legend(legendData: List<LegendData>, displayInfoIcon: Boolean = true, prompt
     }
 }
 
-/**
- * Displays a dialog with information about the legend items.
- *
- * @param pairedRes A list of `Pair`s containing (term, definition).
- * @param onDismiss Executes when the user presses the close button.
- */
 @Composable
 fun LegendInfoDialog(pairedRes: List<Pair<StringResource, StringResource>>, onDismiss: () -> Unit) {
     AlertDialog(

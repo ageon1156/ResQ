@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.theme
 
@@ -23,16 +8,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-/**
- * Organic Tech Typography System
- *
- * Uses a three-typeface approach for visual hierarchy:
- * - Serif: Elegant, for large titles and display text
- * - Sans Serif: Clean and readable, for UI elements and body text
- * - Monospace: Technical precision, for data and labels
- */
 val OrganicTypography = Typography(
-    // Display styles - Elegant serif for large titles
+    
     displayLarge = TextStyle(
         fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.Light,
@@ -55,7 +32,6 @@ val OrganicTypography = Typography(
         letterSpacing = 0.sp
     ),
 
-    // Headline styles - Mix of serif and sans serif
     headlineLarge = TextStyle(
         fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.Normal,
@@ -78,7 +54,6 @@ val OrganicTypography = Typography(
         letterSpacing = 0.sp
     ),
 
-    // Title styles - Sans serif for UI elements
     titleLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.SemiBold,
@@ -101,7 +76,6 @@ val OrganicTypography = Typography(
         letterSpacing = 0.1.sp
     ),
 
-    // Body styles - Sans serif for readability
     bodyLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
         fontWeight = FontWeight.Normal,
@@ -124,7 +98,6 @@ val OrganicTypography = Typography(
         letterSpacing = 0.4.sp
     ),
 
-    // Label styles - Monospace for technical data
     labelLarge = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Medium,

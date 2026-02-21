@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.data.repository
 
 import co.touchlab.kermit.Logger
@@ -31,7 +16,6 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Annotating with Singleton to ensure a single instance manages the cache
 @Singleton
 class DeviceHardwareRepository
 @Inject
@@ -43,20 +27,6 @@ constructor(
     private val dispatchers: CoroutineDispatchers,
 ) {
 
-    /**
-     * Retrieves device hardware information by its model ID and optional target string.
-     *
-     * This function implements a cache-aside pattern with a fallback mechanism:
-     * 1. Check for a valid, non-expired local cache entry.
-     * 2. If not found or expired, fetch fresh data from the remote API.
-     * 3. If the remote fetch fails, attempt to use stale data from the cache.
-     * 4. If the cache is empty, fall back to loading data from a bundled JSON asset.
-     *
-     * @param hwModel The hardware model identifier.
-     * @param target Optional PlatformIO target environment name to disambiguate multiple variants.
-     * @param forceRefresh If true, the local cache will be invalidated and data will be fetched remotely.
-     * @return A [Result] containing the [DeviceHardware] on success (or null if not found), or an exception on failure.
-     */
     @Suppress("LongMethod", "detekt:CyclomaticComplexMethod")
     suspend fun getDeviceHardwareByModel(
         hwModel: Int,
@@ -74,10 +44,9 @@ constructor(
             Logger.d { "DeviceHardwareRepository: forceRefresh=true, clearing local device hardware cache" }
             localDataSource.deleteAllDeviceHardware()
         } else {
-            // 1. Attempt to retrieve from cache first
+            
             var cachedEntities = localDataSource.getByHwModel(hwModel)
 
-            // Fallback to target-only lookup if hwModel-based lookup yielded nothing
             if (cachedEntities.isEmpty() && target != null) {
                 Logger.d {
                     "DeviceHardwareRepository: no cache for hwModel=$hwModel, trying target lookup for $target"
@@ -98,7 +67,6 @@ constructor(
             Logger.d { "DeviceHardwareRepository: no fresh cache for hwModel=$hwModel, attempting remote fetch" }
         }
 
-        // 2. Fetch from remote API
         runCatching {
             Logger.d { "DeviceHardwareRepository: fetching device hardware from remote API" }
             val remoteHardware = remoteDataSource.getAllDeviceHardware()
@@ -109,7 +77,6 @@ constructor(
             localDataSource.insertAllDeviceHardware(remoteHardware)
             var fromDb = localDataSource.getByHwModel(hwModel)
 
-            // Fallback to target lookup after remote fetch
             if (fromDb.isEmpty() && target != null) {
                 val byTarget = localDataSource.getByTarget(target)
                 if (byTarget != null) fromDb = listOf(byTarget)
@@ -122,7 +89,7 @@ constructor(
             disambiguate(fromDb, target)?.asExternalModel()
         }
             .onSuccess {
-                // Successfully fetched and found the model
+                
                 return@withContext Result.success(applyBootloaderQuirk(hwModel, it, quirks, target))
             }
             .onFailure { e ->
@@ -130,7 +97,6 @@ constructor(
                     "DeviceHardwareRepository: failed to fetch device hardware from server for hwModel=$hwModel"
                 }
 
-                // 3. Attempt to use stale cache as a fallback, but only if it looks complete.
                 var staleEntities = localDataSource.getByHwModel(hwModel)
                 if (staleEntities.isEmpty() && target != null) {
                     val byTarget = localDataSource.getByTarget(target)
@@ -145,7 +111,6 @@ constructor(
                     )
                 }
 
-                // 4. Fallback to bundled JSON if cache is empty or incomplete
                 Logger.d {
                     "DeviceHardwareRepository: cache ${if (staleEntities.isEmpty()) "empty" else "incomplete"} " +
                         "for hwModel=$hwModel, falling back to bundled JSON asset"
@@ -168,7 +133,6 @@ constructor(
         localDataSource.insertAllDeviceHardware(jsonHardware)
         var baseList = localDataSource.getByHwModel(hwModel)
 
-        // Fallback to target lookup after JSON load
         if (baseList.isEmpty() && target != null) {
             val byTarget = localDataSource.getByTarget(target)
             if (byTarget != null) baseList = listOf(byTarget)
@@ -199,16 +163,9 @@ constructor(
         }
     }
 
-    /** Returns true if the cached entity is missing important fields and should be refreshed. */
     private fun DeviceHardwareEntity.isIncomplete(): Boolean =
         displayName.isBlank() || platformioTarget.isBlank() || images.isNullOrEmpty()
 
-    /**
-     * Extension function to check if the cached entity is stale.
-     *
-     * We treat entries with missing critical fields (e.g., no images or target) as stale so that they can be
-     * automatically healed from newer JSON snapshots even if their timestamp is recent.
-     */
     private fun DeviceHardwareEntity.isStale(): Boolean =
         isIncomplete() || (System.currentTimeMillis() - this.lastUpdated) > CACHE_EXPIRATION_TIME_MS
 
@@ -242,7 +199,6 @@ constructor(
                 base
             }
 
-        // If the device reported a specific build environment via pio_env, trust it for firmware retrieval
         return if (reportedTarget != null) {
             Logger.d { "DeviceHardwareRepository: using reported target $reportedTarget for hardware info" }
             result.copy(platformioTarget = reportedTarget)

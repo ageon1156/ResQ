@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.data.repository
 
 import io.mockk.every
@@ -76,7 +61,6 @@ class MeshLogRepositoryTest {
                 fromRadio = FromRadio.newBuilder().setPacket(meshPacket).build(),
             )
 
-        // Using reflection to test private method parseTelemetryLog
         val method = MeshLogRepository::class.java.getDeclaredMethod("parseTelemetryLog", MeshLog::class.java)
         method.isAccessible = true
         val result = method.invoke(repository, meshLog) as Telemetry?
@@ -89,7 +73,7 @@ class MeshLogRepositoryTest {
 
     @Test
     fun `parseTelemetryLog maps missing temperature to NaN`() = runTest(testDispatcher) {
-        val envMetrics = EnvironmentMetrics.newBuilder().build() // Temperature not set
+        val envMetrics = EnvironmentMetrics.newBuilder().build() 
         val telemetry = Telemetry.newBuilder().setEnvironmentMetrics(envMetrics).build()
 
         val meshPacket =
@@ -115,7 +99,6 @@ class MeshLogRepositoryTest {
         assertNotNull(result)
         val resultMetrics = result?.environmentMetrics
 
-        // Should be NaN as per repository logic for missing fields
         assertEquals(Float.NaN, resultMetrics?.temperature!!, 0.01f)
     }
 }

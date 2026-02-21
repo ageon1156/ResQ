@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.node.metrics
 
 import androidx.compose.foundation.background
@@ -41,11 +26,6 @@ import org.meshtastic.feature.node.metrics.CommonCharts.DATE_TIME_FORMAT
 import org.meshtastic.feature.node.metrics.CommonCharts.MS_PER_SEC
 import org.meshtastic.proto.MeshProtos.MeshPacket
 
-/**
- * Organic Signal Metrics Card
- *
- * Displays signal strength metrics (SNR/RSSI) with organic styling.
- */
 @Composable
 fun OrganicSignalMetricsCard(meshPacket: MeshPacket) {
     val time = meshPacket.rxTime * MS_PER_SEC
@@ -66,7 +46,7 @@ fun OrganicSignalMetricsCard(meshPacket: MeshPacket) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Timestamp
+            
             Text(
                 text = DATE_TIME_FORMAT.format(time),
                 style = MaterialTheme.typography.titleMedium,
@@ -74,12 +54,11 @@ fun OrganicSignalMetricsCard(meshPacket: MeshPacket) {
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            // Signal metrics row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // SNR chip
+                
                 OrganicSignalMetricChip(
                     label = "SNR",
                     value = "%.1f dB".format(meshPacket.rxSnr),
@@ -87,7 +66,6 @@ fun OrganicSignalMetricsCard(meshPacket: MeshPacket) {
                     modifier = Modifier.weight(1f)
                 )
 
-                // RSSI chip
                 OrganicSignalMetricChip(
                     label = "RSSI",
                     value = "%d dBm".format(meshPacket.rxRssi),
@@ -99,9 +77,6 @@ fun OrganicSignalMetricsCard(meshPacket: MeshPacket) {
     }
 }
 
-/**
- * Organic signal metric chip
- */
 @Composable
 private fun OrganicSignalMetricChip(
     label: String,

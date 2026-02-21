@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.settings.radio.channel.component
 
@@ -64,11 +49,6 @@ import org.meshtastic.core.strings.security_icon_help_dismiss
 import org.meshtastic.core.strings.uplink_enabled
 import org.meshtastic.core.strings.uplink_feature_description
 
-/**
- * At this firmware version periodic position sharing on a secondary channel was implemented. To enable this feature the
- * user must disable position on the primary channel and enable on a secondary channel. The lowest indexed secondary
- * channel with the position enabled will conduct the automatic position broadcasts.
- */
 internal const val SECONDARY_CHANNEL_EPOCH = "2.6.10"
 
 internal enum class ChannelIcons(
@@ -149,7 +129,7 @@ internal fun ChannelLegendDialog(firmwareVersion: DeviceVersion, onDismiss: () -
                 Text(
                     text =
                     if (firmwareVersion >= DeviceVersion(asString = SECONDARY_CHANNEL_EPOCH)) {
-                        /* 2.6.10+ */
+                        
                         "- ${stringResource(Res.string.secondary_channel_position_feature)}"
                     } else {
                         "- ${stringResource(Res.string.manual_position_request)}"

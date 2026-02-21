@@ -1,22 +1,7 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.map
 
-import android.Manifest // Added for Accompanist
+import android.Manifest 
 import android.graphics.Paint
 import android.text.format.DateUtils
 import androidx.appcompat.content.res.AppCompatResources
@@ -77,8 +62,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.touchlab.kermit.Logger
-import com.google.accompanist.permissions.ExperimentalPermissionsApi // Added for Accompanist
-import com.google.accompanist.permissions.rememberMultiplePermissionsState // Added for Accompanist
+import com.google.accompanist.permissions.ExperimentalPermissionsApi 
+import com.google.accompanist.permissions.rememberMultiplePermissionsState 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import org.meshtastic.core.model.triage.TriageLevel
@@ -204,7 +189,7 @@ private fun createTriageMarkerIcon(
     val canvas = android.graphics.Canvas(bmp)
     val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
         color = if (isSilentNode) {
-            0xFFFF6D00.toInt() // orange — auto-placed silent node pin
+            0xFFFF6D00.toInt() 
         } else {
             when (level) {
                 TriageLevel.RED    -> 0xFFD32F2F.toInt()
@@ -223,7 +208,7 @@ private fun createTriageMarkerIcon(
     canvas.drawCircle(sizePx / 2f, sizePx / 2f, r, fillPaint)
     canvas.drawCircle(sizePx / 2f, sizePx / 2f, r, borderPaint)
     if (isSilentNode) {
-        // Draw a small "!" to distinguish silent-node auto-pins from manual pins
+        
         val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.WHITE
             textSize = 26f
@@ -273,7 +258,7 @@ private fun MapView.updateMarkers(
 ) {
     Logger.d { "Showing on map: ${nodeMarkers.size} nodes ${waypointMarkers.size} waypoints" }
     overlays.removeAll { it is MarkerWithLabel }
-    // overlays.addAll(nodeMarkers + waypointMarkers)
+    
     overlays.addAll(waypointMarkers)
     nodeClusterer.items.clear()
     nodeClusterer.items.addAll(nodeMarkers)
@@ -291,26 +276,19 @@ private fun cacheManagerCallback(onTaskComplete: () -> Unit, onTaskFailed: (Int)
         }
 
         override fun updateProgress(progress: Int, currentZoomLevel: Int, zoomMin: Int, zoomMax: Int) {
-            // NOOP since we are using the build in UI
+            
         }
 
         override fun downloadStarted() {
-            // NOOP since we are using the build in UI
+            
         }
 
         override fun setPossibleTilesInArea(total: Int) {
-            // NOOP since we are using the build in UI
+            
         }
     }
 
-/**
- * Main composable for displaying the map view, including nodes, waypoints, and user location. It handles user
- * interactions for map manipulation, filtering, and offline caching.
- *
- * @param mapViewModel The [MapViewModel] providing data and state for the map.
- * @param navigateToNodeDetails Callback to navigate to the details screen of a selected node.
- */
-@OptIn(ExperimentalPermissionsApi::class) // Added for Accompanist
+@OptIn(ExperimentalPermissionsApi::class) 
 @Suppress("CyclomaticComplexMethod", "LongParameterList", "LongMethod")
 @Composable
 fun MapView(
@@ -340,7 +318,6 @@ fun MapView(
     var showPurgeTileSourceDialog by remember { mutableStateOf(false) }
     var showMapStyleDialog by remember { mutableStateOf(false) }
 
-    // ── Triage map state ──────────────────────────────────────────────────────
     val triageMapViewModel: TriageMapViewModel = hiltViewModel()
     var activeMapMode by remember { mutableStateOf(MapMode.CustomMap) }
     var pendingTriageLatLng by remember { mutableStateOf<GeoPoint?>(null) }
@@ -356,7 +333,6 @@ fun MapView(
 
     val hasGps = remember { context.hasGps() }
 
-    // Accompanist permissions state for location
     val locationPermissionsState =
         rememberMultiplePermissionsState(permissions = listOf(Manifest.permission.ACCESS_FINE_LOCATION))
     var triggerLocationToggleAfterPermission by remember { mutableStateOf(false) }
@@ -422,7 +398,6 @@ fun MapView(
         }
     }
 
-    // Effect to toggle MyLocation after permission is granted
     LaunchedEffect(locationPermissionsState.allPermissionsGranted) {
         if (locationPermissionsState.allPermissionsGranted && triggerLocationToggleAfterPermission) {
             map.toggleMyLocation()
@@ -430,7 +405,6 @@ fun MapView(
         }
     }
 
-    // Auto-enable MyLocation overlay on startup if permission is already granted
     LaunchedEffect(Unit) {
         if (locationPermissionsState.allPermissionsGranted && myLocationOverlay == null) {
             map.toggleMyLocation()
@@ -517,7 +491,7 @@ fun MapView(
         val nodesWithPosition = nodes.filter { it.validPosition != null }
         val ourNode = mapViewModel.ourNodeInfo.value
         val displayUnits = mapViewModel.config.display.units
-        val mapFilterStateValue = mapViewModel.mapFilterStateFlow.value // Access mapFilterState directly
+        val mapFilterStateValue = mapViewModel.mapFilterStateFlow.value 
         return nodesWithPosition.mapNotNull { node ->
             if (
                 mapFilterStateValue.onlyFavorites &&
@@ -603,7 +577,7 @@ fun MapView(
         performHapticFeedback()
         Logger.d { "marker long pressed id=$id" }
         val waypoint = waypoints[id]?.data?.waypoint ?: return
-        // edit only when unlocked or lockedTo myNodeNum
+        
         if (waypoint.lockedTo in setOf(0, mapViewModel.myNodeNum ?: 0) && isConnected) {
             showEditWaypointDialog = waypoint
         } else {
@@ -621,7 +595,7 @@ fun MapView(
     fun MapView.onWaypointChanged(waypoints: Collection<Packet>, selectedWaypointId: Int?): List<MarkerWithLabel> {
         return waypoints.mapNotNull { waypoint ->
             val pt = waypoint.data.waypoint ?: return@mapNotNull null
-            if (!mapFilterState.showWaypoints) return@mapNotNull null // Use collected mapFilterState
+            if (!mapFilterState.showWaypoints) return@mapNotNull null 
             val lock = if (pt.lockedTo != 0) "\uD83D\uDD12" else ""
             val time =
                 DateUtils.formatDateTime(
@@ -847,9 +821,9 @@ fun MapView(
                         )
                     }
                     mapView.drawOverlays()
-                }, // Renamed map to mapView to avoid conflict
+                }, 
             )
-            // ── Mode toggle always visible at top center ──────────────────────
+            
             MapModeTabRow(
                 activeMode = activeMapMode,
                 onModeSelected = { activeMapMode = it },
@@ -1028,7 +1002,6 @@ fun MapView(
         PurgeTileSourceDialog(onDismiss = { showPurgeTileSourceDialog = false })
     }
 
-    // ── Triage dialogs ────────────────────────────────────────────────────────
     pendingTriageLatLng?.let { geoPoint ->
         TriageLevelPickerDialog(
             onLevelSelected = { level ->
@@ -1056,7 +1029,7 @@ fun MapView(
 
     if (showEditWaypointDialog != null) {
         OrganicEditWaypointDialog(
-            waypoint = showEditWaypointDialog ?: return, // Safe call
+            waypoint = showEditWaypointDialog ?: return, 
             onSendClicked = { waypoint ->
                 Logger.d { "User clicked send waypoint ${waypoint.id}" }
                 showEditWaypointDialog = null

@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.component
 
@@ -60,8 +45,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
-// Derived in part from:
-// https://github.com/androidx/androidx/blob/c92ad2941368202b2d78b8d14c71bf81e9525944/compose/foundation/foundation/integration-tests/foundation-demos/src/main/java/androidx/compose/foundation/demos/LazyColumnDragAndDropDemo.kt
 @Preview
 @Composable
 fun LazyColumnDragAndDropDemo() {
@@ -241,12 +224,6 @@ fun LazyItemScope.DraggableItem(
 
 const val DRAG_DROP_CONTENT_TYPE = "drag-and-drop"
 
-/**
- * Extension function for [LazyListScope] with drag-and-drop functionality for indexed items.
- *
- * Wraps [itemsIndexed] function with [detectDragGesturesAfterLongPress] to enable long-press drag gestures and allow
- * items in the list to be reordered using the provided [DragDropState].
- */
 inline fun <T> LazyListScope.dragDropItemsIndexed(
     items: List<T>,
     dragDropState: DragDropState,

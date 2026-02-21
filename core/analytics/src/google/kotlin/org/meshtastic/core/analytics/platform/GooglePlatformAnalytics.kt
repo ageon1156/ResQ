@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.analytics.platform
 
 import android.app.Application
@@ -65,10 +50,6 @@ import org.meshtastic.core.prefs.analytics.AnalyticsPrefs
 import javax.inject.Inject
 import co.touchlab.kermit.Logger as KermitLogger
 
-/**
- * Google Play Services specific implementation of [PlatformAnalytics]. This helper initializes and manages Firebase and
- * Datadog services, and subscribes to analytics preference changes to update consent accordingly.
- */
 class GooglePlatformAnalytics
 @Inject
 constructor(
@@ -76,7 +57,7 @@ constructor(
     analyticsPrefs: AnalyticsPrefs,
 ) : PlatformAnalytics {
 
-    private val sampleRate = 100f.takeIf { BuildConfig.DEBUG } ?: 10f // For Datadog remote sample rate
+    private val sampleRate = 100f.takeIf { BuildConfig.DEBUG } ?: 10f 
 
     private val isInTestLab: Boolean
         get() {
@@ -111,10 +92,8 @@ constructor(
         KermitLogger.setLogWriters(writers)
         KermitLogger.setMinSeverity(if (BuildConfig.DEBUG) Severity.Debug else Severity.Info)
 
-        // Initial consent state
         updateAnalyticsConsent(analyticsPrefs.analyticsAllowed)
 
-        // Subscribe to analytics preference changes
         analyticsPrefs
             .getAnalyticsAllowedChangesFlow()
             .onEach { allowed -> updateAnalyticsConsent(allowed) }
@@ -132,7 +111,7 @@ constructor(
                 .setCrashReportsEnabled(true)
                 .setUseDeveloperModeWhenDebuggable(true)
                 .build()
-        // Initialize with PENDING, consent will be updated via updateAnalyticsConsent
+        
         Datadog.initialize(application, configuration, TrackingConsent.PENDING)
         Datadog.setUserInfo(analyticsPrefs.installId)
         Datadog.setVerbosity(if (BuildConfig.DEBUG) android.util.Log.DEBUG else android.util.Log.WARN)
@@ -172,11 +151,6 @@ constructor(
         Firebase.crashlytics.setUserId(analyticsPrefs.installId)
     }
 
-    /**
-     * Updates the consent status for analytics, performance, and crash reporting services.
-     *
-     * @param allowed True if analytics are allowed, false otherwise.
-     */
     fun updateAnalyticsConsent(allowed: Boolean) {
         if (!isPlatformServicesAvailable || isInTestLab) {
             KermitLogger.i { "Analytics not available or in test lab, consent update skipped." }
@@ -194,12 +168,12 @@ constructor(
     }
 
     override fun setDeviceAttributes(firmwareVersion: String, model: String) {
-        // No-op: Analytics disabled for streamlined emergency app
+        
     }
 
     @Composable
     override fun AddNavigationTrackingEffect(navController: NavHostController) {
-        // No-op: Analytics disabled for streamlined emergency app
+        
     }
 
     private val isGooglePlayAvailable: Boolean
@@ -212,7 +186,7 @@ constructor(
         get() = Datadog.isInitialized()
 
     override val isPlatformServicesAvailable: Boolean
-        get() = false // Analytics disabled for streamlined emergency app
+        get() = false 
 
     private class CrashlyticsLogWriter : LogWriter() {
         companion object {
@@ -260,7 +234,7 @@ constructor(
     }
 
     override fun track(event: String, vararg properties: DataPair) {
-        // No-op: Analytics disabled for streamlined emergency app
+        
     }
 }
 

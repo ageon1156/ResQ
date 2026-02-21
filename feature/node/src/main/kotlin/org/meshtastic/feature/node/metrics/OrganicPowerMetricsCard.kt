@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.node.metrics
 
 import androidx.compose.foundation.background
@@ -47,11 +32,6 @@ import org.meshtastic.feature.node.metrics.CommonCharts.DATE_TIME_FORMAT
 import org.meshtastic.feature.node.metrics.CommonCharts.MS_PER_SEC
 import org.meshtastic.proto.TelemetryProtos.Telemetry
 
-/**
- * Organic Power Metrics Card
- *
- * Displays power channel metrics (voltage/current) with organic styling.
- */
 @Composable
 fun OrganicPowerMetricsCard(telemetry: Telemetry) {
     val time = telemetry.time * MS_PER_SEC
@@ -72,7 +52,7 @@ fun OrganicPowerMetricsCard(telemetry: Telemetry) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Timestamp
+            
             Text(
                 text = DATE_TIME_FORMAT.format(time),
                 style = MaterialTheme.typography.titleMedium,
@@ -80,7 +60,6 @@ fun OrganicPowerMetricsCard(telemetry: Telemetry) {
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            // Power channels row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -117,9 +96,6 @@ fun OrganicPowerMetricsCard(telemetry: Telemetry) {
     }
 }
 
-/**
- * Organic power channel chip displaying voltage and current
- */
 @Composable
 private fun OrganicPowerChannel(
     titleRes: StringResource,

@@ -38,10 +38,6 @@ class TriagePinRepository @Inject constructor(
         dbManager.currentDb.value.triagePinDao().updateVictimCount(pinId, newCount)
     }
 
-    /**
-     * Upgrades the triage level of [pinId] to [newLevel].
-     * MUST NOT be called with a lower-priority level — caller is responsible.
-     */
     suspend fun upgradeTriageLevel(pinId: String, newLevel: TriageLevel) = withContext(dispatchers.io) {
         dbManager.currentDb.value.triagePinDao().updateTriageLevel(pinId, newLevel.name)
     }
@@ -50,8 +46,6 @@ class TriagePinRepository @Inject constructor(
         dbManager.currentDb.value.triagePinDao().delete(pinId)
     }
 }
-
-// ── Domain ↔ Entity mappers ───────────────────────────────────────────────────
 
 private fun TriagePinEntity.toDomain(): TriagePin = TriagePin(
     pinId                  = pinId,

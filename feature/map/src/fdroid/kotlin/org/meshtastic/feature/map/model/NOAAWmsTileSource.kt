@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.map.model
 
@@ -53,24 +38,20 @@ open class NOAAWmsTileSource(
     ),
 ) {
 
-    // array indexes for array to hold bounding boxes.
     private val minX = 0
     private val maxX = 1
     private val minY = 2
     private val maxY = 3
 
-    // Web Mercator n/w corner of the map.
     private val tileOrigin = doubleArrayOf(-20037508.34789244, 20037508.34789244)
 
-    // array indexes for that data
     private val origX = 0
-    private val origY = 1 // "
+    private val origY = 1 
 
-    // Size of square world map in meters, using WebMerc projection.
     private val mapSize = 20037508.34789244 * 2
     private var layer = ""
     private var version = "1.1.0"
-    private var srs = "EPSG%3A3857" // used by geo server
+    private var srs = "EPSG%3A3857" 
     private var format = ""
     private var time = ""
     private var style: String? = null
@@ -87,22 +68,6 @@ open class NOAAWmsTileSource(
         if (time != null) this.time = time
     }
 
-    //    fun createFrom(endpoint: WMSEndpoint, layer: WMSLayer): WMSTileSource? {
-    //        var srs: String? = "EPSG:900913"
-    //        if (layer.srs.isNotEmpty()) {
-    //            srs = layer.srs[0]
-    //        }
-    //        return if (layer.styles.isEmpty()) {
-    //            WMSTileSource(
-    //                layer.name, arrayOf(endpoint.baseurl), layer.name,
-    //                endpoint.wmsVersion, srs, null, layer.pixelSize
-    //            )
-    //        } else WMSTileSource(
-    //            layer.name, arrayOf(endpoint.baseurl), layer.name,
-    //            endpoint.wmsVersion, srs, layer.styles[0], layer.pixelSize
-    //        )
-    //    }
-
     private fun tile2lon(x: Int, z: Int): Double = x / 2.0.pow(z.toDouble()) * 360.0 - 180
 
     private fun tile2lat(y: Int, z: Int): Double {
@@ -110,8 +75,6 @@ open class NOAAWmsTileSource(
         return Math.toDegrees(atan(sinh(n)))
     }
 
-    // Return a web Mercator bounding box given tile x/y indexes and a zoom
-    // level.
     private fun getBoundingBox(x: Int, y: Int, zoom: Int): DoubleArray {
         val tileSize = mapSize / 2.0.pow(zoom.toDouble())
         val minx = tileOrigin[origX] + x * tileSize

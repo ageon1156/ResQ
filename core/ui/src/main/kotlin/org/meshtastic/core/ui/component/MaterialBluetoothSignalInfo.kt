@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.component
 
@@ -56,15 +41,6 @@ import org.meshtastic.core.ui.theme.StatusColors.StatusYellow
 
 private const val SIZE_ICON = 20
 
-/**
- * A composable that displays a signal strength indicator with an icon and optional text value. The icon and its color
- * change based on the number of signal bars.
- *
- * @param modifier Modifier for this composable.
- * @param signalBars The number of signal bars, typically from 0 to 4. Values outside this range (e.g., < 0) will
- *   display a "signal off" or unknown state icon.
- * @param signalStrengthValue Optional text to display next to the icon, such as dBm or SNR value.
- */
 @Suppress("MagicNumber")
 @Composable
 fun MaterialSignalInfo(
@@ -124,11 +100,11 @@ fun MaterialBluetoothSignalInfo(rssi: Int, modifier: Modifier = Modifier) {
 
 @Suppress("MagicNumber")
 private fun getBluetoothSignalBars(rssi: Int): Int = when {
-    rssi > -60 -> 4 // Excellent
-    rssi > -70 -> 3 // Good
-    rssi > -80 -> 2 // Fair
-    rssi > -90 -> 1 // Weak
-    else -> 0 // Poor/No Signal
+    rssi > -60 -> 4 
+    rssi > -70 -> 3 
+    rssi > -80 -> 2 
+    rssi > -90 -> 1 
+    else -> 0 
 }
 
 class SignalStrengthProvider : PreviewParameterProvider<Int> {

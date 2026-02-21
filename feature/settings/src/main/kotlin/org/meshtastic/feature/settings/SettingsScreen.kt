@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.settings
 
 import android.Manifest
@@ -276,11 +261,10 @@ fun SettingsScreen(
     }
 }
 
-private const val UNLOCK_CLICK_COUNT = 5 // Number of clicks required to unlock excluded modules.
-private const val UNLOCKED_CLICK_COUNT = 3 // Number of clicks before we toast that modules are already unlocked.
-private const val UNLOCK_TIMEOUT_SECONDS = 1 // Timeout in seconds to reset the click counter.
+private const val UNLOCK_CLICK_COUNT = 5 
+private const val UNLOCKED_CLICK_COUNT = 3 
+private const val UNLOCK_TIMEOUT_SECONDS = 1 
 
-/** A button to display the app version. Clicking it 5 times will unlock the excluded modules. */
 @Composable
 private fun AppVersionButton(
     excludedModulesUnlocked: Boolean,

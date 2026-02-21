@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 @file:Suppress("MagicNumber")
 
@@ -29,12 +14,6 @@ import org.meshtastic.core.strings.plurals_minutes
 import org.meshtastic.core.strings.plurals_seconds
 import java.util.concurrent.TimeUnit
 
-/**
- * Defines a set of fixed time intervals in seconds, commonly used for configuration settings.
- *
- * @param value The interval duration in seconds.
- * @param textRes The string resource for the display name of the interval.
- */
 enum class FixedUpdateIntervals(
     val value: Long,
     val textRes: StringResource? = null,
@@ -78,19 +57,11 @@ enum class FixedUpdateIntervals(
     ;
 
     companion object {
-        /**
-         * Finds a [FixedUpdateIntervals] that matches the given value.
-         *
-         * @return The corresponding [FixedUpdateIntervals] or null if no match is found.
-         */
+        
         fun fromValue(value: Long): FixedUpdateIntervals? = entries.find { it.value == value }
     }
 }
 
-/**
- * Represents a specific configuration context that determines a subset of allowed update intervals. This is used to
- * filter the available [FixedUpdateIntervals] for a particular setting.
- */
 enum class IntervalConfiguration {
     ALL,
     BROADCAST_SHORT,
@@ -111,7 +82,6 @@ enum class IntervalConfiguration {
     DISPLAY_CAROUSEL,
     ;
 
-    /** A list of [FixedUpdateIntervals] that are permissible for this configuration. */
     val allowedIntervals: List<FixedUpdateIntervals> by lazy {
         when (this) {
             ALL -> FixedUpdateIntervals.entries
@@ -361,15 +331,10 @@ enum class IntervalConfiguration {
     }
 }
 
-/**
- * Represents an update interval, which can be either a predefined fixed value or a custom manual value in seconds. This
- * is a type-safe representation for settings that involve time durations.
- */
 sealed class UpdateInterval {
-    /** The duration of the interval in seconds. */
+    
     abstract val value: Long
 
-    /** A unique, stable identifier for this interval, suitable for use in Compose keys. */
     val id: String
         get() =
             when (this) {
@@ -377,21 +342,14 @@ sealed class UpdateInterval {
                 is Manual -> "manual_$value"
             }
 
-    /** A predefined, fixed interval. */
     data class Fixed(val interval: FixedUpdateIntervals) : UpdateInterval() {
         override val value: Long = interval.value
     }
 
-    /** A user-defined interval, specified in seconds. */
     data class Manual(override val value: Long) : UpdateInterval()
 
     companion object {
-        /**
-         * Creates an [UpdateInterval] from a raw Long value in seconds. If the value matches a predefined
-         * [FixedUpdateIntervals], a [Fixed] instance is returned. Otherwise, a [Manual] instance is returned.
-         *
-         * @param value The interval duration in seconds.
-         */
+        
         fun fromValue(value: Long): UpdateInterval =
             FixedUpdateIntervals.fromValue(value)?.let { Fixed(it) } ?: Manual(value)
     }

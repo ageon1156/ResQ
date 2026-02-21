@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.buildlogic
 
@@ -38,16 +23,6 @@ import org.gradle.kotlin.dsl.withType
 import org.meshtastic.buildlogic.PluginType.Unknown
 import kotlin.text.RegexOption.DOT_MATCHES_ALL
 
-/**
- * Generates module dependency graphs with `graphDump` task, and update the corresponding `README.md` file with `graphUpdate`.
- *
- * This is not an optimal implementation and could be improved if needed:
- * - [Graph.invoke] is **recursively** searching through dependent projects (although in practice it will never reach a stack overflow).
- * - [Graph.invoke] is entirely re-executed for all projects, without re-using intermediate values.
- * - [Graph.invoke] is always executed during Gradle's Configuration phase (but takes in general less than 1 ms for a project).
- *
- * The resulting graphs can be configured with `graph.ignoredProjects` and `graph.supportedConfigurations` properties.
- */
 private class Graph(
     private val root: Project,
     private val dependencies: MutableMap<Project, Set<Pair<Configuration, Project>>> = mutableMapOf(),
@@ -90,9 +65,6 @@ private class Graph(
     fun plugins() = plugins.mapKeys { it.key.path }
 }
 
-/**
- * Declaration order is important, as only the first match will be retained.
- */
 internal enum class PluginType(val id: String, val ref: String, val style: String) {
     AndroidApplication(
         id = "meshtastic.android.application",
@@ -115,18 +87,18 @@ internal enum class PluginType(val id: String, val ref: String, val style: Strin
         style = "fill:#9BF6FF,stroke:#000,stroke-width:2px,color:#000",
     ),
     AndroidLibraryCompose(
-        // Assuming this might be a distinct plugin
+        
         id = "meshtastic.android.library.compose",
         ref = "android-library-compose",
         style = "fill:#9BF6FF,stroke:#000,stroke-width:2px,color:#000",
     ),
     AndroidTest(
-        id = "meshtastic.android.test", // Placeholder
+        id = "meshtastic.android.test", 
         ref = "android-test",
         style = "fill:#A0C4FF,stroke:#000,stroke-width:2px,color:#000",
     ),
     Jvm(
-        id = "meshtastic.jvm.library", // Placeholder
+        id = "meshtastic.jvm.library", 
         ref = "jvm-library",
         style = "fill:#BDB2FF,stroke:#000,stroke-width:2px,color:#000",
     ),
@@ -143,7 +115,7 @@ internal enum class PluginType(val id: String, val ref: String, val style: Strin
 }
 
 internal fun Project.configureGraphTasks() {
-    if (!buildFile.exists()) return // Ignore root modules without build file
+    if (!buildFile.exists()) return 
     val dumpTask = tasks.register<GraphDumpTask>("graphDump") {
         val graph = Graph(this@configureGraphTasks).invoke()
         projectPath = this@configureGraphTasks.path
@@ -190,9 +162,9 @@ private abstract class GraphDumpTask : DefaultTask() {
     private fun mermaid() = buildString {
         val dependencies: Set<Dependency> = dependencies.get()
             .flatMapTo(mutableSetOf()) { (project, entries) -> entries.map { it.toDependency(project) } }
-        // FrontMatter configuration (not supported yet on GitHub.com)
+        
         appendLine(
-            // language=YAML
+            
             """
             ---
             config:
@@ -202,12 +174,12 @@ private abstract class GraphDumpTask : DefaultTask() {
             ---
             """.trimIndent(),
         )
-        // Graph declaration
+        
         appendLine("graph TB")
-        // Nodes and subgraphs
+        
         val (rootProjects, nestedProjects) = dependencies
             .map { listOf(it.project, it.dependency) }.flatten().toSet()
-            .plus(projectPath.get()) // Special case when this specific module has no other dependency
+            .plus(projectPath.get()) 
             .groupBy { it.substringBeforeLast(":") }
             .entries.partition { it.key.isEmpty() }
 
@@ -247,12 +219,12 @@ private abstract class GraphDumpTask : DefaultTask() {
         rootProjects.flatMap { it.value }.sortedDescending().forEach {
             appendLine(it.alias(indent = 2, plugins.get().getValue(it)))
         }
-        // Links
+        
         if (dependencies.isNotEmpty()) appendLine()
         dependencies
             .sortedWith(compareBy({ it.project }, { it.dependency }, { it.configuration }))
             .forEach { appendLine(it.link(indent = 2)) }
-        // Classes
+        
         appendLine()
         PluginType.entries.forEach { appendLine(it.classDef()) }
     }

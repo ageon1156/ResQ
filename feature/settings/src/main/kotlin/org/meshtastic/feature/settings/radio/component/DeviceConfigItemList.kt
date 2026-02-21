@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.settings.radio.component
 
 import android.content.BroadcastReceiver
@@ -275,7 +260,7 @@ fun DeviceConfigScreen(viewModel: RadioConfigViewModel = hiltViewModel(), onBack
                     title = "",
                     value = formState.value.tzdef,
                     summary = stringResource(Res.string.config_device_tzdef_summary),
-                    maxSize = 64, // tzdef max_size:65
+                    maxSize = 64, 
                     enabled = state.connected,
                     isError = false,
                     keyboardOptions =

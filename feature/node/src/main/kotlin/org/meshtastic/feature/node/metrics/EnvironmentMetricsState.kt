@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.metrics
 
@@ -65,13 +50,6 @@ enum class Environment(val color: Color) {
     abstract fun getValue(telemetry: TelemetryProtos.Telemetry): Float?
 }
 
-/**
- * @param metrics the filtered [List]
- * @param shouldPlot a [List] the size of [Environment] used to determine if a metric should be plotted
- * @param leftMinMax [Pair] with the min and max of the barometric pressure
- * @param rightMinMax [Pair] with the combined min and max of: the temperature, humidity, and IAQ
- * @param times [Pair] with the oldest and newest times in that order
- */
 data class EnvironmentGraphingData(
     val metrics: List<TelemetryProtos.Telemetry>,
     val shouldPlot: List<Boolean>,
@@ -83,12 +61,6 @@ data class EnvironmentGraphingData(
 data class EnvironmentMetricsState(val environmentMetrics: List<TelemetryProtos.Telemetry> = emptyList()) {
     fun hasEnvironmentMetrics() = environmentMetrics.isNotEmpty()
 
-    /**
-     * Filters [environmentMetrics] based on a [org.meshtastic.feature.node.model.TimeFrame].
-     *
-     * @param timeFrame used to filter
-     * @return [EnvironmentGraphingData]
-     */
     @Suppress("LongMethod", "CyclomaticComplexMethod", "MagicNumber")
     fun environmentMetricsFiltered(timeFrame: TimeFrame, useFahrenheit: Boolean = false): EnvironmentGraphingData {
         val oldestTime = timeFrame.calculateOldestTime()
@@ -98,11 +70,9 @@ data class EnvironmentMetricsState(val environmentMetrics: List<TelemetryProtos.
             return EnvironmentGraphingData(metrics = telemetries, shouldPlot = shouldPlot.toList())
         }
 
-        /* Grab the combined min and max for temp, humidity, soil_Temperature, soilMoisture and iaq. */
         val minValues = mutableListOf<Float>()
         val maxValues = mutableListOf<Float>()
 
-        // Temperature
         val temperatures = telemetries.mapNotNull { it.environmentMetrics.temperature?.takeIf { !it.isNaN() } }
         if (temperatures.isNotEmpty()) {
             var minTempValue = temperatures.minOf { it }
@@ -116,7 +86,6 @@ data class EnvironmentMetricsState(val environmentMetrics: List<TelemetryProtos.
             shouldPlot[Environment.TEMPERATURE.ordinal] = true
         }
 
-        // Relative Humidity
         val humidities =
             telemetries.mapNotNull { it.environmentMetrics.relativeHumidity?.takeIf { !it.isNaN() && it != 0.0f } }
         if (humidities.isNotEmpty()) {
@@ -125,7 +94,6 @@ data class EnvironmentMetricsState(val environmentMetrics: List<TelemetryProtos.
             shouldPlot[Environment.HUMIDITY.ordinal] = true
         }
 
-        // Soil Temperature
         val soilTemperatures = telemetries.mapNotNull { it.environmentMetrics.soilTemperature?.takeIf { !it.isNaN() } }
         if (soilTemperatures.isNotEmpty()) {
             var minSoilTemperatureValue = soilTemperatures.minOf { it }
@@ -139,7 +107,6 @@ data class EnvironmentMetricsState(val environmentMetrics: List<TelemetryProtos.
             shouldPlot[Environment.SOIL_TEMPERATURE.ordinal] = true
         }
 
-        // Soil Moisture
         val soilMoistures =
             telemetries.mapNotNull { it.environmentMetrics.soilMoisture?.takeIf { it != Int.MIN_VALUE } }
         if (soilMoistures.isNotEmpty()) {
@@ -148,7 +115,6 @@ data class EnvironmentMetricsState(val environmentMetrics: List<TelemetryProtos.
             shouldPlot[Environment.SOIL_MOISTURE.ordinal] = true
         }
 
-        // IAQ
         val iaqs = telemetries.mapNotNull { it.environmentMetrics.iaq?.takeIf { it != Int.MIN_VALUE } }
         if (iaqs.isNotEmpty()) {
             minValues.add(iaqs.minOf { it.toFloat() })
@@ -156,7 +122,6 @@ data class EnvironmentMetricsState(val environmentMetrics: List<TelemetryProtos.
             shouldPlot[Environment.IAQ.ordinal] = true
         }
 
-        // Barometric Pressure
         val pressures = telemetries.mapNotNull { it.environmentMetrics.barometricPressure?.takeIf { !it.isNaN() } }
         var minPressureValue = 0f
         var maxPressureValue = 0f
@@ -166,7 +131,6 @@ data class EnvironmentMetricsState(val environmentMetrics: List<TelemetryProtos.
             shouldPlot[Environment.BAROMETRIC_PRESSURE.ordinal] = true
         }
 
-        // Lux
         val luxValues = telemetries.mapNotNull { it.environmentMetrics.lux?.takeIf { !it.isNaN() } }
         if (luxValues.isNotEmpty()) {
             minValues.add(luxValues.minOf { it })
@@ -174,7 +138,6 @@ data class EnvironmentMetricsState(val environmentMetrics: List<TelemetryProtos.
             shouldPlot[Environment.LUX.ordinal] = true
         }
 
-        // UVLux
         val uvLuxValues = telemetries.mapNotNull { it.environmentMetrics.uvLux?.takeIf { !it.isNaN() } }
         if (uvLuxValues.isNotEmpty()) {
             minValues.add(uvLuxValues.minOf { it })

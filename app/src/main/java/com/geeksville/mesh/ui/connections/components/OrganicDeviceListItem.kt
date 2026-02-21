@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.ui.connections.components
 
 import androidx.compose.animation.AnimatedVisibility
@@ -69,15 +54,6 @@ import org.meshtastic.core.strings.serial
 import org.meshtastic.core.ui.theme.LeafShape
 import org.meshtastic.core.ui.theme.organicSpring
 
-/**
- * Organic Device List Item
- *
- * A redesigned device card with organic styling:
- * - LeafShape for natural appearance
- * - Gradient device type indicator
- * - Animated connection states
- * - Better visual hierarchy
- */
 @Composable
 fun OrganicDeviceListItem(
     connectionState: ConnectionState,
@@ -143,7 +119,7 @@ fun OrganicDeviceListItem(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Device type icon with gradient background
+            
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -151,7 +127,7 @@ fun OrganicDeviceListItem(
                     .background(iconColor.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
-                // Connecting animation
+                
                 if (connectionState.isConnecting()) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(40.dp),
@@ -168,7 +144,6 @@ fun OrganicDeviceListItem(
                 )
             }
 
-            // Device info
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -192,7 +167,6 @@ fun OrganicDeviceListItem(
                     )
                 }
 
-                // Connection state text
                 if (connectionState.isConnecting()) {
                     Text(
                         text = "Connecting...",
@@ -209,7 +183,6 @@ fun OrganicDeviceListItem(
                 }
             }
 
-            // Selection indicator
             if (isSelected) {
                 RadioButton(
                     selected = true,

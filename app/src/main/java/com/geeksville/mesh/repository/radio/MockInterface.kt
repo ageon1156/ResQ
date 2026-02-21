@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh.repository.radio
 
@@ -52,7 +37,6 @@ private val defaultChannel = channel {
     role = ChannelProtos.Channel.Role.PRIMARY
 }
 
-/** A simulated interface that is used for testing in the simulator */
 @Suppress("detekt:TooManyFunctions", "detekt:MagicNumber")
 class MockInterface
 @AssistedInject
@@ -67,12 +51,11 @@ constructor(
 
     private var currentPacketId = 50
 
-    // an infinite sequence of ints
     private val packetIdSequence = generateSequence { currentPacketId++ }.iterator()
 
     init {
         Logger.i { "Starting the mock interface" }
-        service.onConnect() // Tell clients they can use the API
+        service.onConnect() 
     }
 
     override fun handleSendToRadio(p: ByteArray) {
@@ -100,7 +83,7 @@ constructor(
             d.getChannelRequest != 0 ->
                 sendAdmin(pr.packet.to, pr.packet.from, pr.packet.id) {
                     getChannelResponse = channel {
-                        index = d.getChannelRequest - 1 // 0 based on the response
+                        index = d.getChannelRequest - 1 
                         if (d.getChannelRequest == 1) {
                             settings = Channel.default.settings
                             role = ChannelProtos.Channel.Role.PRIMARY
@@ -116,14 +99,13 @@ constructor(
         Logger.i { "Closing the mock interface" }
     }
 
-    // / Generate a fake text message from a node
     private fun makeTextMessage(numIn: Int) = MeshProtos.FromRadio.newBuilder().apply {
         packet =
             MeshProtos.MeshPacket.newBuilder()
                 .apply {
                     id = packetIdSequence.next()
                     from = numIn
-                    to = 0xffffffff.toInt() // ugly way of saying broadcast
+                    to = 0xffffffff.toInt() 
                     rxTime = (System.currentTimeMillis() / 1000).toInt()
                     rxSnr = 1.5f
                     decoded =
@@ -143,7 +125,7 @@ constructor(
                 .apply {
                     id = packetIdSequence.next()
                     from = numIn
-                    to = 0xffffffff.toInt() // broadcast
+                    to = 0xffffffff.toInt() 
                     rxTime = (System.currentTimeMillis() / 1000).toInt()
                     rxSnr = 1.5f
                     decoded =
@@ -185,7 +167,7 @@ constructor(
                 .apply {
                     id = packetIdSequence.next()
                     from = numIn
-                    to = 0xffffffff.toInt() // ugly way of saying broadcast
+                    to = 0xffffffff.toInt() 
                     rxTime = (System.currentTimeMillis() / 1000).toInt()
                     rxSnr = 1.5f
                     decoded =
@@ -213,7 +195,7 @@ constructor(
                 .apply {
                     id = packetIdSequence.next()
                     from = numIn
-                    to = 0xffffffff.toInt() // broadcast
+                    to = 0xffffffff.toInt() 
                     rxTime = (System.currentTimeMillis() / 1000).toInt()
                     rxSnr = 1.5f
                     decoded =
@@ -290,7 +272,6 @@ constructor(
         service.handleFromRadio(p.build().toByteArray())
     }
 
-    // / Send a fake ack packet back if the sender asked for want_ack
     private fun sendFakeAck(pr: MeshProtos.ToRadio) = service.serviceScope.handledLaunch {
         delay(2000)
         service.handleFromRadio(makeAck(MY_NODE + 1, pr.packet.from, pr.packet.id).build().toByteArray())
@@ -299,7 +280,6 @@ constructor(
     private fun sendConfigResponse(configId: Int) {
         Logger.d { "Sending mock config response" }
 
-        // / Generate a fake node info entry
         @Suppress("MagicNumber")
         fun makeNodeInfo(numIn: Int, lat: Double, lon: Double) = MeshProtos.FromRadio.newBuilder().apply {
             nodeInfo =
@@ -329,10 +309,9 @@ constructor(
                     .build()
         }
 
-        // Simulated network data to feed to our app
         val packets =
             arrayOf(
-                // MyNodeInfo
+                
                 MeshProtos.FromRadio.newBuilder().apply {
                     myInfo = MeshProtos.MyNodeInfo.newBuilder().apply { myNodeNum = MY_NODE }.build()
                 },
@@ -343,14 +322,11 @@ constructor(
                     }
                 },
 
-                // Fake NodeDB
-                makeNodeInfo(MY_NODE, 32.776665, -96.796989), // dallas
-                makeNodeInfo(MY_NODE + 1, 32.960758, -96.733521), // richardson
+                makeNodeInfo(MY_NODE, 32.776665, -96.796989), 
+                makeNodeInfo(MY_NODE + 1, 32.960758, -96.733521), 
                 MeshProtos.FromRadio.newBuilder().apply { config = config { lora = defaultLoRaConfig } },
                 MeshProtos.FromRadio.newBuilder().apply { channel = defaultChannel },
                 MeshProtos.FromRadio.newBuilder().apply { configCompleteId = configId },
-
-                // Done with config response, now pretend to receive some text messages
 
                 makeTextMessage(MY_NODE + 1),
                 makeNeighborInfo(MY_NODE + 1),

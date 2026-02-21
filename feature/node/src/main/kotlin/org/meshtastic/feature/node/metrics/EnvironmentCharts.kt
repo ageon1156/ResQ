@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.metrics
 
@@ -139,17 +124,16 @@ fun EnvironmentMetricsChart(
 
     val shouldPlot = graphData.shouldPlot
 
-    // Calculate visible time range based on scroll position and chart width
     val visibleTimeRange = run {
         val totalWidthPx = with(LocalDensity.current) { dp.toPx() }
         val scrollPx = scrollState.value.toFloat()
-        // Calculate chart width ratio dynamically based on whether barometric pressure is plotted
+        
         val yAxisCount = if (shouldPlot[Environment.BAROMETRIC_PRESSURE.ordinal]) 2 else 1
         val chartWidthRatio = CHART_WEIGHT / (CHART_WEIGHT + (Y_AXIS_WEIGHT * yAxisCount))
         val visibleWidthPx = screenWidth * chartWidthRatio
         val leftRatio = (scrollPx / totalWidthPx).coerceIn(0f, 1f)
         val rightRatio = ((scrollPx + visibleWidthPx) / totalWidthPx).coerceIn(0f, 1f)
-        // With reverseScrolling = true, scrolling right shows older data (left side of chart)
+        
         val visibleOldest = oldest + (timeDiff * (1f - rightRatio)).toInt()
         val visibleNewest = oldest + (timeDiff * (1f - leftRatio)).toInt()
         visibleOldest to visibleNewest
@@ -223,7 +207,7 @@ private fun MetricPlottingCanvas(
             if (metric == Environment.BAROMETRIC_PRESSURE) {
                 diff = pressureMax - pressureMin
                 min = pressureMin
-            } else { // Reset for other metrics to use rightMin/rightMax
+            } else { 
                 min = rightMin
                 diff = rightMax - rightMin
             }
@@ -242,10 +226,8 @@ private fun MetricPlottingCanvas(
                         timeThreshold = selectedTime.timeThreshold(),
                     ) { i ->
                         val telemetry = telemetries.getOrNull(i) ?: telemetries.last()
-                        val rawValue = metric.getValue(telemetry) // This is Float?
+                        val rawValue = metric.getValue(telemetry) 
 
-                        // Default to 0f if the actual value is null or NaN. This is a reasonable default for
-                        // lux.
                         val pointValue =
                             if (rawValue != null && !rawValue.isNaN()) {
                                 rawValue
@@ -253,21 +235,18 @@ private fun MetricPlottingCanvas(
                                 0f
                             }
 
-                        // Use 'min' and 'diff' from the outer scope, which are specific to the current metric's
-                        // scale group.
                         val currentMin = min
-                        // Avoid division by zero if all values in the current y-axis range are the same.
+                        
                         val currentDiff = if (diff == 0f) 1f else diff
 
                         val ratio = (pointValue - currentMin) / currentDiff
                         var y = height - (ratio * height)
 
-                        // Final check to ensure y is a valid, plottable coordinate.
                         if (y.isNaN() || y.isInfinite()) {
-                            y = height // Default to the bottom of the chart if calculation still results in an
-                            // invalid number.
+                            y = height 
+                            
                         } else {
-                            y = y.coerceIn(0f, height) // Clamp to chart bounds to be safe.
+                            y = y.coerceIn(0f, height) 
                         }
                         return@createPath y
                     }
@@ -346,12 +325,4 @@ private fun MetricLegends(graphData: EnvironmentGraphingData, promptInfoDialog: 
         promptInfoDialog = promptInfoDialog,
     )
 }
-
-// private const val LINE_ON = 10f
-// private const val LINE_OFF = 20f
-// private val TIME_FORMAT: DateFormat = DateFormat.getTimeInstance(DateFormat.MEDIUM)
-// private val DATE_FORMAT: DateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
-// private const val DATE_Y = 32f
-// private const val LINE_LIMIT = 4
-// private const val TEXT_PAINT_ALPHA = 192
 

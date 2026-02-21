@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.settings
 
 import android.app.Application
@@ -105,7 +90,7 @@ constructor(
     val provideLocation: StateFlow<Boolean> =
         myNodeInfo
             .flatMapLatest { myNodeEntity ->
-                // When myNodeInfo changes, set up emissions for the "provide-location-nodeNum" pref.
+                
                 if (myNodeEntity == null) {
                     flowOf(false)
                 } else {
@@ -131,12 +116,8 @@ constructor(
                     val capabilities = Capabilities(node.metadata?.firmwareVersion)
                     val isSerial = radioPrefs.isSerial()
 
-                    // ESP32 Unified OTA is only supported via BLE or WiFi (TCP), not USB Serial.
                     val isEsp32OtaSupported = hw?.isEsp32Arc == true && capabilities.supportsEsp32Ota && !isSerial
 
-                    // Nordic DFU/USB update is supported for NRF52/RP2040.
-                    // For ESP32, we do NOT support Serial updates from the app yet, even if requiresDfu is true
-                    // (which might be set for S3 native USB, but is currently unused by our handlers).
                     val isDfuSupported = hw?.requiresDfu == true && hw.isEsp32Arc != true
 
                     flow { emit(isDfuSupported || isEsp32OtaSupported) }
@@ -146,7 +127,6 @@ constructor(
             }
             .stateInWhileSubscribed(initialValue = false)
 
-    // Device DB cache limit (bounded by DatabaseConstants)
     val dbCacheLimit: StateFlow<Int> = databaseManager.cacheLimit
 
     fun setDbCacheLimit(limit: Int) {
@@ -154,7 +134,6 @@ constructor(
         databaseManager.setCacheLimit(clamped)
     }
 
-    // MeshLog retention period (bounded by MeshLogPrefsImpl constants)
     private val _meshLogRetentionDays = MutableStateFlow(meshLogPrefs.retentionDays)
     val meshLogRetentionDays: StateFlow<Int> = _meshLogRetentionDays.asStateFlow()
 
@@ -194,28 +173,14 @@ constructor(
         _excludedModulesUnlocked.update { true }
     }
 
-    /**
-     * Export all persisted packet data to a CSV file at the given URI.
-     *
-     * The CSV will include all packets, or only those matching the given port number if specified. Each row contains:
-     * date, time, sender node number, sender name, sender latitude, sender longitude, receiver latitude, receiver
-     * longitude, receiver elevation, received SNR, distance, hop limit, and payload.
-     *
-     * @param uri The destination URI for the CSV file.
-     * @param filterPortnum If provided, only packets with this port number will be exported.
-     */
     @Suppress("detekt:CyclomaticComplexMethod", "detekt:LongMethod")
     fun saveDataCsv(uri: Uri, filterPortnum: Int? = null) {
         viewModelScope.launch(Dispatchers.Main) {
-            // Extract distances to this device from position messages and put (node,SNR,distance)
-            // in the file_uri
+
             val myNodeNum = myNodeNum ?: return@launch
 
-            // Capture the current node value while we're still on main thread
             val nodes = nodeRepository.nodeDBbyNum.value
 
-            // Converts a MeshProtos.Position (nullable) to a Position, but only if it's valid, otherwise returns null.
-            // The returned Position is guaranteed to be non-null and valid, or null if the input was null or invalid.
             val positionToPos: (MeshProtos.Position?) -> Position? = { meshPosition ->
                 meshPosition?.let { Position(it) }?.takeIf { it.isValid() }
             }
@@ -228,17 +193,15 @@ constructor(
                     "\"date\",\"time\",\"from\",\"sender name\",\"sender lat\",\"sender long\",\"rx lat\",\"rx long\",\"rx elevation\",\"rx snr\",\"distance(m)\",\"hop limit\",\"payload\"",
                 )
 
-                // Packets are ordered by time, we keep most recent position of
-                // our device in localNodePosition.
                 val dateFormat = SimpleDateFormat("\"yyyy-MM-dd\",\"HH:mm:ss\"", Locale.getDefault())
                 meshLogRepository.getAllLogsInReceiveOrder(Int.MAX_VALUE).first().forEach { packet ->
-                    // If we get a NodeInfo packet, use it to update our position data (if valid)
+                    
                     packet.nodeInfo?.let { nodeInfo ->
                         positionToPos.invoke(nodeInfo.position)?.let { nodePositions[nodeInfo.num] = nodeInfo.position }
                     }
 
                     packet.meshPacket?.let { proto ->
-                        // If the packet contains position data then use it to update, if valid
+                        
                         packet.position?.let { position ->
                             positionToPos.invoke(position)?.let {
                                 nodePositions[
@@ -247,7 +210,6 @@ constructor(
                             }
                         }
 
-                        // packets must have rxSNR, and optionally match the filter given as a param.
                         if (
                             (filterPortnum == null || proto.decoded.portnumValue == filterPortnum) &&
                             proto.rxSnr != 0.0f
@@ -256,13 +218,11 @@ constructor(
                             val rxFrom = proto.from.toUInt()
                             val senderName = nodes[proto.from]?.user?.longName ?: ""
 
-                            // sender lat & long
                             val senderPosition = nodePositions[proto.from]
                             val senderPos = positionToPos.invoke(senderPosition)
                             val senderLat = senderPos?.latitude ?: ""
                             val senderLong = senderPos?.longitude ?: ""
 
-                            // rx lat, long, and elevation
                             val rxPosition = nodePositions[myNodeNum]
                             val rxPos = positionToPos.invoke(rxPosition)
                             val rxLat = rxPos?.latitude ?: ""
@@ -270,17 +230,15 @@ constructor(
                             val rxAlt = rxPos?.altitude ?: ""
                             val rxSnr = proto.rxSnr
 
-                            // Calculate the distance if both positions are valid
-
                             val dist =
                                 if (senderPos == null || rxPos == null) {
                                     ""
                                 } else {
                                     positionToMeter(
-                                        Position(rxPosition!!), // Use rxPosition but only if rxPos was
-                                        // valid
-                                        Position(senderPosition!!), // Use senderPosition but only if
-                                        // senderPos was valid
+                                        Position(rxPosition!!), 
+                                        
+                                        Position(senderPosition!!), 
+                                        
                                     )
                                         .roundToInt()
                                         .toString()
@@ -302,9 +260,6 @@ constructor(
                                     else -> ""
                                 }
 
-                            //  date,time,from,sender name,sender lat,sender long,rx lat,rx long,rx
-                            // elevation,rx
-                            // snr,distance,hop limit,payload
                             @Suppress("MaxLineLength")
                             writer.appendLine(
                                 "$rxDateTime,\"$rxFrom\",\"$senderName\",\"$senderLat\",\"$senderLong\",\"$rxLat\",\"$rxLong\",\"$rxAlt\",\"$rxSnr\",\"$dist\",\"$hopLimit\",\"$payload\"",

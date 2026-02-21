@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh.ui.connections.components
 
@@ -69,17 +54,6 @@ import org.meshtastic.core.strings.scan
 import org.meshtastic.core.strings.scanning_bluetooth
 import org.meshtastic.core.ui.util.showToast
 
-/**
- * Composable that displays a list of Bluetooth Low Energy (BLE) devices and allows scanning. It handles Bluetooth
- * permissions using `accompanist-permissions`.
- *
- * @param connectionState The current connection state of the MeshService.
- * @param bondedDevices List of discovered BLE devices.
- * @param availableDevices
- * @param selectedDevice The full address of the currently selected device.
- * @param scanModel The ViewModel responsible for Bluetooth scanning logic.
- * @param bluetoothEnabled
- */
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -91,10 +65,9 @@ fun BLEDevices(
     scanModel: BTScanModel,
     bluetoothEnabled: Boolean,
 ) {
-    LocalContext.current // Used implicitly by stringResource
+    LocalContext.current 
     val isScanning by scanModel.spinner.collectAsStateWithLifecycle(false)
 
-    // Define permissions needed for Bluetooth scanning based on Android version.
     val bluetoothPermissionsList = remember {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
@@ -179,8 +152,7 @@ fun BLEDevices(
                             onClick = { checkPermissionsAndScan(permissionsState, scanModel, true) },
                         ) {
                             Box {
-                                // Still measure for the icon and text when scanning, so the button's size doesn't jump
-                                // around.
+
                                 Row(modifier = Modifier.alpha(if (isScanning) 0f else 1f)) {
                                     Icon(
                                         imageVector = Icons.Rounded.Search,
@@ -229,7 +201,7 @@ fun BLEDevices(
                 }
             }
         } else {
-            // Show a message and a button to grant permissions if not all granted
+            
             EmptyStateContent(
                 text =
                 if (permissionsState.shouldShowRationale) {

@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.database.dao
 
@@ -61,7 +46,7 @@ class NodeInfoDaoTest {
                 hwModel = MeshProtos.HardwareModel.UNSET
             },
             longName = "Meshtastic c3d4",
-            shortName = null, // Dao filter for includeUnknown
+            shortName = null, 
         )
 
     private val ourNode =
@@ -78,7 +63,7 @@ class NodeInfoDaoTest {
             longName = "Kevin Mester",
             shortName = "KLO",
             latitude = 30.267153,
-            longitude = -97.743057, // Austin
+            longitude = -97.743057, 
             hopsAway = 0,
         )
 
@@ -163,15 +148,15 @@ class NodeInfoDaoTest {
     private val testPositions =
         arrayOf(
             0.0 to 0.0,
-            32.776665 to -96.796989, // Dallas
-            32.960758 to -96.733521, // Richardson
-            32.912901 to -96.781776, // North Dallas
-            29.760427 to -95.369804, // Houston
-            33.748997 to -84.387985, // Atlanta
-            34.052235 to -118.243683, // Los Angeles
-            40.712776 to -74.005974, // New York City
-            41.878113 to -87.629799, // Chicago
-            39.952583 to -75.165222, // Philadelphia
+            32.776665 to -96.796989, 
+            32.960758 to -96.733521, 
+            32.912901 to -96.781776, 
+            29.760427 to -95.369804, 
+            33.748997 to -84.387985, 
+            34.052235 to -118.243683, 
+            40.712776 to -74.005974, 
+            41.878113 to -87.629799, 
+            39.952583 to -75.165222, 
         )
     private val testNodes =
         listOf(ourNode, unknownNode, onlineNode, offlineNode, directNode, relayedNode) +
@@ -212,10 +197,6 @@ class NodeInfoDaoTest {
         database.close()
     }
 
-    /**
-     * Retrieves a list of nodes based on [sort], [filter] and [includeUnknown] parameters. The list excludes [ourNode]
-     * to ensure consistency in the results.
-     */
     private suspend fun getNodes(
         sort: NodeSortOption = NodeSortOption.LAST_HEARD,
         filter: String = "",
@@ -234,13 +215,13 @@ class NodeInfoDaoTest {
         .first()
         .filter { it.num != ourNode.num }
 
-    @Test // node list size
+    @Test 
     fun testNodeListSize() = runBlocking {
         val nodes = nodeInfoDao.nodeDBbyNum().first()
         assertEquals(6 + testPositions.size, nodes.size)
     }
 
-    @Test // nodeDBbyNum() re-orders our node at the top of the list
+    @Test 
     fun testOurNodeInfoIsFirst() = runBlocking {
         val nodes = nodeInfoDao.nodeDBbyNum().first()
         assertEquals(ourNode.num, nodes.values.first().node.num)
@@ -265,7 +246,7 @@ class NodeInfoDaoTest {
         val nodes = getNodes(sort = NodeSortOption.DISTANCE)
         fun NodeEntity.toNode() = Node(num = num, user = user, position = position)
         val sortedNodes =
-            nodes.sortedWith( // nodes with invalid (null) positions at the end
+            nodes.sortedWith( 
                 compareBy<Node> { it.validPosition == null }.thenBy { it.distance(ourNode.toNode()) },
             )
         assertEquals(sortedNodes, nodes)

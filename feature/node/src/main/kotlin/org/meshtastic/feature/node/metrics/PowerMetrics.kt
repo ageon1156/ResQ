@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.metrics
 
@@ -84,7 +69,6 @@ private enum class Power(val color: Color, val min: Float, val max: Float) {
     CURRENT(InfantryBlue, -500f, 500f),
     ;
 
-    /** Difference between the metrics `max` and `min` values. */
     fun difference() = max - min
 }
 
@@ -193,15 +177,14 @@ private fun PowerMetricsChart(
             mutableStateOf(selectedTime.dp(screenWidth, time = (newest.time - oldest.time).toLong()))
         }
 
-    // Calculate visible time range based on scroll position and chart width
     val visibleTimeRange = run {
         val totalWidthPx = with(LocalDensity.current) { dp.toPx() }
         val scrollPx = scrollState.value.toFloat()
-        // Calculate visible width based on actual weight distribution
+        
         val visibleWidthPx = screenWidth * CHART_WIDTH_RATIO
         val leftRatio = (scrollPx / totalWidthPx).coerceIn(0f, 1f)
         val rightRatio = ((scrollPx + visibleWidthPx) / totalWidthPx).coerceIn(0f, 1f)
-        // With reverseScrolling = true, scrolling right shows older data (left side of chart)
+        
         val visibleOldest = oldest.time + (timeDiff * (1f - rightRatio)).toInt()
         val visibleNewest = oldest.time + (timeDiff * (1f - leftRatio)).toInt()
         visibleOldest to visibleNewest
@@ -236,11 +219,10 @@ private fun PowerMetricsChart(
 
             TimeAxisOverlay(modifier.width(dp), oldest = oldest.time, newest = newest.time, selectedTime.lineInterval())
 
-            /* Plot */
             Canvas(modifier = modifier.width(dp)) {
                 val width = size.width
                 val height = size.height
-                /* Voltage */
+                
                 var index = 0
                 while (index < telemetries.size) {
                     val path = Path()
@@ -265,7 +247,7 @@ private fun PowerMetricsChart(
                         style = Stroke(width = GraphUtil.RADIUS, cap = StrokeCap.Round),
                     )
                 }
-                /* Current */
+                
                 index = 0
                 while (index < telemetries.size) {
                     val path = Path()
@@ -315,7 +297,7 @@ private fun PowerMetricsCard(telemetry: Telemetry) {
             SelectionContainer {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(8.dp)) {
-                        /* Time */
+                        
                         Row {
                             Text(
                                 text = DATE_TIME_FORMAT.format(time),
@@ -374,14 +356,12 @@ private fun PowerChannelColumn(titleRes: StringResource, voltage: Float, current
     }
 }
 
-/** Retrieves the appropriate voltage depending on `channelSelected`. */
 private fun retrieveVoltage(channelSelected: PowerChannel, telemetry: Telemetry): Float = when (channelSelected) {
     PowerChannel.ONE -> telemetry.powerMetrics.ch1Voltage
     PowerChannel.TWO -> telemetry.powerMetrics.ch2Voltage
     PowerChannel.THREE -> telemetry.powerMetrics.ch3Voltage
 }
 
-/** Retrieves the appropriate current depending on `channelSelected`. */
 private fun retrieveCurrent(channelSelected: PowerChannel, telemetry: Telemetry): Float = when (channelSelected) {
     PowerChannel.ONE -> telemetry.powerMetrics.ch1Current
     PowerChannel.TWO -> telemetry.powerMetrics.ch2Current

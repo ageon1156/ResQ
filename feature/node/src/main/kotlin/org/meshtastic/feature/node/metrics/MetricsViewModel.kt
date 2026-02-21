@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.node.metrics
 
 import android.app.Application
@@ -101,10 +86,6 @@ constructor(
     private fun MeshLog.hasValidTraceroute(): Boolean =
         with(fromRadio.packet) { hasDecoded() && decoded.wantResponse && from == 0 && to == destNum }
 
-    /**
-     * Creates a fallback node for hidden clients or nodes not yet in the database. This prevents the detail screen from
-     * freezing when viewing unknown nodes.
-     */
     private suspend fun createFallbackNode(nodeNum: Int): Node {
         val userId = DataPacket.nodeNumToDefaultId(nodeNum)
         val safeUserId = userId.padStart(DEFAULT_ID_SUFFIX_LENGTH, '0').takeLast(DEFAULT_ID_SUFFIX_LENGTH)
@@ -220,7 +201,7 @@ constructor(
                             .distinctUntilChanged()
                             .collect { (node, localData) ->
                                 val (ourNodeNum, myInfo) = localData
-                                // Create a fallback node if not found in database (for hidden clients, etc.)
+                                
                                 val actualNode = node ?: createFallbackNode(currentDestNum)
                                 val pioEnv = if (currentDestNum == ourNodeNum) myInfo?.pioEnv else null
                                 val deviceHardware =
@@ -365,7 +346,6 @@ constructor(
         _timeFrame.value = timeFrame
     }
 
-    /** Write the persisted Position data out to a CSV file in the specified location. */
     fun savePositionCSV(uri: Uri) = viewModelScope.launch(dispatchers.main) {
         val positions = state.value.positionLogs
         writeToUri(uri) { writer ->
@@ -384,7 +364,6 @@ constructor(
                 val speed = position.groundSpeed
                 val heading = "%.2f".format(position.groundTrack * 1e-5)
 
-                // date,time,latitude,longitude,altitude,satsInView,speed,heading
                 writer.appendLine(
                     "$rxDateTime,\"$latitude\",\"$longitude\",\"$altitude\",\"$satsInView\",\"$speed\",\"$heading\"",
                 )

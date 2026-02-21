@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.sos
 
@@ -89,9 +74,9 @@ class SOSViewModel @Inject constructor(
                     bytes = messageText.toByteArray(Charsets.UTF_8),
                     dataType = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
                     channel = 0,
-                    hopLimit = 7, // Maximum hops — reach the entire mesh
+                    hopLimit = 7, 
                     wantAck = true,
-                    priority = MeshProtos.MeshPacket.Priority.ALERT_VALUE, // Highest priority
+                    priority = MeshProtos.MeshPacket.Priority.ALERT_VALUE, 
                 )
                 serviceRepository.meshService?.send(packet)
                     ?: run {

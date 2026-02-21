@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh.navigation
 
@@ -84,20 +69,18 @@ fun NavGraphBuilder.nodesGraph(navController: NavHostController, scrollToTopEven
 
 @Suppress("LongMethod")
 fun NavGraphBuilder.nodeDetailGraph(navController: NavHostController, scrollToTopEvents: Flow<ScrollToTopEvent>) {
-    // We keep this route for deep linking or direct navigation to details,
-    // but typically users will navigate via the Adaptive screen in NodesRoutes.Nodes
+
     navigation<NodesRoutes.NodeDetailGraph>(startDestination = NodesRoutes.NodeDetail()) {
         composable<NodesRoutes.NodeDetail>(
             deepLinks =
             listOf(
-                navDeepLink<NodesRoutes.NodeDetail>( // Handles both /node and /node/{destNum} due to destNum: Int?
+                navDeepLink<NodesRoutes.NodeDetail>( 
                     basePath = "$DEEP_LINK_BASE_URI/node",
                 ),
             ),
         ) { backStackEntry ->
             val args = backStackEntry.toRoute<NodesRoutes.NodeDetail>()
-            // When navigating directly to NodeDetail (e.g. from Map or deep link),
-            // we use the Adaptive screen initialized with the specific node ID.
+
             AdaptiveNodeListScreen(
                 navController = navController,
                 scrollToTopEvents = scrollToTopEvents,
@@ -194,15 +177,6 @@ fun NavGraphBuilder.nodeDetailGraph(navController: NavHostController, scrollToTo
 
 fun NavDestination.isNodeDetailRoute(): Boolean = NodeDetailRoute.entries.any { hasRoute(it.routeClass) }
 
-/**
- * Helper to define a composable route for a screen within the node detail graph.
- *
- * @param R The type of the [Route] object, must be serializable.
- * @param navController The [NavHostController] for navigation.
- * @param routeInfo The [NodeDetailRoute] enum entry that defines the path and metadata for this route.
- * @param screenContent A lambda that defines the composable content for the screen.
- * @param getDestNum A lambda to extract the destination number from the route arguments.
- */
 private inline fun <reified R : Route> NavGraphBuilder.addNodeDetailScreenComposable(
     navController: NavHostController,
     routeInfo: NodeDetailRoute,

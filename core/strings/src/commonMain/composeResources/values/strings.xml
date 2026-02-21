@@ -1,11 +1,8 @@
-<!--
-  ~ Licensed under GPL-3.0
-  -->
+
 
 <resources>
     <string name="meshtastic_app_name">ResQ</string>
 
-    <!-- Language tags native names (not available via .getDisplayLanguage) -->
     <string name="fr_HT" translatable="false">Kreyòl ayisyen</string>
     <string name="pt_BR" translatable="false">Português do Brasil</string>
     <string name="zh_CN" translatable="false">简体中文</string>
@@ -157,7 +154,6 @@
     <string name="config_security_serial_enabled">Serial Console over the Stream API.</string>
     <string name="config_security_debug_log_api_enabled">Output live debug logging over serial, view and export position-redacted device logs over Bluetooth.</string>
 
-    <!-- Position Config -->
     <string name="position_packet">Position Packet</string>
     <string name="broadcast_interval">Broadcast Interval</string>
     <string name="smart_position">Smart Position</string>
@@ -858,19 +854,15 @@
 
     <string name="security_icon_help_green_lock">A green lock means the channel is securely encrypted with either a 128 or 256 bit AES key.</string>
 
-    <!-- INSECURE_NO_PRECISE State (Yellow Open Lock) -->
     <string name="security_icon_insecure_no_precise">Insecure Channel, Not Precise</string>
     <string name="security_icon_help_yellow_open_lock">A yellow open lock means the channel is not securely encrypted, is not used for precise location data, and uses either no key at all or a 1 byte known key.</string>
 
-    <!-- INSECURE_PRECISE_ONLY State (Red Open Lock) -->
     <string name="security_icon_insecure_precise_only">Insecure Channel, Precise Location</string>
     <string name="security_icon_help_red_open_lock">A red open lock means the channel is not securely encrypted, is used for precise location data, and uses either no key at all or a 1 byte known key.</string>
 
-    <!-- INSECURE_PRECISE_MQTT_WARNING State (Red Open Lock with Warning Badge) -->
     <string name="security_icon_warning_precise_mqtt">Warning: Insecure, Precise Location &amp; MQTT Uplink</string>
     <string name="security_icon_help_warning_precise_mqtt">A red open lock with a warning means the channel is not securely encrypted, is used for precise location data which is being uplinked to the internet via MQTT, and uses either no key at all or a 1 byte known key.</string>
 
-    <!-- Security Help Dialog Titles and Buttons (from your existing code structure) -->
     <string name="security_icon_help_title">Channel Security</string>
     <string name="security_icon_help_title_all">Channel Security Meanings</string>
     <string name="security_icon_help_show_all">Show All Meanings</string>
@@ -1000,7 +992,6 @@
     <string name="system_settings">System Settings</string>
     <string name="no_local_stats">No Stats Available</string>
 
-
     <string name="analytics_notice">Analytics are collected to help us improve the Android app (thank you), we will receive anonymized information about user behavior. This includes crash reports, screens used in the app, etc.</string>
     <string name="analytics_platforms">"Analytics platforms: "</string>
     <string name="firebase_link" translatable="false">Firebase https://firebase.google.com/</string>
@@ -1021,7 +1012,6 @@
     <string name="preserve_favorites">Preserve Favorites?</string>
     <string name="usb_devices">USB Devices</string>
 
-    <!-- Firmware Update -->
     <string name="firmware_update_title">Firmware Update</string>
     <string name="firmware_update_checking">Checking for updates...</string>
     <string name="firmware_update_device">Device: %1$s</string>
@@ -1115,7 +1105,6 @@
         <item quantity="other">%1$d hours</item>
     </plurals>
 
-    <!-- Compass -->
     <string name="compass_title">Compass</string>
     <string name="open_compass">Open Compass</string>
     <string name="compass_distance">Distance: %1$s</string>
@@ -1134,7 +1123,6 @@
     <string name="replace_channels_and_settings_title">Replace Channels &amp; Settings</string>
     <string name="replace_channels_and_settings_description">This QR code contains a complete configuration. This will REPLACE your existing channels and radio settings. All existing channels will be removed.</string>
 
-    <!-- Emergency Help -->
     <string name="emergency_help">Emergency</string>
     <string name="emergency_first_aid">First Aid</string>
     <string name="emergency_disaster_survival">Disaster Survival</string>
@@ -1159,7 +1147,6 @@
     <string name="emergency_hazard_type">Hazard Type</string>
     <string name="emergency_purpose">Purpose</string>
 
-    <!-- SOS -->
     <string name="sos">SOS</string>
     <string name="sos_screen_title">SOS Emergency</string>
     <string name="sos_send_button">SEND SOS</string>

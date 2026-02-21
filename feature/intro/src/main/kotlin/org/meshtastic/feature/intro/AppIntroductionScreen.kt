@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.intro
 
@@ -70,34 +55,27 @@ import org.meshtastic.core.strings.share_your_location_in_real_time
 import org.meshtastic.core.strings.stay_connected_anywhere
 import org.meshtastic.core.strings.track_and_share_locations
 
-/**
- * Single-page introduction screen. Shows the app name, icon, and key features.
- * Tapping "Get Started" triggers system permission popups (notifications + location)
- * sequentially, then proceeds to the main app regardless of the user's choices.
- *
- * @param onDone Callback invoked when the intro flow is complete.
- */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AppIntroductionScreen(onDone: () -> Unit) {
-    // Build the full list of runtime permissions for this device/API level.
+    
     val allPermissions = remember {
         buildList {
-            // Bluetooth — runtime on Android 12+ (API 31+)
+            
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 add(Manifest.permission.BLUETOOTH_SCAN)
                 add(Manifest.permission.BLUETOOTH_CONNECT)
             }
-            // Notifications — runtime on Android 13+ (API 33+)
+            
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 add(Manifest.permission.POST_NOTIFICATIONS)
             }
-            // Location
+            
             add(Manifest.permission.ACCESS_FINE_LOCATION)
             add(Manifest.permission.ACCESS_COARSE_LOCATION)
-            // Camera
+            
             add(Manifest.permission.CAMERA)
-            // External storage — only needed below Android 10 (API 29)
+            
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
@@ -105,11 +83,8 @@ fun AppIntroductionScreen(onDone: () -> Unit) {
     }
     val permissionsState = rememberMultiplePermissionsState(permissions = allPermissions)
 
-    // Flag set to true once the user has tapped "Get Started" and the dialogs are in flight.
     var permissionsLaunched by remember { mutableStateOf(false) }
 
-    // The Activity's ON_RESUME is the most reliable signal that all permission dialogs
-    // have been dismissed (granted or denied). Proceed to the main app at that point.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -148,7 +123,7 @@ fun AppIntroductionScreen(onDone: () -> Unit) {
                 Button(
                     onClick = {
                         if (permissionsState.allPermissionsGranted || allPermissions.isEmpty()) {
-                            // Already granted — skip straight to the app.
+                            
                             onDone()
                         } else {
                             permissionsLaunched = true

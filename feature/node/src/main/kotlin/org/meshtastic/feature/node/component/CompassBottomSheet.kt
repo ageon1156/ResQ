@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.component
 
@@ -151,7 +136,7 @@ fun CompassSheetContent(
                 text = stringResource(Res.string.last_position_update) + ": $it",
                 style = MaterialTheme.typography.bodyMedium,
             )
-            // Quick way to re-request a fresh fix without leaving the compass sheet
+            
             Button(onClick = onRequestPosition, modifier = Modifier.fillMaxWidth()) {
                 Icon(imageVector = Icons.Default.GpsFixed, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
@@ -256,7 +241,7 @@ private fun CompassDial(
         val currentBearing = bearing
 
         rotate(-currentHeading, center) {
-            // Compass circles
+            
             drawCircle(color = compassRoseColor, radius = radius, center = center, style = Stroke(width = ringStroke))
             drawCircle(
                 color = compassRoseColor.copy(alpha = 0.35f),
@@ -265,7 +250,6 @@ private fun CompassDial(
                 style = Stroke(width = 1.dp.toPx()),
             )
 
-            // Tick marks
             for (deg in 0 until 360 step 5) {
                 val isCardinal = deg % 90 == 0
                 val isMajor = deg % 30 == 0
@@ -299,10 +283,8 @@ private fun CompassDial(
                 )
             }
 
-            // Compass rose center
             drawCompassRoseCenter(center = center, size = radius * 0.13f, color = compassRoseColor)
 
-            // Cardinal labels (moved closer to center)
             val cardinalRadius = radius * 0.48f
             val cardinals =
                 listOf(
@@ -327,7 +309,6 @@ private fun CompassDial(
                 }
             }
 
-            // Degree labels
             val degRadius = radius * 0.72f
             for (d in 0 until 360 step 30) {
                 val angle = Math.toRadians(d.toDouble())
@@ -344,17 +325,15 @@ private fun CompassDial(
                 }
             }
 
-            // Bearing marker (adjust bearing by current heading because the canvas is rotated)
             val bearingForDraw = currentBearing
             if (bearingForDraw != null && angularErrorDeg != null && angularErrorDeg > 0f) {
                 val arcRadius = radius * 0.82f
                 val startAngleNorth = bearingForDraw - angularErrorDeg
                 val sweep = angularErrorDeg * 2f
                 val faint = markerColor.copy(alpha = 0.18f)
-                // Canvas drawArc: 0deg = 3 o'clock, +clockwise. Convert north=0° to that space.
+                
                 val startAngleCanvas = (startAngleNorth - 90f).normalizeDegrees()
 
-                // Filled wedge for the cone shading.
                 drawArc(
                     color = faint,
                     startAngle = startAngleCanvas,
@@ -364,7 +343,6 @@ private fun CompassDial(
                     size = Size(arcRadius * 2, arcRadius * 2),
                 )
 
-                // Cone edge lines for clarity
                 val edgeRadius = arcRadius
                 val startRad = Math.toRadians(startAngleNorth.toDouble())
                 val endRad = Math.toRadians((startAngleNorth + sweep).toDouble())
@@ -389,7 +367,6 @@ private fun CompassDial(
             }
         }
 
-        // Heading indicator as a simple line
         if (heading != null) {
             val headingEnd = Offset(center.x, center.y - radius * 0.78f)
             drawLine(

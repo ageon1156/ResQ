@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.service
 
 import android.app.Notification
@@ -201,7 +186,6 @@ constructor(
     fun onHasSettings() {
         commandSender.processQueuedPackets()
 
-        // Start MQTT if enabled
         scope.handledLaunch {
             val moduleConfig = radioConfigRepository.moduleConfigFlow.first()
             mqttManager.start(scope, moduleConfig.mqtt.enabled, moduleConfig.mqtt.proxyToClientEnabled)
@@ -210,13 +194,12 @@ constructor(
         reportConnection()
 
         val myNodeNum = nodeManager.myNodeNum ?: 0
-        // Request history
+        
         scope.handledLaunch {
             val moduleConfig = radioConfigRepository.moduleConfigFlow.first()
             historyManager.requestHistoryReplay("onHasSettings", myNodeNum, moduleConfig.storeForward, "Unknown")
         }
 
-        // Set time
         commandSender.sendAdmin(myNodeNum) {
             setTimeOnly = (System.currentTimeMillis() / MILLISECONDS_IN_SECOND).toInt()
         }

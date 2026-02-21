@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.repository.radio
 
 import co.touchlab.kermit.Logger
@@ -43,12 +28,12 @@ constructor(
 
     companion object {
         const val MAX_RETRIES_ALLOWED = Int.MAX_VALUE
-        const val MIN_BACKOFF_MILLIS = 1 * 1000L // 1 second
-        const val MAX_BACKOFF_MILLIS = 5 * 60 * 1000L // 5 minutes
+        const val MIN_BACKOFF_MILLIS = 1 * 1000L 
+        const val MAX_BACKOFF_MILLIS = 5 * 60 * 1000L 
         const val SOCKET_TIMEOUT = 5000
         const val SOCKET_RETRIES = 18
         const val SERVICE_PORT = NetworkRepository.SERVICE_PORT
-        const val TIMEOUT_LOG_INTERVAL = 5 // Log every Nth timeout
+        const val TIMEOUT_LOG_INTERVAL = 5 
     }
 
     private var retryCount = 1
@@ -173,7 +158,6 @@ constructor(
         handleSendToRadio(heartbeat.toByteArray())
     }
 
-    // Create a socket to make the connection with the server
     private suspend fun startConnect() = withContext(dispatchers.io) {
         val attemptStart = System.currentTimeMillis()
         Logger.i { "[$address] TCP connection attempt starting..." }
@@ -208,7 +192,7 @@ constructor(
 
                     var timeoutCount = 0
                     while (timeoutCount < SOCKET_RETRIES) {
-                        try { // close after 90s of inactivity
+                        try { 
                             val c = inputStream.read()
                             if (c == -1) {
                                 Logger.w {
@@ -230,7 +214,7 @@ constructor(
                                         "(total timeouts: $timeoutEvents)"
                                 }
                             }
-                            // Ignore and start another read
+                            
                         }
                     }
                     if (timeoutCount >= SOCKET_RETRIES) {

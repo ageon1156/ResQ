@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.component
 
@@ -79,13 +64,6 @@ import org.meshtastic.core.ui.theme.StatusColors.StatusGreen
 import org.meshtastic.core.ui.theme.StatusColors.StatusRed
 import org.meshtastic.core.ui.theme.StatusColors.StatusYellow
 
-/**
- * function to display information about the current node's encryption key.
- *
- * @property hasPKC boolean if the node has public key encryption
- * @property mismatchKey boolean if the public key does not match the recorded key.
- * @property publicKey boolean if the node has a shared public key.
- */
 @Composable
 fun NodeKeyStatusIcon(
     modifier: Modifier = Modifier,
@@ -129,16 +107,6 @@ fun NodeKeyStatusIcon(
     }
 }
 
-/**
- * Represents the various visual states of the node key as an enum. Each enum constant encapsulates the icon, color,
- * descriptive text, and optional badge details.
- *
- * @property icon The primary vector graphic for the icon.
- * @property color The tint color for the primary icon.
- * @property descriptionResId The string resource ID for the accessibility description of the icon's state.
- * @property helpTextResId The string resource ID for the detailed help text associated with this state.
- * @property title The string resource ID for the title associated with this state.
- */
 @Immutable
 enum class NodeKeySecurityState(
     @Stable val icon: ImageVector,
@@ -147,7 +115,7 @@ enum class NodeKeySecurityState(
     val helpTextResId: StringResource,
     @Stable val title: StringResource,
 ) {
-    // State for public key mismatch
+    
     PKM(
         icon = Icons.Default.KeyOff,
         color = { colorScheme.StatusRed },
@@ -156,7 +124,6 @@ enum class NodeKeySecurityState(
         title = Res.string.encryption_error,
     ),
 
-    // State for public key encryption
     PKC(
         icon = Icons.Default.Lock,
         color = { colorScheme.StatusGreen },
@@ -165,7 +132,6 @@ enum class NodeKeySecurityState(
         descriptionResId = Res.string.encryption_pkc,
     ),
 
-    // State for shared key encryption
     PSK(
         icon = Icons.Default.LockOpen,
         color = { colorScheme.StatusYellow },
@@ -231,10 +197,6 @@ private fun KeyStatusDialog(title: StringResource, text: StringResource, key: By
     )
 }
 
-/**
- * Displays a list of all possible node key states with their icons and descriptions within the help dialog. Iterates
- * over `NodeKeySecurityState.entries` which is provided by the enum class.
- */
 @Composable
 private fun AllKeyStates() {
     Column(
@@ -242,7 +204,7 @@ private fun AllKeyStates() {
         modifier = Modifier.verticalScroll(rememberScrollState()),
     ) {
         NodeKeySecurityState.entries.forEach { state ->
-            // Uses enum entries
+            
             Row(verticalAlignment = Alignment.CenterVertically) {
                 when (state) {
                     NodeKeySecurityState.PKM -> NodeKeyStatusIcon(hasPKC = false, mismatchKey = true)

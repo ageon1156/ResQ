@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.component
 
@@ -42,9 +27,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.meshtastic.core.ui.theme.AppTheme
 
-/**
- * A list item with an optional [leadingIcon], headline [text], optional [supportingText], and optional [trailingIcon].
- */
 @Composable
 fun ListItem(
     text: String,
@@ -87,7 +69,6 @@ fun ListItem(
     )
 }
 
-/** A toggleable switch list item. */
 @Composable
 fun SwitchListItem(
     checked: Boolean,
@@ -111,15 +92,6 @@ fun SwitchListItem(
     )
 }
 
-/**
- * The foundational list item. It supports a [leadingIcon] (optional), headline [text] and [supportingText] (optional),
- * and a [trailingContent] composable (optional).
- *
- * This is a core component that should facilitate most list item use cases. Please carefully consider if modifying this
- * is really necessary before doing so.
- *
- * @see [LinkedCoordinatesItem] for example usage
- */
 @Suppress("UnusedParameter")
 @Composable
 fun BasicListItem(

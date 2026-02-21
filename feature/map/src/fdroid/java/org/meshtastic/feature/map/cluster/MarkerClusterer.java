@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.map.cluster;
 
@@ -32,20 +17,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.ListIterator;
 
-/** 
- * An overlay allowing to perform markers clustering. 
- * Usage: put your markers inside with add(Marker), and add the MarkerClusterer to the map overlays. 
- * Depending on the zoom level, markers will be displayed separately, or grouped as a single Marker. <br/>
- * 
- * This abstract class provides the framework. Sub-classes have to implement the clustering algorithm, 
- * and the rendering of a cluster. 
- * 
- * @author M.Kergall
- *
- */
 public abstract class MarkerClusterer extends Overlay {
 
-	/** impossible value for zoom level, to force clustering */
 	protected static final int FORCE_CLUSTERING = -1;
 	
 	protected ArrayList<MarkerWithLabel> mItems = new ArrayList<MarkerWithLabel>();
@@ -54,14 +27,11 @@ public abstract class MarkerClusterer extends Overlay {
 	protected int mLastZoomLevel;
 	protected Bitmap mClusterIcon;
 	protected String mName, mDescription;
-	
-	// abstract methods: 
-	
-	/** clustering algorithm */
+
 	public abstract ArrayList<StaticCluster> clusterer(MapView mapView);
-	/** Build the marker for a cluster. */
+	
 	public abstract MarkerWithLabel buildClusterMarker(StaticCluster cluster, MapView mapView);
-	/** build clusters markers to be used at next draw */
+	
 	public abstract void renderer(ArrayList<StaticCluster> clusters, Canvas canvas, MapView mapView);
 	
 	public MarkerClusterer() {
@@ -84,31 +54,23 @@ public abstract class MarkerClusterer extends Overlay {
 	public String getDescription(){
 		return mDescription;
 	}
-	
-	/** Set the cluster icon to be drawn when a cluster contains more than 1 marker. 
-	 * If not set, default will be the default osmdroid marker icon (which is really inappropriate as a cluster icon). */
+
 	public void setIcon(Bitmap icon){
 		mClusterIcon = icon;
 	}
-	
-	/** Add the Marker. 
-	 * Important: Markers added in a MarkerClusterer should not be added in the map overlays. */
+
 	public void add(MarkerWithLabel marker){
 		mItems.add(marker);
 	}
-	
-	/** Force a rebuild of clusters at next draw, even without a zooming action. 
-	 * Should be done when you changed the content of a MarkerClusterer. */
+
 	public void invalidate(){
 		mLastZoomLevel = FORCE_CLUSTERING; 
 	}
-	
-	/** @return the Marker at id (starting at 0) */
+
 	public MarkerWithLabel getItem(int id){
 		return mItems.get(id);
 	}
-	
-	/** @return the list of Markers. */
+
 	public ArrayList<MarkerWithLabel> getItems(){
 		return mItems;
 	}
@@ -123,7 +85,7 @@ public abstract class MarkerClusterer extends Overlay {
 	@Override public void draw(Canvas canvas, MapView mapView, boolean shadow) {
 		if (shadow)
 			return;
-		//if zoom has changed and mapView is now stable, rebuild clusters:
+		
 		int zoomLevel = mapView.getZoomLevel();
 		if (zoomLevel != mLastZoomLevel && !mapView.isAnimating()){
 			hideInfoWindows();

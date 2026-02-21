@@ -30,11 +30,6 @@ import org.meshtastic.core.model.triage.TriageLevel
 import org.meshtastic.core.model.triage.TriagePin
 import org.meshtastic.feature.map.MapMode
 
-// ── Mode toggle ───────────────────────────────────────────────────────────────
-
-/**
- * [ Custom Map | Triage Map ] segmented button toggle shown on the map screen.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapModeTabRow(
@@ -66,12 +61,6 @@ fun MapModeTabRow(
     }
 }
 
-// ── Triage level picker ───────────────────────────────────────────────────────
-
-/**
- * AlertDialog shown after a long-press on the triage map.
- * The rescuer selects a triage level; the callback fires with the choice.
- */
 @Composable
 fun TriageLevelPickerDialog(
     onLevelSelected: (TriageLevel) -> Unit,
@@ -103,12 +92,6 @@ fun TriageLevelPickerDialog(
     )
 }
 
-// ── Triage pin info dialog ────────────────────────────────────────────────────
-
-/**
- * Dialog shown when the user taps a triage pin marker.
- * Displays the pin details and offers a Claim button if unclaimed.
- */
 @Composable
 fun TriagePinInfoDialog(
     pin: TriagePin,
@@ -163,8 +146,6 @@ fun TriagePinInfoDialog(
         },
     )
 }
-
-// ── Private helpers ───────────────────────────────────────────────────────────
 
 @Composable
 private fun TriageLevelButton(

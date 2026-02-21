@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 @file:Suppress("MatchingDeclarationName")
 
 package com.geeksville.mesh.ui
@@ -269,14 +254,14 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     fun tryParseNeighborInfo(input: String): MeshProtos.NeighborInfo? {
-                        // First, try parsing directly from raw bytes of the string
+                        
                         var neighborInfo: MeshProtos.NeighborInfo? =
                             runCatching { MeshProtos.NeighborInfo.parseFrom(input.toByteArray()) }.getOrNull()
 
                         if (neighborInfo == null) {
-                            // Next, try to decode a hex dump embedded as text (e.g., "AA BB CC ...")
+                            
                             val hexPairs = Regex("""\b[0-9A-Fa-f]{2}\b""").findAll(input).map { it.value }.toList()
-                            @Suppress("detekt:MagicNumber") // byte offsets
+                            @Suppress("detekt:MagicNumber") 
                             if (hexPairs.size >= 4) {
                                 val bytes = hexPairs.map { it.toInt(16).toByte() }.toByteArray()
                                 neighborInfo = runCatching { MeshProtos.NeighborInfo.parseFrom(bytes) }.getOrNull()
@@ -322,7 +307,7 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
                     } else {
                         val rawBytes = response.toByteArray()
 
-                        @Suppress("detekt:MagicNumber") // byte offsets
+                        @Suppress("detekt:MagicNumber") 
                         val isBinary = response.any { it.code < 32 && it != '\n' && it != '\r' && it != '\t' }
                         if (isBinary) {
                             val hexString = rawBytes.joinToString(" ") { "%02X".format(it) }
@@ -357,14 +342,12 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
     val currentDestination = navController.currentBackStackEntryAsState().value?.destination
     val topLevelDestination = TopLevelDestination.fromNavDestination(currentDestination)
 
-    // State for determining the connection type icon to display
     val selectedDevice by scanModel.selectedNotNullFlow.collectAsStateWithLifecycle()
 
-    // State for managing the glow animation around the Connections icon
     var currentGlowColor by remember { mutableStateOf(Color.Transparent) }
     val animatedGlowAlpha = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
-    val capturedColorScheme = colorScheme // Capture current colorScheme instance for LaunchedEffect
+    val capturedColorScheme = colorScheme 
 
     val sendColor = capturedColorScheme.StatusGreen
     val receiveColor = capturedColorScheme.StatusBlue
@@ -377,13 +360,12 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
                 }
 
             currentGlowColor = newTargetColor
-            // Stop any existing animation and launch a new one.
-            // Launching in a new coroutine ensures the collect block is not suspended.
+
             coroutineScope.launch {
-                animatedGlowAlpha.stop() // Stop before snapping/animating
-                animatedGlowAlpha.snapTo(1.0f) // Show glow instantly
+                animatedGlowAlpha.stop() 
+                animatedGlowAlpha.snapTo(1.0f) 
                 animatedGlowAlpha.animateTo(
-                    targetValue = 0.0f, // Fade out
+                    targetValue = 0.0f, 
                     animationSpec = tween(durationMillis = 1000, easing = LinearEasing),
                 )
             }
@@ -481,7 +463,7 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
                                 BadgedBox(
                                     badge = {
                                         if (destination == TopLevelDestination.Conversations) {
-                                            // Keep track of the last non-zero count for display during exit animation
+                                            
                                             var lastNonZeroCount by remember { mutableIntStateOf(unreadMessageCount) }
                                             if (unreadMessageCount > 0) {
                                                 lastNonZeroCount = unreadMessageCount
@@ -511,7 +493,7 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
                             modifier =
                             if (navSuiteType == NavigationSuiteType.ShortNavigationBarCompact) {
                                 Modifier.width(1.dp)
-                                    .height(1.dp) // hide on phone - min 1x1 or talkback won't see it.
+                                    .height(1.dp) 
                             } else {
                                 Modifier
                             },
@@ -590,18 +572,17 @@ private fun VersionChecks(viewModel: UIViewModel) {
                 Logger.d { "FirmwareEdition: ${edition.name}" }
                 when (edition) {
                     MeshProtos.FirmwareEdition.VANILLA -> {
-                        // Handle any specific logic for VANILLA firmware edition if needed
+                        
                     }
 
                     else -> {
-                        // Handle other firmware editions if needed
+                        
                     }
                 }
             }
         }
     }
 
-    // Check if the device is running an old app version or firmware version
     LaunchedEffect(connectionState, myNodeInfo) {
         if (connectionState == ConnectionState.Connected) {
             Logger.i {

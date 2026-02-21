@@ -1,7 +1,3 @@
-/*
- * Licensed under GPL-3.0
- */
-
 
 
 plugins {
@@ -29,8 +25,6 @@ plugins {
     alias(libs.plugins.dokka)
     alias(libs.plugins.meshtastic.root)
 }
-
-
 
 dependencies {
     dokkaPlugin(libs.dokka.android.documentation.plugin)

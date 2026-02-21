@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh.model
 
@@ -70,11 +55,6 @@ import org.meshtastic.proto.AppOnlyProtos
 import org.meshtastic.proto.MeshProtos
 import javax.inject.Inject
 
-// Given a human name, strip out the first letter of the first three words and return that as the
-// initials for
-// that user, ignoring emojis. If the original name is only one word, strip vowels from the original
-// name and if the result is 3 or more characters, use the first three characters. If not, just take
-// the first 3 characters of the original name.
 fun getInitials(fullName: String): String {
     val maxInitialLength = 4
     val minWordCountForInitials = 2
@@ -128,10 +108,6 @@ constructor(
         meshServiceNotifications.clearClientNotification(notification)
     }
 
-    /**
-     * Emits events for mesh network send/receive activity. This is a SharedFlow to ensure all events are delivered,
-     * even if they are the same.
-     */
     val meshActivity: SharedFlow<MeshActivity> =
         radioInterfaceService.meshActivity.shareIn(viewModelScope, SharingStarted.Eagerly, 0)
 
@@ -195,7 +171,6 @@ constructor(
     val unreadMessageCount =
         packetRepository.getUnreadCountTotal().map { it.coerceAtLeast(0) }.stateInWhileSubscribed(initialValue = 0)
 
-    // hardware info about our local device (can be null)
     val myNodeInfo: StateFlow<MyNodeEntity?>
         get() = nodeDB.myNodeInfo
 
@@ -227,12 +202,10 @@ constructor(
             }
     }
 
-    /** Called immediately after activity observes requestChannelUrl */
     fun clearSharedContactRequested() {
         _sharedContactRequested.value = null
     }
 
-    // Connection state to our radio device
     val connectionState
         get() = serviceRepository.connectionState
 
@@ -249,7 +222,6 @@ constructor(
 
     val latestStableFirmwareRelease = firmwareReleaseRepository.stableRelease.mapNotNull { it?.asDeviceVersion() }
 
-    /** Called immediately after activity observes requestChannelUrl */
     fun clearRequestChannelUrl() {
         _requestChannelSet.value = null
     }

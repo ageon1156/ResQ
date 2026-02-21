@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.ui.contact
 
 import androidx.lifecycle.ViewModel
@@ -63,18 +48,9 @@ constructor(
 
     val channels = radioConfigRepository.channelSetFlow.stateInWhileSubscribed(initialValue = channelSet {})
 
-    // Combine node info and myId to reduce argument count in subsequent combines
     private val identityFlow: Flow<Pair<MyNodeEntity?, String?>> =
         combine(nodeRepository.myNodeInfo, nodeRepository.myId) { info, id -> Pair(info, id) }
 
-    /**
-     * Non-paginated contact list.
-     *
-     * NOTE: This is kept for ShareScreen which needs a simple, non-paginated list of contacts. The main ContactsScreen
-     * uses [contactListPaged] instead for better performance with large contact lists.
-     *
-     * @see contactListPaged for the paginated version used in ContactsScreen
-     */
     val contactList =
         combine(identityFlow, packetRepository.getContacts(), channels, packetRepository.getContactSettings()) {
                 identity,
@@ -84,7 +60,7 @@ constructor(
             ->
             val (myNodeInfo, myId) = identity
             val myNodeNum = myNodeInfo?.myNodeNum ?: return@combine emptyList()
-            // Add empty channel placeholders (always show Broadcast contacts, even when empty)
+            
             val placeholder =
                 (0 until channelSet.settingsCount).associate { ch ->
                     val contactKey = "$ch${DataPacket.ID_BROADCAST}"
@@ -96,11 +72,9 @@ constructor(
                 val data = packet.data
                 val contactKey = packet.contact_key
 
-                // Determine if this is my message (originated on this device)
                 val fromLocal = data.from == DataPacket.ID_LOCAL || (myId != null && data.from == myId)
                 val toBroadcast = data.to == DataPacket.ID_BROADCAST
 
-                // grab usernames from NodeInfo
                 val user = getUser(if (fromLocal) data.to else data.from)
                 val node = getNode(if (fromLocal) data.to else data.from)
 
@@ -149,11 +123,9 @@ constructor(
                         val data = packet.data
                         val contactKey = packet.contact_key
 
-                        // Determine if this is my message (originated on this device)
                         val fromLocal = data.from == DataPacket.ID_LOCAL || (myId != null && data.from == myId)
                         val toBroadcast = data.to == DataPacket.ID_BROADCAST
 
-                        // grab usernames from NodeInfo
                         val user = getUser(if (fromLocal) data.to else data.from)
                         val node = getNode(if (fromLocal) data.to else data.from)
 
@@ -197,10 +169,6 @@ constructor(
 
     fun getContactSettings() = packetRepository.getContactSettings()
 
-    /**
-     * Get the total message count for a list of contact keys. This queries the repository directly, so it works even if
-     * contacts aren't loaded in the paged list.
-     */
     suspend fun getTotalMessageCount(contactKeys: List<String>): Int = if (contactKeys.isEmpty()) {
         0
     } else {

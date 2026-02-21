@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.service
 
 import co.touchlab.kermit.Logger
@@ -63,7 +48,6 @@ data class TracerouteResponse(
         get() = forwardRoute.isNotEmpty() || returnRoute.isNotEmpty()
 }
 
-/** Repository class for managing the [IMeshService] instance and connection state */
 @Suppress("TooManyFunctions")
 @Singleton
 class ServiceRepository @Inject constructor() {
@@ -74,7 +58,6 @@ class ServiceRepository @Inject constructor() {
         meshService = service
     }
 
-    // Connection state to our radio device
     private val _connectionState: MutableStateFlow<ConnectionState> = MutableStateFlow(ConnectionState.Disconnected)
     val connectionState: StateFlow<ConnectionState>
         get() = _connectionState
@@ -159,20 +142,12 @@ class ServiceRepository @Inject constructor() {
         _serviceAction.send(action)
     }
 
-    // Retry management
     private val _retryEvents = MutableStateFlow<RetryEvent?>(null)
     val retryEvents: StateFlow<RetryEvent?>
         get() = _retryEvents
 
     private val pendingRetries = ConcurrentHashMap<Int, CompletableDeferred<Boolean>>()
 
-    /**
-     * Request a retry for a message or reaction. Emits a retry event to the UI and waits for user response.
-     *
-     * @param event The retry event containing packet information
-     * @param timeoutMs Maximum time to wait for user response (defaults to auto-retry)
-     * @return true if should proceed with retry, false if user cancelled
-     */
     suspend fun requestRetry(event: RetryEvent, timeoutMs: Long): Boolean {
         val packetId = event.packetId
         val deferred = CompletableDeferred<Boolean>()
@@ -182,25 +157,16 @@ class ServiceRepository @Inject constructor() {
         _retryEvents.value = event
         Logger.i { "ServiceRepository: Retry event set, waiting for response..." }
 
-        // Wait for user response with timeout
-        // If timeout occurs (user doesn't respond), default to retry
         val result = withTimeoutOrNull(timeoutMs) { deferred.await() } ?: true
         Logger.i { "ServiceRepository: Retry result for packet $packetId: $result" }
         return result
     }
 
-    /**
-     * Respond to a retry request. Called by the UI when user interacts with retry dialog.
-     *
-     * @param packetId The packet ID of the message/reaction
-     * @param shouldRetry true to proceed with retry, false to cancel
-     */
     fun respondToRetry(packetId: Int, shouldRetry: Boolean) {
         pendingRetries.remove(packetId)?.complete(shouldRetry)
-        _retryEvents.value = null // Clear the event to prevent replay
+        _retryEvents.value = null 
     }
 
-    /** Cancel all pending retry requests. Should be called when service is stopped or restarted. */
     fun cancelPendingRetries() {
         pendingRetries.forEach { (_, deferred) -> deferred.complete(false) }
         pendingRetries.clear()

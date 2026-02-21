@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.theme
 
@@ -32,9 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-/**
- * Organic Tech Light Color Scheme
- */
 private val organicLightScheme = lightColorScheme(
     primary = primaryLight_Organic,
     onPrimary = onPrimaryLight_Organic,
@@ -73,9 +55,6 @@ private val organicLightScheme = lightColorScheme(
     surfaceContainerHighest = surfaceContainerHighestLight_Organic,
 )
 
-/**
- * Organic Tech Dark Color Scheme
- */
 private val organicDarkScheme = darkColorScheme(
     primary = primaryDark_Organic,
     onPrimary = onPrimaryDark_Organic,
@@ -114,9 +93,6 @@ private val organicDarkScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDark_Organic,
 )
 
-/**
- * Organic Tech Light Color Scheme - Medium Contrast
- */
 private val organicMediumContrastLightColorScheme = lightColorScheme(
     primary = primaryLightMediumContrast_Organic,
     onPrimary = onPrimaryLightMediumContrast_Organic,
@@ -136,9 +112,6 @@ private val organicMediumContrastLightColorScheme = lightColorScheme(
     onErrorContainer = onErrorContainerLightMediumContrast_Organic,
 )
 
-/**
- * Organic Tech Light Color Scheme - High Contrast
- */
 private val organicHighContrastLightColorScheme = lightColorScheme(
     primary = primaryLightHighContrast_Organic,
     onPrimary = onPrimaryLightHighContrast_Organic,
@@ -158,9 +131,6 @@ private val organicHighContrastLightColorScheme = lightColorScheme(
     onErrorContainer = onErrorContainerLightHighContrast_Organic,
 )
 
-/**
- * Organic Tech Dark Color Scheme - Medium Contrast
- */
 private val organicMediumContrastDarkColorScheme = darkColorScheme(
     primary = primaryDarkMediumContrast_Organic,
     onPrimary = onPrimaryDarkMediumContrast_Organic,
@@ -180,9 +150,6 @@ private val organicMediumContrastDarkColorScheme = darkColorScheme(
     onErrorContainer = onErrorContainerDarkMediumContrast_Organic,
 )
 
-/**
- * Organic Tech Dark Color Scheme - High Contrast
- */
 private val organicHighContrastDarkColorScheme = darkColorScheme(
     primary = primaryDarkHighContrast_Organic,
     onPrimary = onPrimaryDarkHighContrast_Organic,
@@ -202,35 +169,21 @@ private val organicHighContrastDarkColorScheme = darkColorScheme(
     onErrorContainer = onErrorContainerDarkHighContrast_Organic,
 )
 
-/**
- * Contrast levels for accessibility
- */
 enum class ContrastLevel {
     NORMAL,
     MEDIUM,
     HIGH
 }
 
-/**
- * Organic Tech Theme
- *
- * A nature-inspired design system that replaces the cyberpunk aesthetic
- * with warm, earthy tones and organic shapes.
- *
- * @param darkTheme Whether to use dark theme colors
- * @param dynamicColor Whether to use Android 12+ dynamic colors (if false, enforces organic theme)
- * @param contrastLevel Accessibility contrast level
- * @param content The composable content to theme
- */
 @Composable
 fun OrganicMeshtasticTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,  // Default to false to enforce organic theme
+    dynamicColor: Boolean = false,  
     contrastLevel: ContrastLevel = ContrastLevel.NORMAL,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        // Support for Android 12+ dynamic colors (if enabled)
+        
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) {
@@ -239,7 +192,7 @@ fun OrganicMeshtasticTheme(
                 dynamicLightColorScheme(context)
             }
         }
-        // Organic color scheme with contrast variants
+        
         darkTheme -> {
             when (contrastLevel) {
                 ContrastLevel.NORMAL -> organicDarkScheme
@@ -256,7 +209,6 @@ fun OrganicMeshtasticTheme(
         }
     }
 
-    // Update system UI (status bar, navigation bar)
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {

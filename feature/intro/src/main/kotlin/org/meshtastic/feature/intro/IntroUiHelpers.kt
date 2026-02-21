@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.intro
 
@@ -37,14 +22,8 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Tag used for identifying clickable annotations in text, specifically for linking to settings. */
 internal const val SETTINGS_TAG = "settings_link_tag"
 
-/**
- * Displays a row for a feature, including an icon, an optional title, and a subtitle.
- *
- * @param feature The [FeatureUIData] containing information for the row.
- */
 @Composable
 internal fun FeatureRow(feature: FeatureUIData) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -70,14 +49,6 @@ internal fun FeatureRow(feature: FeatureUIData) {
     }
 }
 
-/**
- * Creates an [AnnotatedString] with a clickable portion.
- *
- * @param fullTextRes String resource for the entire text.
- * @param linkTextRes String resource for the portion of text that should be clickable.
- * @param tag A tag to identify the annotation.
- * @return An [AnnotatedString] with the specified portion styled and annotated.
- */
 @Composable
 internal fun Context.createClickableAnnotatedString(
     fullTextRes: StringResource,

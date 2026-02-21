@@ -1,6 +1,4 @@
-/*
- * Licensed under GPL-3.0
- */
+
 import com.android.build.api.dsl.LibraryExtension
 
 plugins {
@@ -13,7 +11,7 @@ plugins {
 configure<LibraryExtension> {
     namespace = "org.meshtastic.core.database"
     sourceSets {
-        // Adds exported schema location as test app assets.
+        
         named("androidTest") { assets.srcDirs(files("$projectDir/schemas")) }
     }
 }

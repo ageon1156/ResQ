@@ -33,8 +33,6 @@ class TriageMapViewModel @Inject constructor(
 
     private val tag = "TriageMapViewModel"
 
-    // ── Reactive state ────────────────────────────────────────────────────────
-
     val ourNodeId: StateFlow<String?> = nodeRepository.myId
 
     private val allNodes: StateFlow<List<Node>> =
@@ -46,10 +44,6 @@ class TriageMapViewModel @Inject constructor(
         triagePinRepository.getTriagePinsFlow()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /**
-     * Detected silent nodes — re-evaluated whenever the node list changes.
-     * Suppressed nodes (battery 1–4 %) are excluded.
-     */
     val silentNodes: StateFlow<List<SilentNodeRecord>> =
         allNodes.map { nodeList ->
             val nowSecs = System.currentTimeMillis() / 1000
@@ -58,7 +52,6 @@ class TriageMapViewModel @Inject constructor(
                 .filter { !it.isSuppressed }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** Combined triage-map state for the UI to observe in a single collect. */
     val triageMapState: StateFlow<TriageMapState> =
         combine(triagePins, silentNodes) { pins, silent ->
             TriageMapState(pins = pins, silentNodes = silent)
@@ -68,12 +61,6 @@ class TriageMapViewModel @Inject constructor(
             TriageMapState(),
         )
 
-    // ── Actions ───────────────────────────────────────────────────────────────
-
-    /**
-     * Long-press handler for the triage map.
-     * Runs merge logic, persists all affected pins, and broadcasts the new pin.
-     */
     fun addTriagePin(
         lat: Double,
         lon: Double,
@@ -90,11 +77,9 @@ class TriageMapViewModel @Inject constructor(
             createdBy    = myId,
         )
 
-        // Apply merge rules against current snapshot
         val currentPins = triagePins.value
         val merged = mergeTriagePin(incoming, currentPins)
 
-        // Persist every pin that changed (new or updated)
         merged.forEach { updated ->
             val previous = currentPins.firstOrNull { it.pinId == updated.pinId }
             if (previous != updated) {
@@ -102,7 +87,6 @@ class TriageMapViewModel @Inject constructor(
             }
         }
 
-        // Broadcast the raw incoming pin (peers apply their own merge logic)
         sendDataPacket(
             ManualTriagePinPacket(
                 pinId        = incoming.pinId,
@@ -116,10 +100,6 @@ class TriageMapViewModel @Inject constructor(
         )
     }
 
-    /**
-     * Converts a silent node card to a RED triage pin at the node's last GPS fix.
-     * Called from the "Convert to Triage Pin" button on the silent node card.
-     */
     fun convertSilentNodeToTriage(record: SilentNodeRecord, channel: Int = 0) =
         viewModelScope.launch(Dispatchers.IO) {
             if (record.node.validPosition == null) return@launch
@@ -155,15 +135,10 @@ class TriageMapViewModel @Inject constructor(
             )
         }
 
-    /** Deletes a triage pin locally. No mesh broadcast — local removal only. */
     fun deletePin(pinId: String) = viewModelScope.launch(Dispatchers.IO) {
         triagePinRepository.deletePin(pinId)
     }
 
-    /**
-     * Claims a triage pin for this rescuer and broadcasts the claim.
-     * A pin can only be claimed once; the DAO uses a guard to prevent overwrite.
-     */
     fun claimPin(pinId: String, channel: Int = 0) = viewModelScope.launch(Dispatchers.IO) {
         val myId = ourNodeId.value ?: DataPacket.ID_LOCAL
         triagePinRepository.claimPin(pinId, myId)
@@ -176,8 +151,6 @@ class TriageMapViewModel @Inject constructor(
         )
     }
 
-    // ── Internal ──────────────────────────────────────────────────────────────
-
     private fun sendDataPacket(p: DataPacket) {
         try {
             serviceRepository.meshService?.send(p)
@@ -187,7 +160,6 @@ class TriageMapViewModel @Inject constructor(
     }
 }
 
-/** Snapshot of all data the triage map needs to render. */
 data class TriageMapState(
     val pins: List<TriagePin>          = emptyList(),
     val silentNodes: List<SilentNodeRecord> = emptyList(),

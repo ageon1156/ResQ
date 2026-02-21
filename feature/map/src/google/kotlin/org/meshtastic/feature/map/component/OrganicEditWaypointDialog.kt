@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.map.component
 
 import android.app.DatePickerDialog
@@ -92,22 +77,18 @@ import java.util.Calendar
 private data class PlaceType(val label: String, val emoji: Int)
 
 private val PLACE_TYPES = listOf(
-    PlaceType("Hospital",    127973), // 🏥
-    PlaceType("First Aid",     9971), // ⛑
-    PlaceType("Shelter",       9978), // ⛺
-    PlaceType("Food",        127838), // 🍞
-    PlaceType("Water",       128167), // 💧
-    PlaceType("Aid Center",  127384), // 🆘
-    PlaceType("Police",      128148), // 🚔
-    PlaceType("Fire Dept",   128146), // 🚒
-    PlaceType("Danger",        9888), // ⚠
-    PlaceType("Blocked",     128679), // 🚧
+    PlaceType("Hospital",    127973), 
+    PlaceType("First Aid",     9971), 
+    PlaceType("Shelter",       9978), 
+    PlaceType("Food",        127838), 
+    PlaceType("Water",       128167), 
+    PlaceType("Aid Center",  127384), 
+    PlaceType("Police",      128148), 
+    PlaceType("Fire Dept",   128146), 
+    PlaceType("Danger",        9888), 
+    PlaceType("Blocked",     128679), 
 )
 
-/**
- * Organic styled waypoint editing dialog with natural shapes and colors.
- * Features LeafShape container, organic toggle rows, and earthy color palette.
- */
 @Suppress("LongMethod")
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -163,7 +144,6 @@ fun OrganicEditWaypointDialog(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     )
 
-                    // Quick place type selector
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -241,7 +221,6 @@ fun OrganicEditWaypointDialog(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Organic toggle row for locked
                     OrganicToggleRow(
                         icon = Icons.Default.Lock,
                         label = stringResource(Res.string.locked),
@@ -274,7 +253,6 @@ fun OrganicEditWaypointDialog(
                         hour, minute, is24Hour,
                     )
 
-                    // Organic toggle row for expires
                     OrganicToggleRow(
                         icon = Icons.Default.CalendarMonth,
                         label = stringResource(Res.string.expires),
@@ -368,9 +346,6 @@ fun OrganicEditWaypointDialog(
     }
 }
 
-/**
- * Organic styled toggle row with icon and switch.
- */
 @Composable
 private fun OrganicToggleRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -410,9 +385,6 @@ private fun OrganicToggleRow(
     }
 }
 
-/**
- * Organic styled date/time picker button.
- */
 @Composable
 private fun OrganicDateTimeButton(
     label: String,

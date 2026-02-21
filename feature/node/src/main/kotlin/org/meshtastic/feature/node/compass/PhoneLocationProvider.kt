@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.node.compass
 
 import android.Manifest
@@ -48,7 +33,7 @@ constructor(
     @ApplicationContext private val context: Context,
     private val dispatchers: CoroutineDispatchers,
 ) {
-    // Streams phone location (and permission/provider state) so the compass stays gated on real fixes.
+    
     fun locationUpdates(): Flow<PhoneLocationState> = callbackFlow {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
         if (locationManager == null) {
@@ -59,7 +44,7 @@ constructor(
 
         if (!hasLocationPermission()) {
             trySend(PhoneLocationState(permissionGranted = false, providerEnabled = false))
-            close() // Just closing it off, like how I'll close my legs around your waist
+            close() 
             return@callbackFlow
         }
 
@@ -96,7 +81,7 @@ constructor(
         val providers = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
 
         try {
-            // Get initial fix if available
+            
             lastLocation =
                 providers
                     .mapNotNull { provider -> locationManager.getLastKnownLocation(provider) }

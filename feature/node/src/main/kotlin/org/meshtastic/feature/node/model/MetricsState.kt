@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.node.model
 
 import androidx.compose.ui.unit.Dp
@@ -55,7 +40,7 @@ data class MetricsState(
     val latestStableFirmware: FirmwareRelease = FirmwareRelease(),
     val latestAlphaFirmware: FirmwareRelease = FirmwareRelease(),
     val paxMetrics: List<MeshLog> = emptyList(),
-    /** The PlatformIO environment reported by the device (if known). */
+    
     val reportedTarget: String? = null,
 ) {
     fun hasDeviceMetrics() = deviceMetrics.isNotEmpty()
@@ -92,7 +77,6 @@ data class MetricsState(
     }
 }
 
-/** Supported time frames used to display data. */
 @Suppress("MagicNumber")
 enum class TimeFrame(val seconds: Long, val strRes: StringResource) {
     TWENTY_FOUR_HOURS(TimeUnit.DAYS.toSeconds(1), Res.string.twenty_four_hours),
@@ -109,11 +93,6 @@ enum class TimeFrame(val seconds: Long, val strRes: StringResource) {
         System.currentTimeMillis() / 1000 - this.seconds
     }
 
-    /**
-     * The time interval to draw the vertical lines representing time on the x-axis.
-     *
-     * @return seconds epoch seconds
-     */
     fun lineInterval(): Long = when (this.ordinal) {
         TWENTY_FOUR_HOURS.ordinal -> TimeUnit.HOURS.toSeconds(6)
 
@@ -126,7 +105,6 @@ enum class TimeFrame(val seconds: Long, val strRes: StringResource) {
         else -> TimeUnit.DAYS.toSeconds(7)
     }
 
-    /** Used to detect a significant time separation between [TelemetryProtos.Telemetry]s. */
     fun timeThreshold(): Long = when (this.ordinal) {
         TWENTY_FOUR_HOURS.ordinal -> TimeUnit.HOURS.toSeconds(6)
 
@@ -135,11 +113,6 @@ enum class TimeFrame(val seconds: Long, val strRes: StringResource) {
         else -> TimeUnit.DAYS.toSeconds(1)
     }
 
-    /**
-     * Calculates the needed [androidx.compose.ui.unit.Dp] depending on the amount of time being plotted.
-     *
-     * @param time in seconds
-     */
     fun dp(screenWidth: Int, time: Long): Dp {
         val timePerScreen = this.lineInterval()
         val multiplier = time / timePerScreen

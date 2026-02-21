@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh.ui.contact
 
@@ -121,14 +106,11 @@ fun ContactsScreen(
     var showMuteDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // State for managing selected contacts
     val selectedContactKeys = remember { mutableStateListOf<String>() }
     val isSelectionModeActive by remember { derivedStateOf { selectedContactKeys.isNotEmpty() } }
 
-    // State for contacts list
     val pagedContacts = viewModel.contactListPaged.collectAsLazyPagingItems()
 
-    // Create channel placeholders (always show broadcast contacts, even when empty)
     val channels by viewModel.channels.collectAsStateWithLifecycle()
     val channelPlaceholders =
         remember(channels.settingsList.size) {
@@ -159,52 +141,50 @@ fun ContactsScreen(
         }
     }
 
-    // Derived state for selected contacts and count
     val selectedContacts =
         remember(pagedContacts.itemCount, selectedContactKeys) {
             (0 until pagedContacts.itemCount)
                 .mapNotNull { pagedContacts[it] }
                 .filter { it.contactKey in selectedContactKeys }
         }
-    // Get message count directly from repository for selected contacts
+    
     var selectedCount by remember { mutableStateOf(0) }
     LaunchedEffect(selectedContactKeys.toList()) {
         selectedCount = viewModel.getTotalMessageCount(selectedContactKeys.toList())
     }
     val isAllMuted = remember(selectedContacts) { selectedContacts.all { it.isMuted } }
 
-    // Callback functions for item interaction
     val onContactClick: (Contact) -> Unit = { contact ->
         if (isSelectionModeActive) {
-            // If in selection mode, toggle selection
+            
             if (selectedContactKeys.contains(contact.contactKey)) {
                 selectedContactKeys.remove(contact.contactKey)
             } else {
                 selectedContactKeys.add(contact.contactKey)
             }
         } else {
-            // If not in selection mode, navigate to messages
+            
             onNavigateToMessages(contact.contactKey)
         }
     }
 
     val onNodeChipClick: (Contact) -> Unit = { contact ->
         if (contact.contactKey.contains("!")) {
-            // if it's a node, look up the nodeNum including the !
+            
             val nodeKey = contact.contactKey.drop(1)
             val node = viewModel.getNode(nodeKey)
             if (node != null) onNavigateToNodeDetails(node.num)
         } else {
-            // Channels
+            
         }
     }
 
     val onContactLongClick: (Contact) -> Unit = { contact ->
-        // Enter selection mode and select the item on long press
+        
         if (!isSelectionModeActive) {
             selectedContactKeys.add(contact.contactKey)
         } else {
-            // If already in selection mode, toggle selection
+            
             if (selectedContactKeys.contains(contact.contactKey)) {
                 selectedContactKeys.remove(contact.contactKey)
             } else {
@@ -239,7 +219,7 @@ fun ContactsScreen(
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
             if (isSelectionModeActive) {
-                // Display selection toolbar when in selection mode
+                
                 SelectionToolbar(
                     selectedCount = selectedContactKeys.size,
                     onCloseSelection = { selectedContactKeys.clear() },
@@ -251,7 +231,7 @@ fun ContactsScreen(
                             (0 until pagedContacts.itemCount).mapNotNull { pagedContacts[it]?.contactKey },
                         )
                     },
-                    isAllMuted = isAllMuted, // Pass the derived state
+                    isAllMuted = isAllMuted, 
                 )
             }
 
@@ -279,7 +259,6 @@ fun ContactsScreen(
         },
     )
 
-    // Get contact settings for the dialog
     val contactSettings by viewModel.getContactSettings().collectAsStateWithLifecycle(initialValue = emptyMap())
 
     MuteNotificationsDialog(
@@ -302,10 +281,10 @@ private fun MuteNotificationsDialog(
     selectedContactKeys: List<String>,
     contactSettings: Map<String, ContactSettings>,
     onDismiss: () -> Unit,
-    onConfirm: (Long) -> Unit, // Lambda to handle the confirmed mute duration
+    onConfirm: (Long) -> Unit, 
 ) {
     if (showDialog) {
-        // Options for mute duration
+        
         val muteOptions = remember {
             listOf(
                 Res.string.unmute to 0L,
@@ -315,15 +294,14 @@ private fun MuteNotificationsDialog(
             )
         }
 
-        // State to hold the selected mute duration index
-        var selectedOptionIndex by remember { mutableStateOf(2) } // Default to "Always"
+        var selectedOptionIndex by remember { mutableStateOf(2) } 
 
         AlertDialog(
-            onDismissRequest = onDismiss, // Dismiss the dialog when clicked outside
+            onDismissRequest = onDismiss, 
             title = { Text(text = stringResource(Res.string.mute_notifications)) },
             text = {
                 Column {
-                    // Show current mute status
+                    
                     selectedContactKeys.forEach { contactKey ->
                         contactSettings[contactKey]?.let { settings ->
                             val now = System.currentTimeMillis()
@@ -374,7 +352,7 @@ private fun MuteNotificationsDialog(
                     onClick = {
                         val selectedMuteDuration = muteOptions[selectedOptionIndex].second
                         onConfirm(selectedMuteDuration)
-                        onDismiss() // Dismiss the dialog after confirming
+                        onDismiss() 
                     },
                 ) {
                     Text(stringResource(Res.string.okay))
@@ -382,7 +360,7 @@ private fun MuteNotificationsDialog(
             },
             dismissButton = {
                 Button(
-                    onClick = onDismiss, // Dismiss the dialog on cancel
+                    onClick = onDismiss, 
                 ) {
                     Text(stringResource(Res.string.cancel))
                 }
@@ -394,29 +372,29 @@ private fun MuteNotificationsDialog(
 @Composable
 private fun DeleteConfirmationDialog(
     showDialog: Boolean,
-    selectedCount: Int, // Number of items to be deleted
+    selectedCount: Int, 
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit, // Lambda to handle the delete action
+    onConfirm: () -> Unit, 
 ) {
     if (showDialog) {
         val deleteMessage =
             pluralStringResource(
                 Res.plurals.delete_messages,
                 selectedCount,
-                selectedCount, // Pass the count as a format argument
+                selectedCount, 
             )
 
         AlertDialog(
             onDismissRequest = onDismiss,
             title = {
-                // Optional: You could add a title here if needed, e.g., "Confirm Deletion"
+                
             },
             text = { Text(text = deleteMessage) },
             confirmButton = {
                 Button(
                     onClick = {
                         onConfirm()
-                        onDismiss() // Dismiss the dialog after confirming
+                        onDismiss() 
                     },
                 ) {
                     Text(stringResource(Res.string.delete))
@@ -425,8 +403,8 @@ private fun DeleteConfirmationDialog(
             dismissButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
             properties =
             DialogProperties(
-                dismissOnClickOutside = true, // Allow dismissing by clicking outside
-                dismissOnBackPress = true, // Allow dismissing with the back button
+                dismissOnClickOutside = true, 
+                dismissOnBackPress = true, 
             ),
         )
     }

@@ -1,6 +1,4 @@
-/*
- * Licensed under GPL-3.0
- */
+
 
 plugins {
     alias(libs.plugins.meshtastic.kmp.library)

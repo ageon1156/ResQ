@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.data.repository
 
 import io.mockk.coEvery
@@ -50,7 +35,7 @@ class DeviceHardwareRepositoryTest {
 
     @Test
     fun `getDeviceHardwareByModel uses target for disambiguation`() = runTest(testDispatcher) {
-        val hwModel = 50 // T_DECK
+        val hwModel = 50 
         val target = "tdeck-pro"
         val entities =
             listOf(createEntity(hwModel, "t-deck", "T-Deck"), createEntity(hwModel, "tdeck-pro", "T-Deck Pro"))
@@ -76,13 +61,12 @@ class DeviceHardwareRepositoryTest {
 
         val result = repository.getDeviceHardwareByModel(hwModel, target).getOrNull()
 
-        // Should fall back to first entity if no exact match
         assertEquals("T-Deck", result?.displayName)
     }
 
     @Test
     fun `getDeviceHardwareByModel falls back to target lookup when hwModel not found`() = runTest(testDispatcher) {
-        val hwModel = 0 // Unknown
+        val hwModel = 0 
         val target = "tdeck-pro"
         val entity = createEntity(102, "tdeck-pro", "T-Deck Pro")
 
@@ -115,7 +99,7 @@ class DeviceHardwareRepositoryTest {
         displayName = displayName,
         hwModel = hwModel,
         hwModelSlug = "T_DECK",
-        images = listOf("image.svg"), // MUST be non-empty to avoid being considered incomplete/stale
+        images = listOf("image.svg"), 
         platformioTarget = target,
         requiresDfu = false,
         supportLevel = 0,

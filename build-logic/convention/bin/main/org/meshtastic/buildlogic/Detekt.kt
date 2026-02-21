@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.buildlogic
 
@@ -28,8 +13,7 @@ internal fun Project.configureDetekt(extension: DetektExtension) = extension.app
     config.setFrom("$rootDir/config/detekt/detekt.yml")
     buildUponDefaultConfig = true
     allRules = false
-    
-    // Default sources
+
     source.setFrom(
         files(
             "src/main/java",
@@ -48,7 +32,7 @@ internal fun Project.configureDetekt(extension: DetektExtension) = extension.app
             sarif.required.set(true)
             md.required.set(true)
         }
-        // Use project-specific build directory for reports to avoid conflicts
+        
         reports.xml.outputLocation.set(layout.buildDirectory.file("reports/detekt/detekt.xml"))
         reports.html.outputLocation.set(layout.buildDirectory.file("reports/detekt/detekt.html"))
         reports.txt.outputLocation.set(layout.buildDirectory.file("reports/detekt/detekt.txt"))

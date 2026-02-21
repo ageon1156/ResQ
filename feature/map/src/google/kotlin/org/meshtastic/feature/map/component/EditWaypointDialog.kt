@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.map.component
 
 import android.app.DatePickerDialog
@@ -100,7 +85,6 @@ fun EditWaypointDialog(
     val emoji = if (waypointInput.icon == 0) 128205 else waypointInput.icon
     var showEmojiPickerView by remember { mutableStateOf(false) }
 
-    // Get current context for dialogs
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
     val currentTime = System.currentTimeMillis()
@@ -108,20 +92,17 @@ fun EditWaypointDialog(
     @Suppress("MagicNumber")
     calendar.add(Calendar.HOUR_OF_DAY, 8)
 
-    // Current time for initializing pickers
     val year = calendar.get(Calendar.YEAR)
     val month = calendar.get(Calendar.MONTH)
     val day = calendar.get(Calendar.DAY_OF_MONTH)
     val hour = calendar.get(Calendar.HOUR_OF_DAY)
     val minute = calendar.get(Calendar.MINUTE)
 
-    // Determine locale-specific date format
     val dateFormat = android.text.format.DateFormat.getDateFormat(context)
-    // Check if 24-hour format is preferred
+    
     val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
     val timeFormat = android.text.format.DateFormat.getTimeFormat(context)
 
-    // State to hold selected date and time
     var selectedDate by remember { mutableStateOf(dateFormat.format(calendar.time)) }
     var selectedTime by remember { mutableStateOf(timeFormat.format(calendar.time)) }
     var epochTime by remember { mutableStateOf<Long?>(null) }

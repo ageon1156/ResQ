@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh
 
@@ -64,7 +49,6 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
     private val model: UIViewModel by viewModels()
 
-    // This is aware of the Activity lifecycle and handles binding to the mesh service.
     @Inject internal lateinit var meshServiceClient: MeshServiceClient
 
     @Inject internal lateinit var uiPreferencesDataSource: UiPreferencesDataSource
@@ -72,11 +56,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge(
-            // Disable three-button navbar scrim on pre-Q devices
+            
             navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Disable three-button navbar scrim
+            
             window.setNavigationBarContrastEnforced(false)
         }
 
@@ -93,7 +77,6 @@ class MainActivity : AppCompatActivity() {
                     else -> isSystemInDarkTheme()
                 }
 
-            // Use Organic Tech theme instead of default AppTheme
             OrganicMeshtasticTheme(dynamicColor = dynamic, darkTheme = dark) {
                 val view = LocalView.current
                 if (!view.isInEditMode) {
@@ -112,15 +95,10 @@ class MainActivity : AppCompatActivity() {
         requestBatteryOptimizationExemption()
     }
 
-    /**
-     * Request exemption from battery optimization so Android doesn't kill our
-     * background service with SmartBackground restriction. Critical for emergency
-     * features like silent node detection.
-     */
     private fun requestBatteryOptimizationExemption() {
         val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
         if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-            @Suppress("BatteryLife") // Justified: emergency mesh safety app
+            @Suppress("BatteryLife") 
             val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                 data = Uri.parse("package:$packageName")
             }

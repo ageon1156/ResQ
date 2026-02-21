@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.android
 
 import android.content.ComponentName
@@ -31,15 +16,13 @@ import kotlin.concurrent.withLock
 
 class BindFailedException : Exception("bindService failed")
 
-/** A wrapper that cleans up the service binding process */
 open class ServiceClient<T : IInterface>(private val stubFactory: (IBinder) -> T) : Closeable {
 
     var serviceP: T? = null
 
-    // A getter that returns the bound service or throws if not bound
     val service: T
         get() {
-            waitConnect() // Wait for at least the initial connection to happen
+            waitConnect() 
             return serviceP ?: throw Exception("Service not bound")
         }
 
@@ -50,9 +33,8 @@ open class ServiceClient<T : IInterface>(private val stubFactory: (IBinder) -> T
     private val lock = ReentrantLock()
     private val condition = lock.newCondition()
 
-    /** Call this if you want to stall until the connection is completed */
     fun waitConnect() {
-        // Wait until this service is connected
+        
         lock.withLock {
             if (context == null) {
                 throw Exception("Haven't called connect")
@@ -69,11 +51,9 @@ open class ServiceClient<T : IInterface>(private val stubFactory: (IBinder) -> T
         if (isClosed) {
             isClosed = false
             if (!c.bindService(intent, connection, flags)) {
-                // Some phones seem to ahve a race where if you unbind and quickly rebind bindService returns false.
-                // Try
-                // a short sleep to see if that helps
+
                 Logger.e { "Needed to use the second bind attempt hack" }
-                delay(500) // was 200ms, but received an autobug from a Galaxy Note4, android 6.0.1
+                delay(500) 
                 if (!c.bindService(intent, connection, flags)) {
                     throw BindFailedException()
                 }
@@ -88,17 +68,15 @@ open class ServiceClient<T : IInterface>(private val stubFactory: (IBinder) -> T
         try {
             context?.unbindService(connection)
         } catch (ex: IllegalArgumentException) {
-            // Autobugs show this can generate an illegal arg exception for "service not registered" during reinstall?
+            
             Logger.w { "Ignoring error in ServiceClient.close, probably harmless" }
         }
         serviceP = null
         context = null
     }
 
-    // Called when we become connected
     open fun onConnected(service: T) {}
 
-    // called on loss of connection
     open fun onDisconnected() {}
 
     private val connection =
@@ -109,12 +87,9 @@ open class ServiceClient<T : IInterface>(private val stubFactory: (IBinder) -> T
                     serviceP = s
                     onConnected(s)
 
-                    // after calling our handler, tell anyone who was waiting for this connection to complete
                     lock.withLock { condition.signalAll() }
                 } else {
-                    // If we start to close a service, it seems that there is a possibility a onServiceConnected event
-                    // is the queue
-                    // for us.  Be careful not to process that stale event
+
                     Logger.w { "A service connected while we were closing it, ignoring" }
                 }
             }

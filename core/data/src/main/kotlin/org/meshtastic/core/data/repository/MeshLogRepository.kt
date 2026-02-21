@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.data.repository
 
 import kotlinx.coroutines.flow.Flow
@@ -59,8 +44,7 @@ constructor(
             .toBuilder()
             .apply {
                 if (hasEnvironmentMetrics()) {
-                    // Handle float metrics that default to 0.0f when not explicitly set or when 0.0f means no
-                    // data
+
                     if (!environmentMetrics.hasTemperature()) {
                         environmentMetrics = environmentMetrics.toBuilder().setTemperature(Float.NaN).build()
                     }
@@ -92,7 +76,6 @@ constructor(
                         environmentMetrics = environmentMetrics.toBuilder().setUvLux(Float.NaN).build()
                     }
 
-                    // Handle uint32 metrics that default to 0 when not explicitly set or when 0 means no data
                     if (!environmentMetrics.hasIaq()) {
                         environmentMetrics = environmentMetrics.toBuilder().setIaq(Int.MIN_VALUE).build()
                     }
@@ -101,11 +84,7 @@ constructor(
                             environmentMetrics.toBuilder().setSoilMoisture(Int.MIN_VALUE).build()
                     }
                 }
-                // Leaving in case we have need of nulling any in device metrics.
-                //                if (hasDeviceMetrics()) {
-                //                    deviceMetrics =
-                // deviceMetrics.toBuilder().setBatteryLevel(Int.MIN_VALUE).build()
-                //                }
+
             }
             .setTime((log.received_date / MILLIS_TO_SECONDS).toInt())
             .build()
@@ -129,10 +108,6 @@ constructor(
         .distinctUntilChanged()
         .flowOn(dispatchers.io)
 
-    /*
-     * Retrieves MeshPackets matching 'nodeNum' and 'portNum'.
-     * If 'portNum' is not specified, returns all MeshPackets. Otherwise, filters by 'portNum'.
-     */
     fun getMeshPacketsFrom(nodeNum: Int, portNum: Int = Portnums.PortNum.UNKNOWN_APP_VALUE): Flow<List<MeshPacket>> =
         getLogsFrom(nodeNum, portNum).mapLatest { list -> list.map { it.fromRadio.packet } }.flowOn(dispatchers.io)
 

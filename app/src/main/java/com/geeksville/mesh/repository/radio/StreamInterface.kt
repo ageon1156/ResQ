@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.repository.radio
 
 import co.touchlab.kermit.Logger
@@ -21,10 +6,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-/**
- * An interface that assumes we are talking to a meshtastic device over some sort of stream connection (serial or TCP
- * probably)
- */
 abstract class StreamInterface(protected val service: RadioInterfaceService) : IRadioInterface {
     companion object {
         private const val START1 = 0x94.toByte()
@@ -36,10 +17,8 @@ abstract class StreamInterface(protected val service: RadioInterfaceService) : I
 
     private val writeMutex = Mutex()
 
-    /** The index of the next byte we are hoping to receive */
     private var ptr = 0
 
-    /** The two halves of our length */
     private var msb = 0
     private var lsb = 0
     private var packetLen = 0
@@ -49,34 +28,25 @@ abstract class StreamInterface(protected val service: RadioInterfaceService) : I
         onDeviceDisconnect(true)
     }
 
-    /**
-     * Tell MeshService our device has gone away, but wait for it to come back
-     *
-     * @param waitForStopped if true we should wait for the manager to finish - must be false if called from inside the
-     *   manager callbacks
-     */
     protected open fun onDeviceDisconnect(waitForStopped: Boolean) {
         service.onDisconnect(
             isPermanent = true,
-        ) // if USB device disconnects it is definitely permanently gone, not sleeping)
+        ) 
     }
 
     protected open fun connect() {
-        // Before telling mesh service, send a few START1s to wake a sleeping device
+        
         val wakeBytes = byteArrayOf(START1, START1, START1, START1)
         sendBytes(wakeBytes)
 
-        // Now tell clients they can (finally use the api)
         service.onConnect()
     }
 
     abstract fun sendBytes(p: ByteArray)
 
-    // If subclasses need to flash at the end of a packet they can implement
     open fun flushBytes() {}
 
     override fun handleSendToRadio(p: ByteArray) {
-        // This method is called from a continuation and it might show up late, so check for uart being null
 
         service.serviceScope.launch {
             writeMutex.withLock {
@@ -93,10 +63,9 @@ abstract class StreamInterface(protected val service: RadioInterfaceService) : I
         }
     }
 
-    /** Print device serial debug output somewhere */
     private fun debugOut(b: Byte) {
         when (val c = b.toInt().toChar()) {
-            '\r' -> {} // ignore
+            '\r' -> {} 
             '\n' -> {
                 Logger.d { "DeviceLog: $debugLineBuf" }
                 debugLineBuf.clear()
@@ -108,7 +77,7 @@ abstract class StreamInterface(protected val service: RadioInterfaceService) : I
     private val rxPacket = ByteArray(MAX_TO_FROM_RADIO_SIZE)
 
     protected fun readChar(c: Byte) {
-        // Assume we will be advancing our pointer
+        
         var nextPtr = ptr + 1
 
         fun lostSync() {
@@ -116,45 +85,41 @@ abstract class StreamInterface(protected val service: RadioInterfaceService) : I
             nextPtr = 0
         }
 
-        // Deliver our current packet and restart our reader
         fun deliverPacket() {
             val buf = rxPacket.copyOf(packetLen)
             service.handleFromRadio(buf)
 
-            nextPtr = 0 // Start parsing the next packet
+            nextPtr = 0 
         }
 
         when (ptr) {
-            0 -> // looking for START1
+            0 -> 
                 if (c != START1) {
                     debugOut(c)
-                    nextPtr = 0 // Restart from scratch
+                    nextPtr = 0 
                 }
-            1 -> // Looking for START2
+            1 -> 
                 if (c != START2) {
-                    lostSync() // Restart from scratch
+                    lostSync() 
                 }
-            2 -> // Looking for MSB of our 16 bit length
+            2 -> 
                 msb = c.toInt() and 0xff
-            3 -> { // Looking for LSB of our 16 bit length
+            3 -> { 
                 lsb = c.toInt() and 0xff
 
-                // We've read our header, do one big read for the packet itself
                 packetLen = (msb shl 8) or lsb
                 if (packetLen > MAX_TO_FROM_RADIO_SIZE) {
-                    lostSync() // If packet len is too long, the bytes must have been corrupted, start looking for
-                    // START1 again
+                    lostSync() 
+                    
                 } else if (packetLen == 0) {
-                    deliverPacket() // zero length packets are valid and should be delivered immediately (because there
-                    // won't be a next byte of payload)
+                    deliverPacket() 
+                    
                 }
             }
             else -> {
-                // We are looking at the packet bytes now
+                
                 rxPacket[ptr - 4] = c
 
-                // Note: we have to check if ptr +1 is equal to packet length (for example, for a 1 byte packetlen, this
-                // code will be run with ptr of4
                 if (ptr - 4 + 1 == packetLen) {
                     deliverPacket()
                 }

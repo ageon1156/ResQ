@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.metrics
 
@@ -102,7 +87,7 @@ fun HostMetricsItem(modifier: Modifier = Modifier, telemetry: TelemetryProtos.Te
     val hostMetrics = telemetry.hostMetrics
     val time = telemetry.time * CommonCharts.MS_PER_SEC
     Card(
-        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp).combinedClickable(onClick = { /* Handle click */ }),
+        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp).combinedClickable(onClick = {  }),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
@@ -216,7 +201,7 @@ fun formatBytes(bytes: Long, decimalPlaces: Int = 2): String {
             isGroupingUsed = false
         }
     return when {
-        bytes < 0 -> "N/A" // Handle negative bytes gracefully
+        bytes < 0 -> "N/A" 
         bytes == 0L -> "0 B"
         bytes >= BYTES_IN_GB -> "${formatter.format(bytes / BYTES_IN_GB)} GB"
         bytes >= BYTES_IN_MB -> "${formatter.format(bytes / BYTES_IN_MB)} MB"

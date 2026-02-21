@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.data.repository
 
 import androidx.lifecycle.Lifecycle
@@ -58,24 +43,21 @@ constructor(
     private val nodeInfoWriteDataSource: NodeInfoWriteDataSource,
     private val dispatchers: CoroutineDispatchers,
 ) {
-    // hardware info about our local device (can be null)
+    
     val myNodeInfo: StateFlow<MyNodeEntity?> =
         nodeInfoReadDataSource
             .myNodeInfoFlow()
             .flowOn(dispatchers.io)
             .stateIn(processLifecycle.coroutineScope, SharingStarted.Eagerly, null)
 
-    // our node info
     private val _ourNodeInfo = MutableStateFlow<Node?>(null)
     val ourNodeInfo: StateFlow<Node?>
         get() = _ourNodeInfo
 
-    // The unique userId of our node
     private val _myId = MutableStateFlow<String?>(null)
     val myId: StateFlow<String?>
         get() = _myId
 
-    // A map from nodeNum to Node
     val nodeDBbyNum: StateFlow<Map<Int, Node>> =
         nodeInfoReadDataSource
             .nodeDBbyNumFlow()
@@ -85,14 +67,13 @@ constructor(
             .stateIn(processLifecycle.coroutineScope, SharingStarted.Eagerly, emptyMap())
 
     init {
-        // Backfill denormalized name columns for existing nodes on startup
+        
         processLifecycle.coroutineScope.launch {
             processLifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
                 withContext(dispatchers.io) { nodeInfoWriteDataSource.backfillDenormalizedNames() }
             }
         }
 
-        // Keep ourNodeInfo and myId correctly updated based on current connection and node DB
         combine(nodeDBbyNum, myNodeInfo) { db, info -> info?.myNodeNum?.let { db[it] } }
             .onEach { node ->
                 _ourNodeInfo.value = node

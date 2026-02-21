@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.data.repository
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
@@ -47,14 +32,13 @@ constructor(
     private val dispatchers: CoroutineDispatchers,
 ) {
 
-    /** Status of whether the app is actively subscribed to location changes. */
     private val _receivingLocationUpdates: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val receivingLocationUpdates: StateFlow<Boolean>
         get() = _receivingLocationUpdates
 
     @RequiresPermission(anyOf = [ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION])
     private fun LocationManager.requestLocationUpdates() = callbackFlow {
-        val intervalMs = 30 * 1000L // 30 seconds
+        val intervalMs = 30 * 1000L 
         val minDistanceM = 0f
 
         val locationRequest =
@@ -71,7 +55,7 @@ constructor(
                     Logger.e(e) { "addMslAltitudeToLocation() failed" }
                 }
             }
-            // info("New location: $location")
+            
             trySend(location)
         }
 
@@ -89,7 +73,7 @@ constructor(
             "Starting location updates with $providerList intervalMs=${intervalMs}ms and minDistanceM=${minDistanceM}m"
         }
         _receivingLocationUpdates.value = true
-        analytics.track("location_start") // Figure out how many users needed to use the phone GPS
+        analytics.track("location_start") 
 
         try {
             providerList.forEach { provider ->
@@ -102,7 +86,7 @@ constructor(
                 )
             }
         } catch (e: Exception) {
-            close(e) // in case of exception, close the Flow
+            close(e) 
         }
 
         awaitClose {
@@ -114,7 +98,6 @@ constructor(
         }
     }
 
-    /** Observable flow for location updates */
     @RequiresPermission(anyOf = [ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION])
     fun getLocations() = locationManager.get().requestLocationUpdates()
 }

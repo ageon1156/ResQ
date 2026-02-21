@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.database.entity
 
 import androidx.room.ColumnInfo
@@ -110,17 +95,17 @@ data class MetadataEntity(
     ],
 )
 data class NodeEntity(
-    @PrimaryKey(autoGenerate = false) val num: Int, // This is immutable, and used as a key
+    @PrimaryKey(autoGenerate = false) val num: Int, 
     @ColumnInfo(typeAffinity = ColumnInfo.BLOB) var user: MeshProtos.User = MeshProtos.User.getDefaultInstance(),
     @ColumnInfo(name = "long_name") var longName: String? = null,
-    @ColumnInfo(name = "short_name") var shortName: String? = null, // used in includeUnknown filter
+    @ColumnInfo(name = "short_name") var shortName: String? = null, 
     @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
     var position: MeshProtos.Position = MeshProtos.Position.getDefaultInstance(),
     var latitude: Double = 0.0,
     var longitude: Double = 0.0,
     var snr: Float = Float.MAX_VALUE,
     var rssi: Int = Int.MAX_VALUE,
-    @ColumnInfo(name = "last_heard") var lastHeard: Int = 0, // the last time we've seen this node in secs since 1970
+    @ColumnInfo(name = "last_heard") var lastHeard: Int = 0, 
     @ColumnInfo(name = "device_metrics", typeAffinity = ColumnInfo.BLOB)
     var deviceTelemetry: TelemetryProtos.Telemetry = TelemetryProtos.Telemetry.getDefaultInstance(),
     var channel: Int = 0,
@@ -138,7 +123,7 @@ data class NodeEntity(
     @ColumnInfo(name = "public_key") var publicKey: ByteString? = null,
     @ColumnInfo(name = "notes", defaultValue = "") var notes: String = "",
     @ColumnInfo(name = "manually_verified", defaultValue = "0")
-    var manuallyVerified: Boolean = false, // ONLY set true when scanned/imported manually
+    var manuallyVerified: Boolean = false, 
 ) {
     val deviceMetrics: TelemetryProtos.DeviceMetrics
         get() = deviceTelemetry.deviceMetrics
@@ -158,14 +143,13 @@ data class NodeEntity(
         longitude = degD(p.longitudeI)
     }
 
-    /** true if the device was heard from recently */
     val isOnline: Boolean
         get() {
             return lastHeard > onlineTimeThreshold()
         }
 
     companion object {
-        // Convert to a double representation of degrees
+        
         fun degD(i: Int) = i * 1e-7
 
         fun degI(d: Double) = (d * 1e7).toInt()

@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh.repository.bluetooth
 
@@ -49,7 +34,6 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
-/** Repository responsible for maintaining and updating the state of Bluetooth availability. */
 @Singleton
 class BluetoothRepository
 @Inject
@@ -63,8 +47,7 @@ constructor(
     private val _state =
         MutableStateFlow(
             BluetoothState(
-                // Assume we have permission until we get our initial state update to prevent premature
-                // notifications to the user.
+
                 hasPermissions = true,
             ),
         )
@@ -91,10 +74,8 @@ constructor(
         processLifecycle.coroutineScope.launch(dispatchers.default) { updateBluetoothState() }
     }
 
-    /** @return true for a valid Bluetooth address, false otherwise */
     fun isValid(bleAddress: String): Boolean = BluetoothAdapter.checkBluetoothAddress(bleAddress)
 
-    /** Starts a BLE scan for Meshtastic devices. The results are published to the [scannedDevices] flow. */
     @OptIn(ExperimentalUuidApi::class)
     @SuppressLint("MissingPermission")
     fun startScan() {
@@ -116,7 +97,7 @@ constructor(
                         _isScanning.value = false
                     }
                     .collect { peripheral ->
-                        // Add or update the peripheral in our list
+                        
                         val currentList = _scannedDevices.value
                         _scannedDevices.value =
                             (currentList.filterNot { it.address == peripheral.address } + peripheral)
@@ -124,22 +105,12 @@ constructor(
             }
     }
 
-    /** Stops the currently active BLE scan. */
     fun stopScan() {
         scanJob?.cancel()
         scanJob = null
         _isScanning.value = false
     }
 
-    /**
-     * Initiates bonding with the given peripheral. This is a suspending function that completes when the bonding
-     * process is finished. After successful bonding, the repository's state is refreshed to include the new bonded
-     * device.
-     *
-     * @param peripheral The peripheral to bond with.
-     * @throws SecurityException if required Bluetooth permissions are not granted.
-     * @throws Exception if the bonding process fails.
-     */
     @SuppressLint("MissingPermission")
     suspend fun bond(peripheral: Peripheral) {
         peripheral.createBond()
@@ -169,7 +140,6 @@ constructor(
             emptyList()
         }
 
-    /** Checks if a peripheral is one of ours, either by its advertised name or by the services it provides. */
     @OptIn(ExperimentalUuidApi::class)
     private fun isMatchingPeripheral(peripheral: Peripheral): Boolean {
         val nameMatches = peripheral.name?.matches(Regex(BLE_NAME_PATTERN)) ?: false

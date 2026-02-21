@@ -8,14 +8,12 @@
       android:translateX="18"
       android:translateY="18">
 
-    <!-- Outer circle -->
     <path
         android:pathData="M12,2A10,10 0,1,0 12,22A10,10 0,1,0 12,2Z"
         android:strokeWidth="0.8"
         android:strokeColor="@color/ic_splash"
         android:fillColor="#00000000"/>
 
-    <!-- Wireframe triangulation edges -->
     <path
         android:pathData="M12,2 L9,3.2
 M12,2 L15,3.2

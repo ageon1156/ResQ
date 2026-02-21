@@ -1,11 +1,5 @@
-/*
- * Licensed under GPL-3.0
- */
-import com.android.build.api.dsl.LibraryExtension
 
-/*
- * Licensed under GPL-3.0
- */
+import com.android.build.api.dsl.LibraryExtension
 
 plugins { alias(libs.plugins.meshtastic.android.library) }
 

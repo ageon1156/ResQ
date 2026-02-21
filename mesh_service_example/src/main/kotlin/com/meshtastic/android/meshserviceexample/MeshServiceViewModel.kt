@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.meshtastic.android.meshserviceexample
 
 import android.content.Intent
@@ -37,7 +22,6 @@ import kotlin.random.Random
 
 private const val TAG = "MeshServiceViewModel"
 
-/** ViewModel for MeshServiceExample. Handles interaction with IMeshService AIDL and manages UI state. */
 @Suppress("TooManyFunctions")
 class MeshServiceViewModel : ViewModel() {
 
@@ -109,7 +93,7 @@ class MeshServiceViewModel : ViewModel() {
                         dataType = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
                         from = DataPacket.ID_LOCAL,
                         time = System.currentTimeMillis(),
-                        id = service.packetId, // Correctly sync with radio's ID
+                        id = service.packetId, 
                         status = MessageStatus.UNKNOWN,
                         hopLimit = 3,
                         channel = 0,

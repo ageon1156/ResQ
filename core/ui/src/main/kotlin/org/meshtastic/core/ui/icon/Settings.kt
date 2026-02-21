@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.icon
 
@@ -23,12 +8,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-/**
- * This is from Material Symbols.
- *
- * @see
- *   [settings](https://fonts.google.com/icons?selected=Material+Symbols+Rounded:settings:FILL@0;wght@400;GRAD@0;opsz@24&icon.style=Rounded&icon.query=settings&icon.set=Material+Symbols&icon.size=24&icon.color=%23e3e3e3&icon.platform=android)
- */
 val MeshtasticIcons.Settings: ImageVector
     get() {
         if (settings != null) {

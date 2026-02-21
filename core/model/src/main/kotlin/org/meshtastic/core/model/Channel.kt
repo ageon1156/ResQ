@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.model
 
 import com.google.protobuf.ByteString
@@ -31,7 +16,7 @@ data class Channel(
     val loraConfig: ConfigProtos.Config.LoRaConfig = default.loraConfig,
 ) {
     companion object {
-        // These bytes must match the well known and not secret bytes used the default channel AES128 key device code
+        
         private val channelDefaultKey =
             byteArrayOfInts(
                 0xd4,
@@ -53,13 +38,12 @@ data class Channel(
             )
 
         private val cleartextPSK = ByteString.EMPTY
-        private val defaultPSK = byteArrayOfInts(1) // a shortstring code to indicate we need our default PSK
+        private val defaultPSK = byteArrayOfInts(1) 
 
-        // The default channel that devices ship with
         val default =
             Channel(
                 channelSettings { psk = ByteString.copyFrom(defaultPSK) },
-                // references: NodeDB::installDefaultConfig / Channels::initDefaultChannel
+                
                 loRaConfig {
                     usePreset = true
                     modemPreset = ModemPreset.LONG_FAST
@@ -76,12 +60,10 @@ data class Channel(
         }
     }
 
-    // Return the name of our channel as a human readable string.  If empty string, assume "Default" per mesh.proto spec
     val name: String
         get() =
             settings.name.ifEmpty {
-                // We have a new style 'empty' channel name.  Use the same logic from the device to convert that to a
-                // human readable name
+
                 if (loraConfig.usePreset) {
                     when (loraConfig.modemPreset) {
                         ModemPreset.SHORT_TURBO -> "ShortTurbo"
@@ -104,22 +86,21 @@ data class Channel(
     val psk: ByteString
         get() =
             if (settings.psk.size() != 1) {
-                settings.psk // A standard PSK
+                settings.psk 
             } else {
-                // One of our special 1 byte PSKs, see mesh.proto for docs.
+                
                 val pskIndex = settings.psk.byteAt(0).toInt()
 
                 if (pskIndex == 0) {
                     cleartextPSK
                 } else {
-                    // Treat an index of 1 as the old channelDefaultKey and work up from there
+                    
                     val bytes = channelDefaultKey.clone()
                     bytes[bytes.size - 1] = (0xff and (bytes[bytes.size - 1] + pskIndex - 1)).toByte()
                     ByteString.copyFrom(bytes)
                 }
             }
 
-    /** Given a channel name and psk, return the (0 to 255) hash for that channel */
     val hash: Int
         get() = xorHash(name.toByteArray()) xor xorHash(psk.toByteArray())
 

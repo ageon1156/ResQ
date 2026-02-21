@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.model.util
 
@@ -23,7 +8,6 @@ import java.util.concurrent.TimeUnit
 
 private const val ONLINE_WINDOW_HOURS = 2
 
-// return time if within 24 hours, otherwise date
 fun getShortDate(time: Long): String? {
     val date = if (time != 0L) Date(time) else return null
     val isWithin24Hours = System.currentTimeMillis() - date.time <= TimeUnit.DAYS.toMillis(1)
@@ -35,7 +19,6 @@ fun getShortDate(time: Long): String? {
     }
 }
 
-// return time if within 24 hours, otherwise date/time
 fun getShortDateTime(time: Long): String {
     val date = Date(time)
     val isWithin24Hours = System.currentTimeMillis() - date.time <= TimeUnit.DAYS.toMillis(1)
@@ -69,12 +52,6 @@ fun onlineTimeThreshold(): Int {
     return (currentSeconds - TimeUnit.HOURS.toSeconds(ONLINE_WINDOW_HOURS.toLong())).toInt()
 }
 
-/**
- * Calculates the remaining mute time in days and hours.
- *
- * @param remainingMillis The remaining time in milliseconds
- * @return Pair of (days, hours), where days is Int and hours is Double
- */
 fun formatMuteRemainingTime(remainingMillis: Long): Pair<Int, Double> {
     if (remainingMillis <= 0) return Pair(0, 0.0)
     val totalHours = remainingMillis.toDouble() / TimeUnit.HOURS.toMillis(1)

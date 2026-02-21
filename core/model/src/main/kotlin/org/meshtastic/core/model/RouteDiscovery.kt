@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.model
 
 import org.jetbrains.compose.resources.StringResource
@@ -39,9 +24,8 @@ val MeshProtos.MeshPacket.fullRouteDiscovery: RouteDiscovery?
 
                         val fullRouteBack = listOf(sourceId) + routeBackList + destinationId
                         clearRouteBack()
-                        // hopStart was not populated prior to 2.3.0. The bitfield was added in 2.5.0 and
-                        // is used to detect versions where hopStart can be trusted to have been set.
-                        if ((hopStart > 0 || hasBitfield()) && snrBackCount > 0) { // otherwise back route is invalid
+
+                        if ((hopStart > 0 || hasBitfield()) && snrBackCount > 0) { 
                             addAllRouteBack(fullRouteBack)
                         }
                     }
@@ -53,13 +37,12 @@ val MeshProtos.MeshPacket.fullRouteDiscovery: RouteDiscovery?
 
 @Suppress("MagicNumber")
 private fun formatTraceroutePath(nodesList: List<String>, snrList: List<Int>): String {
-    // nodesList should include both origin and destination nodes
-    // origin will not have an SNR value, but destination should
+
     val snrStr =
         if (snrList.size == nodesList.size - 1) {
             snrList
         } else {
-            // use unknown SNR for entire route if snrList has invalid size
+            
             List(nodesList.size - 1) { -128 }
         }
             .map { snr ->
@@ -95,7 +78,6 @@ fun MeshProtos.MeshPacket.getTracerouteResponse(
     headerBack: String = "Route traced back to us:\n\n",
 ): String? = fullRouteDiscovery?.getTracerouteResponse(getUser, headerTowards, headerBack)
 
-/** Returns a traceroute response string only when the result is complete (both directions). */
 fun MeshProtos.MeshPacket.getFullTracerouteResponse(
     getUser: (nodeNum: Int) -> String,
     headerTowards: String = "Route traced toward destination:\n\n",

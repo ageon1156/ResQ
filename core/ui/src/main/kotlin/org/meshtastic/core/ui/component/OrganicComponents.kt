@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.component
 
@@ -58,11 +43,6 @@ import org.meshtastic.core.ui.theme.NatureGradient
 import org.meshtastic.core.ui.theme.SoftRectangleShape
 import org.meshtastic.core.ui.theme.organicSpring
 
-/**
- * Organic Button Component
- *
- * A button with organic shape and optional icon support
- */
 @Composable
 fun OrganicButton(
     text: String,
@@ -100,11 +80,6 @@ fun OrganicButton(
     }
 }
 
-/**
- * Organic Floating Action Button
- *
- * FAB with more rounded corners for organic feel
- */
 @Composable
 fun OrganicFloatingActionButton(
     onClick: () -> Unit,
@@ -128,11 +103,6 @@ fun OrganicFloatingActionButton(
     }
 }
 
-/**
- * Organic Chip Component
- *
- * Small, rounded container for tags, labels, and compact info
- */
 @Composable
 fun OrganicChip(
     text: String,
@@ -177,11 +147,6 @@ fun OrganicChip(
     }
 }
 
-/**
- * Organic Badge Component
- *
- * Circular badge for notification counts
- */
 @Composable
 fun OrganicBadge(
     count: Int,
@@ -212,11 +177,6 @@ fun OrganicBadge(
     }
 }
 
-/**
- * Organic Header Component
- *
- * Header with title and optional illustration space
- */
 @Composable
 fun OrganicHeader(
     title: String,
@@ -276,11 +236,6 @@ fun OrganicHeader(
     }
 }
 
-/**
- * Organic Metric Chip
- *
- * Small chip displaying metric icon and value
- */
 @Composable
 fun OrganicMetricChip(
     icon: ImageVector,
@@ -315,11 +270,6 @@ fun OrganicMetricChip(
     }
 }
 
-/**
- * Organic Avatar Component
- *
- * Circular or rounded square avatar with gradient background and initials
- */
 @Composable
 fun OrganicAvatar(
     name: String,
@@ -327,7 +277,7 @@ fun OrganicAvatar(
     seed: Long = name.hashCode().toLong(),
     shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(16.dp)
 ) {
-    // Generate gradient based on seed for consistency
+    
     val gradient = remember(seed) {
         val hue = (seed % 360).toFloat()
         val color1 = android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.5f, 0.7f))
@@ -360,11 +310,6 @@ fun OrganicAvatar(
     }
 }
 
-/**
- * Organic Empty State Component
- *
- * Centered empty state with icon, title, subtitle, and optional action
- */
 @Composable
 fun OrganicEmptyState(
     icon: ImageVector,
@@ -380,7 +325,7 @@ fun OrganicEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Icon with gradient background
+        
         Box(
             modifier = Modifier
                 .size(120.dp)
@@ -417,11 +362,6 @@ fun OrganicEmptyState(
     }
 }
 
-/**
- * Organic Tab Item
- *
- * Single tab item with icon and label, used in tab bars
- */
 @Composable
 fun OrganicTabItem(
     icon: ImageVector,

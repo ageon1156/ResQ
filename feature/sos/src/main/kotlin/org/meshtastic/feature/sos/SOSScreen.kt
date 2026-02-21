@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.sos
 
@@ -134,7 +119,7 @@ private fun SOSContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        // Connection status
+        
         Text(
             text = if (isConnected) {
                 "\u2022 Connected"
@@ -148,7 +133,6 @@ private fun SOSContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Large SOS button
         Box(contentAlignment = Alignment.Center) {
             Button(
                 onClick = {
@@ -186,7 +170,6 @@ private fun SOSContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Status message
         when (uiState) {
             is SOSUiState.Ready -> {}
             is SOSUiState.Sending -> {
@@ -244,7 +227,6 @@ private fun SOSContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // GPS status
         Text(
             text = if (locationInfo != null) {
                 "GPS: $locationInfo"
@@ -257,7 +239,6 @@ private fun SOSContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Info text
         Text(
             text = stringResource(Res.string.sos_info_text),
             style = MaterialTheme.typography.bodySmall,
@@ -265,7 +246,6 @@ private fun SOSContent(
             textAlign = TextAlign.Center,
         )
 
-        // Last sent timestamp
         if (lastSentTime != null) {
             Spacer(modifier = Modifier.height(16.dp))
             val timeText = SimpleDateFormat("h:mm a", Locale.getDefault())

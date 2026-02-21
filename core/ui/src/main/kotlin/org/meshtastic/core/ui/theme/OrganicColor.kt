@@ -1,24 +1,8 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Organic Tech Palette - Light theme base colors
 val ForestGreen = Color(0xFF2D5F4D)
 val SandBeige = Color(0xFFE8DCC4)
 val TerracottaOrange = Color(0xFFCB6843)
@@ -29,7 +13,6 @@ val BackgroundCream = Color(0xFFFAF7F0)
 val SurfaceIvory = Color(0xFFF5F1E8)
 val OutlineStone = Color(0xFFB8AFA0)
 
-// Organic Tech Palette - Dark theme base colors
 val DeepForest = Color(0xFF1A3329)
 val WarmEarth = Color(0xFF3D352A)
 val BurntOrange = Color(0xFFD97855)
@@ -40,30 +23,29 @@ val BackgroundCharcoal = Color(0xFF1C1917)
 val SurfaceSlate = Color(0xFF252220)
 val OutlineDriftwood = Color(0xFF4D4641)
 
-// Organic Tech Palette - Light theme
-val primaryLight_Organic = Color(0xFF2D5F4D) // Forest Green
+val primaryLight_Organic = Color(0xFF2D5F4D) 
 val onPrimaryLight_Organic = Color(0xFFFFFFFF)
-val primaryContainerLight_Organic = Color(0xFFE8DCC4) // Sand Beige
+val primaryContainerLight_Organic = Color(0xFFE8DCC4) 
 val onPrimaryContainerLight_Organic = Color(0xFF002114)
-val secondaryLight_Organic = Color(0xFFCB6843) // Terracotta Orange
+val secondaryLight_Organic = Color(0xFFCB6843) 
 val onSecondaryLight_Organic = Color(0xFFFFFFFF)
 val secondaryContainerLight_Organic = Color(0xFFFFDAC8)
 val onSecondaryContainerLight_Organic = Color(0xFF2C1600)
-val tertiaryLight_Organic = Color(0xFF7BA8C1) // Sky Blue
+val tertiaryLight_Organic = Color(0xFF7BA8C1) 
 val onTertiaryLight_Organic = Color(0xFFFFFFFF)
 val tertiaryContainerLight_Organic = Color(0xFFD8E9F7)
 val onTertiaryContainerLight_Organic = Color(0xFF001F2A)
-val errorLight_Organic = Color(0xFFC14A3D) // Clay Red
+val errorLight_Organic = Color(0xFFC14A3D) 
 val onErrorLight_Organic = Color(0xFFFFFFFF)
 val errorContainerLight_Organic = Color(0xFFFFDAD5)
 val onErrorContainerLight_Organic = Color(0xFF3B0907)
-val backgroundLight_Organic = Color(0xFFFAF7F0) // Background Cream
+val backgroundLight_Organic = Color(0xFFFAF7F0) 
 val onBackgroundLight_Organic = Color(0xFF1F1B16)
-val surfaceLight_Organic = Color(0xFFF5F1E8) // Surface Ivory
+val surfaceLight_Organic = Color(0xFFF5F1E8) 
 val onSurfaceLight_Organic = Color(0xFF1F1B16)
 val surfaceVariantLight_Organic = Color(0xFFE7E1D6)
 val onSurfaceVariantLight_Organic = Color(0xFF49453C)
-val outlineLight_Organic = Color(0xFFB8AFA0) // Outline Stone
+val outlineLight_Organic = Color(0xFFB8AFA0) 
 val outlineVariantLight_Organic = Color(0xFFCAC5B9)
 val scrimLight_Organic = Color(0xFF000000)
 val inverseSurfaceLight_Organic = Color(0xFF343127)
@@ -77,7 +59,6 @@ val surfaceContainerLight_Organic = Color(0xFFEBEFE7)
 val surfaceContainerHighLight_Organic = Color(0xFFE5EAE2)
 val surfaceContainerHighestLight_Organic = Color(0xFFDFE4DC)
 
-// Organic Tech Palette - Light theme Medium Contrast
 val primaryLightMediumContrast_Organic = Color(0xFF1A4537)
 val onPrimaryLightMediumContrast_Organic = Color(0xFFFFFFFF)
 val primaryContainerLightMediumContrast_Organic = Color(0xFF447662)
@@ -95,7 +76,6 @@ val onErrorLightMediumContrast_Organic = Color(0xFFFFFFFF)
 val errorContainerLightMediumContrast_Organic = Color(0xFFD96153)
 val onErrorContainerLightMediumContrast_Organic = Color(0xFFFFFFFF)
 
-// Organic Tech Palette - Light theme High Contrast
 val primaryLightHighContrast_Organic = Color(0xFF00281A)
 val onPrimaryLightHighContrast_Organic = Color(0xFFFFFFFF)
 val primaryContainerLightHighContrast_Organic = Color(0xFF1A4537)
@@ -113,30 +93,29 @@ val onErrorLightHighContrast_Organic = Color(0xFFFFFFFF)
 val errorContainerLightHighContrast_Organic = Color(0xFF8C3329)
 val onErrorContainerLightHighContrast_Organic = Color(0xFFFFFFFF)
 
-// Organic Tech Palette - Dark theme
-val primaryDark_Organic = Color(0xFF9FD4B9) // Soft mint
+val primaryDark_Organic = Color(0xFF9FD4B9) 
 val onPrimaryDark_Organic = Color(0xFF003826)
-val primaryContainerDark_Organic = Color(0xFF1A3329) // Deep Forest
+val primaryContainerDark_Organic = Color(0xFF1A3329) 
 val onPrimaryContainerDark_Organic = Color(0xFFBBF0D4)
-val secondaryDark_Organic = Color(0xFFD97855) // Burnt Orange
+val secondaryDark_Organic = Color(0xFFD97855) 
 val onSecondaryDark_Organic = Color(0xFF4A2800)
-val secondaryContainerDark_Organic = Color(0xFF3D352A) // Warm Earth
+val secondaryContainerDark_Organic = Color(0xFF3D352A) 
 val onSecondaryContainerDark_Organic = Color(0xFFFFDAC8)
-val tertiaryDark_Organic = Color(0xFFB3D1E8) // Light sky
+val tertiaryDark_Organic = Color(0xFFB3D1E8) 
 val onTertiaryDark_Organic = Color(0xFF1C3444)
-val tertiaryContainerDark_Organic = Color(0xFF4A6273) // Midnight Blue
+val tertiaryContainerDark_Organic = Color(0xFF4A6273) 
 val onTertiaryContainerDark_Organic = Color(0xFFD8E9F7)
-val errorDark_Organic = Color(0xFFE86850) // Ember Red
+val errorDark_Organic = Color(0xFFE86850) 
 val onErrorDark_Organic = Color(0xFF5F1410)
 val errorContainerDark_Organic = Color(0xFF8C2622)
 val onErrorContainerDark_Organic = Color(0xFFFFDAD5)
-val backgroundDark_Organic = Color(0xFF1C1917) // Background Charcoal
+val backgroundDark_Organic = Color(0xFF1C1917) 
 val onBackgroundDark_Organic = Color(0xFFEAE1D9)
-val surfaceDark_Organic = Color(0xFF252220) // Surface Slate
+val surfaceDark_Organic = Color(0xFF252220) 
 val onSurfaceDark_Organic = Color(0xFFEAE1D9)
 val surfaceVariantDark_Organic = Color(0xFF49453C)
 val onSurfaceVariantDark_Organic = Color(0xFFCAC5B9)
-val outlineDark_Organic = Color(0xFF4D4641) // Outline Driftwood
+val outlineDark_Organic = Color(0xFF4D4641) 
 val outlineVariantDark_Organic = Color(0xFF49453C)
 val scrimDark_Organic = Color(0xFF000000)
 val inverseSurfaceDark_Organic = Color(0xFFEAE1D9)
@@ -150,7 +129,6 @@ val surfaceContainerDark_Organic = Color(0xFF292623)
 val surfaceContainerHighDark_Organic = Color(0xFF33302E)
 val surfaceContainerHighestDark_Organic = Color(0xFF3E3B38)
 
-// Organic Tech Palette - Dark theme Medium Contrast
 val primaryDarkMediumContrast_Organic = Color(0xFFB3E5C8)
 val onPrimaryDarkMediumContrast_Organic = Color(0xFF001B10)
 val primaryContainerDarkMediumContrast_Organic = Color(0xFF7AAA8F)
@@ -168,7 +146,6 @@ val onErrorDarkMediumContrast_Organic = Color(0xFF370600)
 val errorContainerDarkMediumContrast_Organic = Color(0xFFBE3626)
 val onErrorContainerDarkMediumContrast_Organic = Color(0xFF000000)
 
-// Organic Tech Palette - Dark theme High Contrast
 val primaryDarkHighContrast_Organic = Color(0xFFEFFFEE)
 val onPrimaryDarkHighContrast_Organic = Color(0xFF000000)
 val primaryContainerDarkHighContrast_Organic = Color(0xFFB3E5C8)
@@ -186,7 +163,6 @@ val onErrorDarkHighContrast_Organic = Color(0xFF000000)
 val errorContainerDarkHighContrast_Organic = Color(0xFFFF9484)
 val onErrorContainerDarkHighContrast_Organic = Color(0xFF000000)
 
-// Gradient helpers for organic theme
 val NatureGradient = listOf(ForestGreen, SkyBlue)
 val EarthGradient = listOf(TerracottaOrange, WarmEarth)
 val MossGradient = listOf(MossGreen, ForestGreen)

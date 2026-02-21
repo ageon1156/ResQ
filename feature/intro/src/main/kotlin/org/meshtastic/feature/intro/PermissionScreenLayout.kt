@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.intro
 
@@ -46,19 +31,6 @@ import org.jetbrains.compose.resources.stringResource
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.skip
 
-/**
- * A generic layout for screens within the app introduction flow. It typically presents a headline, a descriptive text
- * (potentially with clickable annotations), a list of features, and standard navigation buttons.
- *
- * @param headlineRes String resource for the main headline of the screen.
- * @param annotatedDescription The [AnnotatedString] for the main descriptive text.
- * @param features A list of [FeatureUIData] to be displayed using [FeatureRow].
- * @param additionalContent Optional composable lambda for adding custom content below the features.
- * @param onSkip Callback for the skip action.
- * @param onConfigure Callback for the main configure/next action.
- * @param configureButtonTextRes String resource for the main action button.
- * @param onAnnotationClick Callback invoked when a tagged annotation within [annotatedDescription] is clicked.
- */
 @Composable
 internal fun PermissionScreenLayout(
     headlineRes: StringResource,

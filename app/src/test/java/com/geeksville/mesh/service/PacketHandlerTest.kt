@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.service
 
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
@@ -65,8 +50,7 @@ class PacketHandlerTest {
         handler.sendToRadio(builder)
 
         verify { radioInterfaceService.sendToRadio(any()) }
-        // Verify broadcast status ENROUTE (via status mapping) is not directly testable easily without more mocks,
-        // but we verify the call to radio service occurred.
+
     }
 
     @Test
@@ -92,7 +76,7 @@ class PacketHandlerTest {
             MeshProtos.QueueStatus.newBuilder()
                 .apply {
                     meshPacketId = 789
-                    res = 0 // Success
+                    res = 0 
                     free = 1
                 }
                 .build()
@@ -100,8 +84,6 @@ class PacketHandlerTest {
         handler.handleQueueStatus(status)
         testScheduler.runCurrent()
 
-        // If it completed, the queue job should move to the next packet or finish.
-        // We can't easily check the deferred inside, but we can check if it cleared the internal wait.
     }
 }
 

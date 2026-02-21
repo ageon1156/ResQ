@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package com.geeksville.mesh.ui.node
 
@@ -73,15 +58,14 @@ fun AdaptiveNodeListScreen(
         val currentEntry = navController.currentBackStackEntry
         val isNodesRoute = currentEntry?.destination?.hasRoute<NodesRoutes.Nodes>() == true
 
-        // Check if we navigated here from another screen (e.g., from Messages or Map)
         val previousEntry = navController.previousBackStackEntry
         val isFromDifferentGraph = previousEntry?.destination?.hasRoute<NodesRoutes.NodesGraph>() == false
 
         if (isFromDifferentGraph && !isNodesRoute) {
-            // Navigate back via NavController to return to the previous screen
+            
             navController.navigateUp()
         } else {
-            // Close the detail pane within the adaptive scaffold
+            
             scope.launch { navigator.navigateBack(backNavigationBehavior) }
         }
     }
@@ -115,7 +99,7 @@ fun AdaptiveNodeListScreen(
         listPane = {
             AnimatedPane {
                 val focusManager = LocalFocusManager.current
-                // Prevent TextFields from auto-focusing when pane animates in
+                
                 LaunchedEffect(Unit) { focusManager.clearFocus() }
                 NodeListScreen(
                     navigateToNodeDetails = { nodeId ->
@@ -129,7 +113,7 @@ fun AdaptiveNodeListScreen(
         detailPane = {
             AnimatedPane {
                 val focusManager = LocalFocusManager.current
-                // Prevent TextFields from auto-focusing when pane animates in
+                
                 navigator.currentDestination?.contentKey?.let { nodeId ->
                     key(nodeId) {
                         LaunchedEffect(nodeId) { focusManager.clearFocus() }

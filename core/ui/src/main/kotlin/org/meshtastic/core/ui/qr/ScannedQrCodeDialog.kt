@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.ui.qr
 
 import androidx.compose.foundation.layout.Arrangement
@@ -81,7 +66,6 @@ fun ScannedQrCodeDialog(
     )
 }
 
-/** Enables the user to select which channels to accept after scanning a QR code. */
 @OptIn(ExperimentalLayoutApi::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
@@ -96,9 +80,7 @@ fun ScannedQrCodeDialog(
     val channelSet =
         remember(shouldReplace) {
             if (shouldReplace) {
-                // When replacing, apply the incoming LoRa configuration but preserve certain
-                // locally safe fields such as MQTT flags and TX power. This prevents QR codes
-                // from unintentionally overriding device-specific power limits (e.g. E22 caps).
+
                 incoming.copy {
                     loraConfig =
                         loraConfig.copy {
@@ -108,9 +90,7 @@ fun ScannedQrCodeDialog(
                 }
             } else {
                 channels.copy {
-                    // To guarantee consistent ordering, using a LinkedHashSet which iterates through
-                    // its entries according to the order an item was *first* inserted.
-                    // https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/-linked-hash-set/
+
                     val result = LinkedHashSet(settings + incoming.settingsList)
                     settings.clear()
                     settings.addAll(result)
@@ -120,14 +100,12 @@ fun ScannedQrCodeDialog(
 
     val modemPresetName = Channel(loraConfig = channelSet.loraConfig).name
 
-    /* Holds selections made by the user */
     val channelSelections =
         remember(channelSet) { mutableStateListOf(elements = Array(size = channelSet.settingsCount, init = { true })) }
 
     val selectedChannelSet =
         channelSet.copy {
-            // When adding (not replacing), include all previous channels + selected new channels.
-            // Since 'channelSet.settings' already contains the merged distinct list, we just filter it.
+
             val result =
                 settings.filterIndexed { i, _ ->
                     val isExisting = !shouldReplace && i < channels.settingsCount
@@ -137,7 +115,6 @@ fun ScannedQrCodeDialog(
             settings.addAll(result)
         }
 
-    // Compute LoRa configuration changes when in replace mode
     val loraChanges =
         remember(shouldReplace, channels, incoming) {
             if (shouldReplace && incoming.hasLoraConfig()) {
@@ -221,7 +198,6 @@ fun ScannedQrCodeDialog(
                     )
                 }
 
-                // Display LoRa configuration changes when in replace mode
                 if (shouldReplace && loraChanges.isNotEmpty()) {
                     item {
                         Text(
@@ -264,7 +240,6 @@ fun ScannedQrCodeDialog(
                     }
                 }
 
-                /* User Actions via buttons */
                 item {
                     FlowRow(
                         horizontalArrangement = Arrangement.SpaceBetween,

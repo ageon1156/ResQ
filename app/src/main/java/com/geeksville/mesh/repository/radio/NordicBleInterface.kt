@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.repository.radio
 
 import android.annotation.SuppressLint
@@ -56,17 +41,6 @@ import java.util.UUID
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
-/**
- * A [IRadioInterface] implementation for BLE devices using Nordic Kotlin BLE Library.
- * https://github.com/NordicSemiconductor/Kotlin-BLE-Library.
- *
- * This class is responsible for connecting to and communicating with a Meshtastic device over BLE.
- *
- * @param serviceScope The coroutine scope to use for launching coroutines.
- * @param centralManager The central manager provided by Nordic BLE Library.
- * @param service The [RadioInterfaceService] to use for handling radio events.
- * @param address The BLE address of the device to connect to.
- */
 @SuppressLint("MissingPermission")
 class NordicBleInterface
 @AssistedInject
@@ -109,11 +83,9 @@ constructor(
         connect()
     }
 
-    // --- Packet Flow Management ---
-
     private fun fromRadioPacketFlow(): Flow<ByteArray> = channelFlow {
         while (isActive) {
-            // Use safe call and Elvis operator for cleaner loop termination if read fails or returns empty
+            
             val packet =
                 fromRadioCharacteristic?.read()?.takeIf { it.isNotEmpty() }
                     ?: run {
@@ -156,8 +128,6 @@ constructor(
                 .collect()
         }
     }
-
-    // --- Connection & Discovery Logic ---
 
     private fun findPeripheral(): Peripheral =
         centralManager.getBondedPeripherals().firstOrNull { it.address == address }
@@ -303,8 +273,6 @@ constructor(
         }
     }
 
-    // --- Notification Setup ---
-
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun setupNotifications() {
         retryCall { fromNumCharacteristic?.subscribe() }
@@ -356,13 +324,6 @@ constructor(
         }
     }
 
-    // --- IRadioInterface Implementation ---
-
-    /**
-     * Sends a packet to the radio.
-     *
-     * @param p The packet to send.
-     */
     override fun handleSendToRadio(p: ByteArray) {
         toRadioCharacteristic?.let { characteristic ->
             if (peripheral == null) {
@@ -404,7 +365,6 @@ constructor(
         Logger.d { "[$address] BLE keepAlive" }
     }
 
-    /** Closes the connection to the device. */
     override fun close() {
         runBlocking {
             val uptime =

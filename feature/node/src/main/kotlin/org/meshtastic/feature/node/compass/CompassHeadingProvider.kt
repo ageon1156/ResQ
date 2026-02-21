@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.compass
 
@@ -33,17 +18,13 @@ private const val ORIENTATION_SIZE = 3
 private const val FULL_CIRCLE_DEGREES = 360f
 
 data class HeadingState(
-    val heading: Float? = null, // 0..360 degrees
+    val heading: Float? = null, 
     val hasSensor: Boolean = true,
     val accuracy: Int = SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM,
 )
 
 class CompassHeadingProvider @Inject constructor(@ApplicationContext private val context: Context) {
 
-    /**
-     * Emits compass heading in degrees (magnetic). Callers can correct for true north using the latest location data
-     * when available.
-     */
     fun headingUpdates(): Flow<HeadingState> = callbackFlow {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         if (sensorManager == null) {
@@ -101,7 +82,7 @@ class CompassHeadingProvider @Inject constructor(@ApplicationContext private val
                 }
 
                 override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
-                    // No-op
+                    
                 }
             }
 

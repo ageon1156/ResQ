@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.metrics
 
@@ -309,27 +294,7 @@ private fun GasCompositionDisplay(envMetrics: TelemetryProtos.EnvironmentMetrics
             }
         }
     }
-    // These are in a differnt proto ...
-    // envMetrics.co2?.let { co2 ->
-    //         Spacer(modifier = Modifier.height(4.dp))
-    //         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-    //             Text(
-    //                 text = "%s %.0f ppm".format(stringResource(Res.string.co2), co2),
-    //                 color = MaterialTheme.colorScheme.onSurface,
-    //                 fontSize = MaterialTheme.typography.labelLarge.fontSize,
-    //             )
-    //         }
-    //     }
-    //     envMetrics.tvoc?.let { tvoc ->
-    //         Spacer(modifier = Modifier.height(4.dp))
-    //         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-    //             Text(
-    //                 text = "%s %.0f ppb".format(stringResource(Res.string.tvoc), tvoc),
-    //                 color = MaterialTheme.colorScheme.onSurface,
-    //                 fontSize = MaterialTheme.typography.labelLarge.fontSize,
-    //             )
-    //         }
-    //     }
+
 }
 
 @Composable
@@ -361,7 +326,7 @@ private fun EnvironmentMetricsContent(telemetry: Telemetry, environmentDisplayFa
     val envMetrics = telemetry.environmentMetrics
     val time = telemetry.time * MS_PER_SEC
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 2.dp)) {
-        /* Time and Temperature */
+        
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
                 text = DATE_TIME_FORMAT.format(time),
@@ -384,11 +349,11 @@ private fun EnvironmentMetricsContent(telemetry: Telemetry, environmentDisplayFa
     }
 }
 
-@Suppress("MagicNumber") // preview data
+@Suppress("MagicNumber") 
 @Preview(showBackground = true)
 @Composable
 private fun PreviewEnvironmentMetricsContent() {
-    // Build a fake EnvironmentMetrics using the generated proto builder APIs
+    
     val fakeEnvMetrics =
         TelemetryProtos.EnvironmentMetrics.newBuilder()
             .setTemperature(22.5f)

@@ -1,6 +1,4 @@
-/*
- * Licensed under GPL-3.0
- */
+
 import com.android.build.api.dsl.LibraryExtension
 
 plugins {
@@ -21,7 +19,6 @@ dependencies {
     implementation(projects.core.prefs)
     implementation(projects.core.proto)
 
-    // Needed because core:data references MeshtasticDatabase (supertype RoomDatabase)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.paging)
 

@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.component
 
@@ -46,7 +31,7 @@ fun EditIPv4Preference(
     fun convertIpAddressToInt(ipAddress: String): Int? = ipAddress
         .split(".")
         .map { it.toIntOrNull() }
-        .reversed() // little-endian byte order
+        .reversed() 
         .fold(0) { total, next -> if (next == null) return null else total shl 8 or next }
 
     var valueState by remember(value) { mutableStateOf(convertIntToIpAddress(value)) }

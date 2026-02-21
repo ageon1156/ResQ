@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.map
 
@@ -36,7 +21,6 @@ import org.osmdroid.views.overlay.ScaleBarOverlay
 import org.osmdroid.views.overlay.advancedpolyline.MonochromaticPaintList
 import org.osmdroid.views.overlay.gridlines.LatLonGridlineOverlay2
 
-/** Adds copyright to map depending on what source is showing */
 fun MapView.addCopyright() {
     if (overlays.none { it is CopyrightOverlay }) {
         val copyrightNotice: String = tileProvider.tileSource.copyrightNotice ?: return
@@ -46,11 +30,6 @@ fun MapView.addCopyright() {
     }
 }
 
-/**
- * Create LatLong Grid line overlay
- *
- * @param enabled: turn on/off gridlines
- */
 fun MapView.createLatLongGrid(enabled: Boolean) {
     val latLongGridOverlay = LatLonGridlineOverlay2()
     latLongGridOverlay.isEnabled = enabled

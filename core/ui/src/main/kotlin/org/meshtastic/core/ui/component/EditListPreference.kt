@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.component
 
@@ -139,7 +124,7 @@ inline fun <reified T> EditListPreference(
                     EditTextPreference(
                         title = stringResource(Res.string.name),
                         value = value.name,
-                        maxSize = 14, // name max_size:15
+                        maxSize = 14, 
                         enabled = enabled,
                         isError = false,
                         keyboardOptions =
@@ -170,7 +155,7 @@ inline fun <reified T> EditListPreference(
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
-                // Add element based on the type T
+                
                 val newElement =
                     when (T::class) {
                         Int::class -> 0 as T

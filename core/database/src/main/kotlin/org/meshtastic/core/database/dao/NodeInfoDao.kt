@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.core.database.dao
 
 import androidx.room.Dao
@@ -35,22 +20,10 @@ import org.meshtastic.proto.MeshProtos
 @Dao
 interface NodeInfoDao {
 
-    /**
-     * Verifies a [NodeEntity] before an upsert operation. It handles populating the publicKey for lazy migration,
-     * checks for public key conflicts with new nodes, and manages updates to existing nodes, particularly in cases of
-     * public key mismatches to prevent potential impersonation or data corruption.
-     *
-     * @param incomingNode The node entity to be verified.
-     * @return A [NodeEntity] that is safe to upsert, or null if the upsert should be aborted (e.g., due to an
-     *   impersonation attempt, though this logic is currently commented out).
-     */
     private suspend fun getVerifiedNodeForUpsert(incomingNode: NodeEntity): NodeEntity {
-        // Populate the NodeEntity.publicKey field from the User.publicKey for consistency
-        // and to support lazy migration.
+
         incomingNode.publicKey = incomingNode.user.publicKey
 
-        // Populate denormalized name columns from the User protobuf for search functionality
-        // Only populate if the user is not a placeholder (hwModel != UNSET); otherwise keep them null
         if (incomingNode.user.hwModel != MeshProtos.HardwareModel.UNSET) {
             incomingNode.longName = incomingNode.user.longName
             incomingNode.shortName = incomingNode.user.shortName
@@ -68,19 +41,16 @@ interface NodeInfoDao {
         }
     }
 
-    /** Validates a new node before it is inserted into the database. */
     private suspend fun handleNewNodeUpsertValidation(newNode: NodeEntity): NodeEntity {
-        // Check if the new node's public key (if present and not empty)
-        // is already claimed by another existing node.
+
         if (newNode.publicKey?.isEmpty == false) {
             val nodeWithSamePK = findNodeByPublicKey(newNode.publicKey)
             if (nodeWithSamePK != null && nodeWithSamePK.num != newNode.num) {
-                // This is a potential impersonation attempt.
+                
                 return nodeWithSamePK
             }
         }
-        // If no conflicting public key is found, or if the impersonation check is not active,
-        // the new node is considered safe to add.
+
         return newNode
     }
 
@@ -92,7 +62,7 @@ interface NodeInfoDao {
         val shouldPreserve = hasExistingUser && isPlaceholder && isDefaultName
 
         if (shouldPreserve) {
-            // Preserve existing name and user info, but update metadata like lastHeard, SNR, and position.
+            
             val resolvedNotes = if (incomingNode.notes.isBlank()) existingNode.notes else incomingNode.notes
             return existingNode.copy(
                 lastHeard = incomingNode.lastHeard,
@@ -113,21 +83,16 @@ interface NodeInfoDao {
             )
         }
 
-        // A public key is considered matching if the incoming key equals the existing key,
-        // OR if the existing key is empty (allowing a new key to be set or an update to proceed).
         val existingResolvedKey = existingNode.publicKey ?: existingNode.user.publicKey
         val isPublicKeyMatchingOrExistingIsEmpty = existingResolvedKey == incomingNode.publicKey || !existingNode.hasPKC
 
         val resolvedNotes = if (incomingNode.notes.isBlank()) existingNode.notes else incomingNode.notes
 
         return if (isPublicKeyMatchingOrExistingIsEmpty) {
-            // Keys match or existing key was empty: trust the incoming node data completely.
-            // This allows for legitimate updates to user info and other fields.
+
             incomingNode.copy(notes = resolvedNotes)
         } else {
-            // Public key mismatch: This could be a factory reset or a hardware ID collision.
-            // We allow the name and user info to update, but we clear the public key
-            // to indicate that this node is no longer "verified" against the previous key.
+
             incomingNode.copy(
                 user = incomingNode.user.toBuilder().setPublicKey(NodeEntity.ERROR_BYTE_STRING).build(),
                 publicKey = NodeEntity.ERROR_BYTE_STRING,
@@ -278,17 +243,13 @@ interface NodeInfoDao {
         putAll(nodes.map { getVerifiedNodeForUpsert(it) })
     }
 
-    /**
-     * Backfills longName and shortName columns from the user protobuf for nodes where these columns are NULL. This
-     * ensures search functionality works for all nodes. Skips placeholder/default users (hwModel == UNSET).
-     */
     @Transaction
     suspend fun backfillDenormalizedNames() {
         val nodes = getAllNodesSnapshot()
         val nodesToUpdate =
             nodes
                 .filter { node ->
-                    // Only backfill if columns are NULL AND the user is not a placeholder (hwModel != UNSET)
+                    
                     (node.longName == null || node.shortName == null) &&
                         node.user.hwModel != MeshProtos.HardwareModel.UNSET
                 }

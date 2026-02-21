@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.messaging
 
 import android.os.RemoteException
@@ -144,28 +129,13 @@ constructor(
 
     fun getUser(userId: String?) = nodeRepository.getUser(userId ?: DataPacket.ID_BROADCAST)
 
-    /**
-     * Sends a message to a contact or channel.
-     *
-     * If the message is a direct message (no channel specified), this function will:
-     * - If the device firmware version is older than 2.7.12, it will mark the destination node as a favorite to prevent
-     *   it from being removed from the on-device node database.
-     * - If the device firmware version is 2.7.12 or newer, it will send a shared contact to the destination node.
-     *
-     * @param str The message content.
-     * @param contactKey The unique contact key, which is a combination of channel (optional) and node ID. Defaults to
-     *   broadcasting on channel 0.
-     * @param replyId The ID of the message this is a reply to, if any.
-     */
     @Suppress("NestedBlockDepth")
     fun sendMessage(str: String, contactKey: String = "0${DataPacket.ID_BROADCAST}", replyId: Int? = null, priority: Int = 0) {
-        // contactKey: unique contact key filter (channel)+(nodeId)
+        
         val channel = contactKey[0].digitToIntOrNull()
         val dest = if (channel != null) contactKey.substring(1) else contactKey
 
-        // if the destination is a node, we need to ensure it's a
-        // favorite so it does not get removed from the on-device node database.
-        if (channel == null) { // no channel specified, so we assume it's a direct message
+        if (channel == null) { 
             val fwVersion = ourNodeInfo.value?.metadata?.firmwareVersion
             val destNode = nodeRepository.getNode(dest)
             val isClientBase = ourNodeInfo.value?.user?.role == Role.CLIENT_BASE

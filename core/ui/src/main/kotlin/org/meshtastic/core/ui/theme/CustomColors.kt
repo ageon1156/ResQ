@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.ui.theme
 
@@ -22,17 +7,15 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// ResQ / Geo brand accents
-val MeshtasticGreen = Color(0xFF1D9BF0) // primary accent blue
-val MeshtasticAlt = Color(0xFF020817) // deep slate background
-val HyperlinkBlue = Color(0xFF38BDF8) // link / secondary accent
+val MeshtasticGreen = Color(0xFF1D9BF0) 
+val MeshtasticAlt = Color(0xFF020817) 
+val HyperlinkBlue = Color(0xFF38BDF8) 
 val AnnotationColor = Color(0xFF039BE5)
 
 object TracerouteColors {
-    // High-contrast pair that stays legible on light/dark tiles and for most color-blind users.
-    // Use partial alpha so polylines don’t overpower markers/tiles.
-    val OutgoingRoute = Color(0xCCE86A00) // orange @ ~80% opacity
-    val ReturnRoute = Color(0xCC0081C7) // cyan @ ~80% opacity
+
+    val OutgoingRoute = Color(0xCCE86A00) 
+    val ReturnRoute = Color(0xCC0081C7) 
 }
 
 object IAQColors {
@@ -64,9 +47,9 @@ object GraphColors {
 object StatusColors {
     val ColorScheme.StatusGreen: Color
         @Composable
-        get() = // If it might change based on theme
+        get() = 
             if (isSystemInDarkTheme()) {
-                Color(0xFF28A03B) // Example dark green
+                Color(0xFF28A03B) 
             } else {
                 Color(0xFF30C047)
             }
@@ -91,7 +74,7 @@ object StatusColors {
 
     val ColorScheme.StatusRed: Color
         @Composable
-        get() = // If it might change based on theme
+        get() = 
             if (isSystemInDarkTheme()) {
                 Color(0xFFB00020)
             } else {
@@ -100,7 +83,7 @@ object StatusColors {
 
     val ColorScheme.StatusBlue: Color
         @Composable
-        get() = // If it might change based on theme
+        get() = 
             if (isSystemInDarkTheme()) {
                 Color(0xFF2196F3)
             } else {

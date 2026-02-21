@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.service
 
 import android.os.RemoteException
@@ -312,7 +297,7 @@ constructor(
                             .setNodeBroadcastIntervalSecs(oneHour)
                             .addNeighbors(
                                 MeshProtos.Neighbor.newBuilder()
-                                    .setNodeId(0) // Dummy node ID that can be intercepted
+                                    .setNodeId(0) 
                                     .setSnr(0f)
                                     .setLastRxTime((System.currentTimeMillis() / TIME_MS_TO_S).toInt())
                                     .setNodeBroadcastIntervalSecs(oneHour)
@@ -321,7 +306,6 @@ constructor(
                             .build()
                     }
 
-            // Send the neighbor info from our connected radio to ourselves (simulated)
             packetHandler?.sendToRadio(
                 newMeshPacketTo(destNum).buildMeshPacket(
                     wantAck = true,
@@ -334,7 +318,7 @@ constructor(
                 },
             )
         } else {
-            // Send request to remote
+            
             packetHandler?.sendToRadio(
                 newMeshPacketTo(destNum).buildMeshPacket(
                     wantAck = true,
@@ -373,7 +357,7 @@ constructor(
 
     private fun MeshPacket.Builder.buildMeshPacket(
         wantAck: Boolean = false,
-        id: Int = generatePacketId(), // always assign a packet ID if we didn't already have one
+        id: Int = generatePacketId(), 
         hopLimit: Int = 0,
         channel: Int = 0,
         priority: MeshPacket.Priority = MeshPacket.Priority.UNSET,
@@ -396,7 +380,7 @@ constructor(
     }
 
     private fun MeshPacket.Builder.buildAdminPacket(
-        id: Int = generatePacketId(), // always assign a packet ID if we didn't already have one
+        id: Int = generatePacketId(), 
         wantResponse: Boolean = false,
         initFn: AdminProtos.AdminMessage.Builder.() -> Unit,
     ): MeshPacket =

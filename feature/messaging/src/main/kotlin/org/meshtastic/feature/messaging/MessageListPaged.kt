@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.messaging
 
 import androidx.compose.foundation.layout.Arrangement
@@ -109,7 +94,6 @@ internal fun MessageListPaged(
     val haptics = LocalHapticFeedback.current
     val inSelectionMode by remember { derivedStateOf { state.selectedIds.value.isNotEmpty() } }
 
-    // Optimization: Pre-calculate map for O(1) lookup in list items to avoid O(N) linear search during scrolling.
     val nodeMap = remember(state.nodes) { state.nodes.associateBy { it.num } }
 
     var showStatusDialog by remember { mutableStateOf<Message?>(null) }
@@ -147,13 +131,10 @@ internal fun MessageListPaged(
 
     val coroutineScope = rememberCoroutineScope()
 
-    // Disable auto-scroll when any dialog is open to prevent list jumping
     val hasDialogOpen = showStatusDialog != null || showReactionDialog != null
 
-    // Track unread count based on scroll position
     UpdateUnreadCountPaged(listState = listState, messages = state.messages, onUnreadChange = handlers.onUnreadChanged)
 
-    // Auto-scroll to bottom when new messages arrive
     AutoScrollToBottomPaged(
         listState = listState,
         messages = state.messages,
@@ -191,7 +172,7 @@ private fun MessageListPagedContent(
     modifier: Modifier = Modifier,
     quickEmojis: List<String>,
 ) {
-    // Calculate unread divider position
+    
     val unreadDividerIndex by
         remember(state.messages.itemCount, state.firstUnreadMessageUuid) {
             derivedStateOf {
@@ -201,7 +182,6 @@ private fun MessageListPagedContent(
             }
         }
 
-    // Disable animations during scroll to prevent jank/stutter
     val enableAnimations by remember { derivedStateOf { !listState.isScrollInProgress } }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -251,14 +231,12 @@ private fun MessageListPagedContent(
                         quickEmojis = quickEmojis,
                     )
 
-                    // Show unread divider after the first unread message
                     if (state.hasUnreadMessages && unreadDividerIndex == index) {
                         UnreadMessagesDivider(modifier = if (enableAnimations) Modifier.animateItem() else Modifier)
                     }
                 }
             }
 
-            // Loading indicator at the end (top when reversed) when loading more items
             state.messages.apply {
                 when {
                     loadState.append is LoadState.Loading -> {
@@ -339,9 +317,7 @@ private fun LazyItemScope.renderPagedChatMessageRow(
         onShowReactions = { onShowReactions(message.emojis) },
         onNavigateToOriginalMessage = {
             coroutineScope.launch {
-                // Note: With pagination, we can't guarantee the original message is loaded
-                // This is a limitation of pagination - we would need to implement
-                // a search/jump feature to load and scroll to specific messages
+
                 val targetIndex =
                     (0 until state.messages.itemCount).firstOrNull { index ->
                         state.messages[index]?.packetId == message.replyId
@@ -366,8 +342,7 @@ private fun AutoScrollToBottomPaged(
     hasDialogOpen: Boolean = false,
     itemThreshold: Int = 3,
 ) = with(listState) {
-    // Cache whether we were at the bottom - only update when not actively scrolling
-    // This prevents stuttering while still tracking position for auto-scroll
+
     var cachedAtBottom by remember { mutableStateOf(true) }
 
     val isCurrentlyAtBottom by
@@ -385,22 +360,17 @@ private fun AutoScrollToBottomPaged(
             }
         }
 
-    // Update cached position only when scroll is idle to prevent stuttering
     LaunchedEffect(isScrollInProgress) {
         if (!isScrollInProgress) {
             cachedAtBottom = isCurrentlyAtBottom
         }
     }
 
-    // Consolidated scroll logic to prevent race conditions
-    // Fixes issue where multiple scroll operations could trigger simultaneously
-    // by unifying all scroll triggers into a single LaunchedEffect
     LaunchedEffect(messages.itemCount) {
-        // Use cached position (captured when scroll was idle) to decide if we should auto-scroll
-        // This prevents race conditions where new message renders before we check position
+
         if (cachedAtBottom && messages.itemCount > 0) {
             scrollToItem(0)
-            // Update cache immediately after scrolling
+            
             cachedAtBottom = true
         }
     }
@@ -434,7 +404,6 @@ private fun UpdateUnreadCountPaged(
         mutableStateOf(lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
     }
 
-    // Track lifecycle state changes
     DisposableEffect(lifecycleOwner) {
         val observer =
             androidx.lifecycle.LifecycleEventObserver { _, event ->
@@ -448,33 +417,24 @@ private fun UpdateUnreadCountPaged(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // Track remote message count to restart effect when remote messages change
-    // This fixes race condition when sending/receiving messages during debounce period
-    // Optimized: Use itemSnapshotList instead of iterating through indices
     val remoteMessageCount by
         remember(messages.itemCount) { derivedStateOf { messages.itemSnapshotList.items.count { !it.fromLocal } } }
 
-    // Mark messages as read after debounce period
-    // Handles both scrolling cases and when all unread messages are visible without scrolling
-    // Effect restarts when isResumed changes, so returning from background will restart the debounce
     LaunchedEffect(remoteMessageCount, listState, isResumed) {
         snapshotFlow {
-            // Emit when scroll stops OR when at initial position (covers no-scroll case)
-            // Include isResumed in the snapshot so lifecycle changes trigger new emissions
+
             if (listState.isScrollInProgress || !isResumed) {
-                null // Scrolling in progress or not resumed, don't emit
+                null 
             } else {
-                listState.firstVisibleItemIndex // Emit current position when not scrolling and resumed
+                listState.firstVisibleItemIndex 
             }
         }
             .debounce(timeoutMillis = UnreadUiDefaults.SCROLL_DEBOUNCE_MILLIS)
             .collectLatest { index ->
-                // Only mark messages as read if we have a valid index (screen is visible and not scrolling)
+                
                 if (index != null) {
                     val lastUnreadIndex = findLastUnreadMessageIndex(messages)
-                    // If we're at/past the oldest unread, mark the first visible unread message
-                    // Since newer messages have HIGHER timestamps, marking a newer message's timestamp
-                    // will batch-mark all older messages via SQL: WHERE received_time <= timestamp
+
                     if (lastUnreadIndex != null && index <= lastUnreadIndex) {
                         val firstVisibleUnread = findFirstVisibleUnreadMessage(messages, index)
                         firstVisibleUnread?.let { currentOnUnreadChange(it.uuid, it.receivedTime) }

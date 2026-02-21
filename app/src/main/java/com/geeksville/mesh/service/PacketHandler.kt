@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.service
 
 import co.touchlab.kermit.Logger
@@ -59,7 +44,7 @@ constructor(
 ) {
 
     companion object {
-        private const val TIMEOUT_MS = 5000L // Increased from 250ms to be more tolerant
+        private const val TIMEOUT_MS = 5000L 
     }
 
     private var queueJob: Job? = null
@@ -72,10 +57,6 @@ constructor(
         this.scope = scope
     }
 
-    /**
-     * Send a command/packet to our radio. But cope with the possibility that we might start up before we are fully
-     * bound to the RadioInterfaceService
-     */
     fun sendToRadio(p: ToRadio.Builder) {
         val built = p.build()
         Logger.d { "Sending to radio ${built.toPIIString()}" }
@@ -99,10 +80,6 @@ constructor(
         }
     }
 
-    /**
-     * Send a mesh packet to the radio, if the radio is not currently connected this function will throw
-     * NotConnectedException
-     */
     fun sendToRadio(packet: MeshPacket) {
         queuedPackets.add(packet)
         startPacketQueue()
@@ -122,11 +99,11 @@ constructor(
     fun handleQueueStatus(queueStatus: MeshProtos.QueueStatus) {
         Logger.d { "[queueStatus] ${queueStatus.toOneLineString()}" }
         val (success, isFull, requestId) = with(queueStatus) { Triple(res == 0, free == 0, meshPacketId) }
-        if (success && isFull) return // Queue is full, wait for free != 0
+        if (success && isFull) return 
         if (requestId != 0) {
             queueResponse.remove(requestId)?.complete(success)
         } else {
-            // This is slightly suboptimal but matches legacy behavior for packets without IDs
+            
             queueResponse.values.firstOrNull { !it.isCompleted }?.complete(success)
         }
     }
@@ -142,10 +119,10 @@ constructor(
             scope.handledLaunch {
                 Logger.d { "packet queueJob started" }
                 while (connectionStateHolder.connectionState.value == ConnectionState.Connected) {
-                    // take the first packet from the queue head
+                    
                     val packet = queuedPackets.poll() ?: break
                     try {
-                        // send packet to the radio and wait for response
+                        
                         val response = sendPacket(packet)
                         Logger.d { "queueJob packet id=${packet.id.toUInt()} waiting" }
                         val success = withTimeout(TIMEOUT_MS) { response.await() }
@@ -161,7 +138,6 @@ constructor(
             }
     }
 
-    /** Change the status on a DataPacket and update watchers */
     private fun changeStatus(packetId: Int, m: MessageStatus) = scope.handledLaunch {
         if (packetId != 0) {
             getDataPacketById(packetId)?.let { p ->
@@ -184,8 +160,7 @@ constructor(
 
     @Suppress("TooGenericExceptionCaught")
     private fun sendPacket(packet: MeshPacket): CompletableDeferred<Boolean> {
-        // send the packet to the radio and return a CompletableDeferred that will be completed with
-        // the result
+
         val deferred = CompletableDeferred<Boolean>()
         queueResponse[packet.id] = deferred
         try {
@@ -202,9 +177,7 @@ constructor(
 
     private fun insertMeshLog(packetToSave: MeshLog) {
         scope.handledLaunch {
-            // Do not log, because might contain PII
-            // info("insert: ${packetToSave.message_type} =
-            // ${packetToSave.raw_message.toOneLineString()}")
+
             meshLogRepository.get().insert(packetToSave)
         }
     }

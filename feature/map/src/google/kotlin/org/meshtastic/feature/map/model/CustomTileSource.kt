@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.map.model
 
@@ -160,7 +145,6 @@ class CustomTileSource {
                         )
             }
 
-        /** WMS TILE SERVER More research is required to get this to function correctly with overlays */
         val NOAA_RADAR_WMS =
             NOAAWmsTileSource(
                 "Recent Weather Radar",
@@ -176,7 +160,6 @@ class CustomTileSource {
                 "image/png",
             )
 
-        /** =============================================================================================== */
         private val MAPNIK: OnlineTileSourceBase = TileSourceFactory.MAPNIK
         private val USGS_TOPO: OnlineTileSourceBase = TileSourceFactory.USGS_TOPO
         private val OPEN_TOPO: OnlineTileSourceBase = TileSourceFactory.OpenTopo
@@ -184,7 +167,6 @@ class CustomTileSource {
         private val SEAMAP: OnlineTileSourceBase = TileSourceFactory.OPEN_SEAMAP
         val DEFAULT_TILE_SOURCE: OnlineTileSourceBase = TileSourceFactory.DEFAULT_TILE_SOURCE
 
-        /** Source for each available [ITileSource] and their display names. */
         val mTileSources: Map<ITileSource, String> =
             mapOf(
                 MAPNIK to "OpenStreetMap",

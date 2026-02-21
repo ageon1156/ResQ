@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.core.datastore
 
@@ -36,7 +21,6 @@ import javax.inject.Singleton
 internal const val KEY_APP_INTRO_COMPLETED = "app_intro_completed"
 internal const val KEY_THEME = "theme"
 
-// Node list filters/sort
 internal const val KEY_NODE_SORT = "node-sort-option"
 internal const val KEY_INCLUDE_UNKNOWN = "include-unknown"
 internal const val KEY_EXCLUDE_INFRASTRUCTURE = "exclude-infrastructure"
@@ -44,7 +28,6 @@ internal const val KEY_ONLY_ONLINE = "only-online"
 internal const val KEY_ONLY_DIRECT = "only-direct"
 internal const val KEY_SHOW_IGNORED = "show-ignored"
 
-// Emergency help
 internal const val KEY_EMERGENCY_DISCLAIMER_ACCEPTED = "emergency_disclaimer_accepted"
 
 @Singleton
@@ -52,11 +35,9 @@ class UiPreferencesDataSource @Inject constructor(private val dataStore: DataSto
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // Start this flow eagerly, so app intro doesn't flash (when disabled) on cold app start.
     val appIntroCompleted: StateFlow<Boolean> =
         dataStore.prefStateFlow(key = APP_INTRO_COMPLETED, default = false, started = SharingStarted.Eagerly)
 
-    // Default value for AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
     val theme: StateFlow<Int> = dataStore.prefStateFlow(key = THEME, default = -1)
 
     val nodeSort: StateFlow<Int> = dataStore.prefStateFlow(key = NODE_SORT, default = -1)

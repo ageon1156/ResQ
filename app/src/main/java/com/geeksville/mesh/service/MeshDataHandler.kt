@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.service
 
 import android.util.Log
@@ -108,7 +93,6 @@ constructor(
         val fromUs = myNodeNum == packet.from
         dataPacket.status = MessageStatus.RECEIVED
 
-        // ── Silent-node detection: record heartbeat for every incoming packet ──
         if (!fromUs) {
             silentNodeDetector.onPacketReceived(packet.from)
         }
@@ -256,19 +240,15 @@ constructor(
             -> {
                 val isFragment = sfpp.sfppMessageType != MeshProtos.StoreForwardPlusPlus.SFPP_message_type.LINK_PROVIDE
 
-                // If it has a commit hash, it's already on the chain (Confirmed)
-                // Otherwise it's still being routed via SF++ (Routing)
                 val status = if (sfpp.commitHash.isEmpty) MessageStatus.SFPP_ROUTING else MessageStatus.SFPP_CONFIRMED
 
-                // Prefer a full 16-byte hash calculated from the message bytes if available
-                // But only if it's NOT a fragment, otherwise the calculated hash would be wrong
                 val hash =
                     when {
                         !sfpp.messageHash.isEmpty -> sfpp.messageHash.toByteArray()
                         !isFragment && !sfpp.message.isEmpty -> {
                             SfppHasher.computeMessageHash(
                                 encryptedPayload = sfpp.message.toByteArray(),
-                                // Map 0 back to NODENUM_BROADCAST to match firmware hash calculation
+                                
                                 to =
                                 if (sfpp.encapsulatedTo == 0) DataPacket.NODENUM_BROADCAST else sfpp.encapsulatedTo,
                                 from = sfpp.encapsulatedFrom,
@@ -450,7 +430,7 @@ constructor(
         if (r.errorReason == MeshProtos.Routing.Error.DUTY_CYCLE_LIMIT) {
             serviceRepository.setErrorMessage(getString(Res.string.error_duty_cycle))
         }
-        // ACK from a node proves it's alive — update silent node tracker
+        
         if (r.errorReason == MeshProtos.Routing.Error.NONE) {
             silentNodeDetector.onPacketReceived(packet.from)
         }
@@ -496,13 +476,12 @@ constructor(
             if (shouldRetry) {
                 val newRetryCount = p.data.retryCount + 1
 
-                // Emit retry event to UI and wait for user response
                 val retryEvent =
                     RetryEvent.MessageRetry(
                         packetId = requestId,
                         text = p.data.text ?: "",
                         attemptNumber = newRetryCount,
-                        maxAttempts = MAX_RETRY_ATTEMPTS + 1, // +1 for initial attempt
+                        maxAttempts = MAX_RETRY_ATTEMPTS + 1, 
                     )
 
                 Logger.w { "[ackNak] requesting retry for req=$requestId retry=$newRetryCount" }
@@ -527,7 +506,7 @@ constructor(
                     Logger.w { "[ackNak] retrying req=$requestId newId=$newId retry=$newRetryCount" }
                     commandSender.sendData(updatedData)
                 } else {
-                    // User cancelled retry - mark as ERROR
+                    
                     Logger.w { "[ackNak] retry cancelled by user for req=$requestId" }
                     p.data.status = MessageStatus.ERROR
                     packetRepository.get().update(p)
@@ -538,13 +517,12 @@ constructor(
             if (shouldRetryReaction && reaction != null) {
                 val newRetryCount = reaction.retryCount + 1
 
-                // Emit retry event to UI and wait for user response
                 val retryEvent =
                     RetryEvent.ReactionRetry(
                         packetId = requestId,
                         emoji = reaction.emoji,
                         attemptNumber = newRetryCount,
-                        maxAttempts = MAX_RETRY_ATTEMPTS + 1, // +1 for initial attempt
+                        maxAttempts = MAX_RETRY_ATTEMPTS + 1, 
                     )
 
                 Logger.w { "[ackNak] requesting retry for reaction req=$requestId retry=$newRetryCount" }
@@ -580,7 +558,7 @@ constructor(
                     Logger.w { "[ackNak] retrying reaction req=$requestId newId=$newId retry=$newRetryCount" }
                     commandSender.sendData(reactionPacket)
                 } else {
-                    // User cancelled retry - mark as ERROR
+                    
                     Logger.w { "[ackNak] retry cancelled by user for reaction req=$requestId" }
                     val errorReaction = reaction.copy(status = MessageStatus.ERROR, routingError = routingError)
                     packetRepository.get().updateReaction(errorReaction)
@@ -684,7 +662,6 @@ constructor(
         val toBroadcast = dataPacket.to == DataPacket.ID_BROADCAST
         val contactId = if (fromLocal || toBroadcast) dataPacket.to else dataPacket.from
 
-        // contactKey: unique contact key filter (channel)+(nodeId)
         val contactKey = "${dataPacket.channel}$contactId"
 
         val packetToSave =
@@ -703,7 +680,7 @@ constructor(
             )
         scope.handledLaunch {
             packetRepository.get().apply {
-                // Check for duplicates by packet_id + contact_key
+                
                 val existingPackets = findPacketsWithIdAndContact(dataPacket.id, contactKey)
                 if (existingPackets.isNotEmpty()) {
                     Logger.d {
@@ -800,7 +777,6 @@ constructor(
                 channel = packet.channel,
             )
 
-        // Check for duplicates before inserting
         val existingReactions = packetRepository.get().findReactionsWithId(packet.id)
         if (existingReactions.isNotEmpty()) {
             Logger.d {
@@ -812,7 +788,6 @@ constructor(
 
         packetRepository.get().insertReaction(reaction)
 
-        // Find the original packet to get the contactKey
         packetRepository.get().getPacketByPacketId(packet.decoded.replyId)?.let { original ->
             val contactKey = original.packet.contact_key
             val conversationMuted = packetRepository.get().getContactSettings(contactKey).isMuted

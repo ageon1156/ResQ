@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.node.component
 
 import androidx.compose.animation.AnimatedVisibility
@@ -74,18 +59,6 @@ import org.meshtastic.core.ui.theme.RiverShape
 import org.meshtastic.core.ui.theme.organicSpring
 import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig
 
-/**
- * Organic Node Item
- *
- * A redesigned node card with organic styling:
- * - Gradient avatar based on node ID
- * - Asymmetric RiverShape for visual interest
- * - Better visual hierarchy
- * - Smooth organic animations
- * - Enhanced status indicators
- *
- * Maintains all existing functionality while providing enhanced visuals.
- */
 @Composable
 fun OrganicNodeItem(
     thisNode: Node?,
@@ -108,7 +81,6 @@ fun OrganicNodeItem(
         thisNode?.distance(thatNode)?.takeIf { it > 0 }?.toDistanceString(system)
     }
 
-    // Animate selection/active state
     val scale by animateFloatAsState(
         targetValue = if (isActive) 0.97f else 1f,
         animationSpec = organicSpring(),
@@ -146,20 +118,19 @@ fun OrganicNodeItem(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Top row: Avatar, Name, Status Icons
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Organic gradient avatar
+                
                 OrganicNodeAvatar(
                     nodeNum = thatNode.num,
                     shortName = thatNode.user.shortName,
                     isThisNode = isThisNode
                 )
 
-                // Node name and info
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -188,7 +159,6 @@ fun OrganicNodeItem(
                         )
                     }
 
-                    // Hardware and role info
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -211,7 +181,6 @@ fun OrganicNodeItem(
                     }
                 }
 
-                // Status badges
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -221,7 +190,6 @@ fun OrganicNodeItem(
                         contentColor = MaterialTheme.colorScheme.onSurface
                     )
 
-                    // Status icons row
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -254,7 +222,6 @@ fun OrganicNodeItem(
                 }
             }
 
-            // Metrics row: Battery, Distance, Elevation, Satellites
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -301,7 +268,6 @@ fun OrganicNodeItem(
                 }
             }
 
-            // Signal info
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -314,7 +280,6 @@ fun OrganicNodeItem(
                 )
             }
 
-            // Telemetry data if available
             val telemetryStrings = thatNode.getTelemetryStrings(tempInFahrenheit)
             if (telemetryStrings.isNotEmpty()) {
                 Row(
@@ -331,7 +296,6 @@ fun OrganicNodeItem(
                 }
             }
 
-            // User ID at bottom
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
@@ -346,18 +310,15 @@ fun OrganicNodeItem(
     }
 }
 
-/**
- * Organic avatar with gradient background for nodes
- */
 @Composable
 fun OrganicNodeAvatar(
     nodeNum: Int,
     shortName: String,
     isThisNode: Boolean
 ) {
-    // Generate deterministic gradient from node number
+    
     val gradient = remember(nodeNum) {
-        val hue = ((nodeNum * 137) % 360).toFloat()  // Golden angle distribution
+        val hue = ((nodeNum * 137) % 360).toFloat()  
         val color1 = android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.5f, 0.7f))
         val color2 = android.graphics.Color.HSVToColor(floatArrayOf((hue + 60) % 360, 0.6f, 0.8f))
         Brush.linearGradient(
@@ -372,7 +333,7 @@ fun OrganicNodeAvatar(
             .background(gradient),
         contentAlignment = Alignment.Center
     ) {
-        // Get initials from short name
+        
         val initials = remember(shortName) {
             shortName.take(2).uppercase()
         }
@@ -385,7 +346,6 @@ fun OrganicNodeAvatar(
             textAlign = TextAlign.Center
         )
 
-        // Show indicator for "this node"
         if (isThisNode) {
             Box(
                 modifier = Modifier

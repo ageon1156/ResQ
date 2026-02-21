@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.metrics
 
@@ -101,7 +86,7 @@ private fun PaxMetricsChart(
     val maxTime = times.maxOrNull() ?: 1
     val timeDiff = maxTime - minTime
     val dp = remember(timeFrame, screenWidth, timeDiff) { timeFrame.dp(screenWidth, time = timeDiff.toLong()) }
-    // Calculate visible time range based on scroll position and chart width
+    
     val visibleTimeRange = run {
         val totalWidthPx = with(LocalDensity.current) { dp.toPx() }
         val scrollPx = scrollState.value.toFloat()
@@ -164,7 +149,7 @@ fun PaxMetricsScreen(metricsViewModel: MetricsViewModel = hiltViewModel(), onNav
     val state by metricsViewModel.state.collectAsStateWithLifecycle()
     val dateFormat = DateFormat.getDateTimeInstance()
     var timeFrame by remember { mutableStateOf(TimeFrame.TWENTY_FOUR_HOURS) }
-    // Only show logs that can be decoded as PaxcountProtos.Paxcount
+    
     val paxMetrics =
         state.paxMetrics.mapNotNull { log ->
             val pax = decodePaxFromLog(log)
@@ -174,7 +159,7 @@ fun PaxMetricsScreen(metricsViewModel: MetricsViewModel = hiltViewModel(), onNav
                 null
             }
         }
-    // Prepare data for graph
+    
     val oldestTime = timeFrame.calculateOldestTime()
     val graphData =
         paxMetrics
@@ -210,7 +195,7 @@ fun PaxMetricsScreen(metricsViewModel: MetricsViewModel = hiltViewModel(), onNav
         },
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            // Time frame selector
+            
             SlidingSelector(
                 options = TimeFrame.entries.toList(),
                 selectedOption = timeFrame,
@@ -218,7 +203,7 @@ fun PaxMetricsScreen(metricsViewModel: MetricsViewModel = hiltViewModel(), onNav
             ) { tf: TimeFrame ->
                 OptionLabel(stringResource(tf.strRes))
             }
-            // Graph
+            
             if (graphData.isNotEmpty()) {
                 ChartHeader(graphData.size)
                 Legend(legendData = legendData)
@@ -231,7 +216,7 @@ fun PaxMetricsScreen(metricsViewModel: MetricsViewModel = hiltViewModel(), onNav
                     timeFrame = timeFrame,
                 )
             }
-            // List
+            
             if (paxMetrics.isEmpty()) {
                 Text(
                     text = stringResource(Res.string.no_pax_metrics_logs),
@@ -250,7 +235,7 @@ fun PaxMetricsScreen(metricsViewModel: MetricsViewModel = hiltViewModel(), onNav
 @Suppress("MagicNumber", "CyclomaticComplexMethod")
 fun decodePaxFromLog(log: MeshLog): PaxcountProtos.Paxcount? {
     var result: PaxcountProtos.Paxcount? = null
-    // First, try to parse from the binary fromRadio field (robust, like telemetry)
+    
     try {
         val packet = log.fromRadio.packet
         if (packet != null && packet.hasDecoded() && packet.decoded.portnumValue == PortNum.PAXCOUNTER_APP_VALUE) {
@@ -262,7 +247,7 @@ fun decodePaxFromLog(log: MeshLog): PaxcountProtos.Paxcount? {
     } catch (e: IllegalArgumentException) {
         android.util.Log.e("PaxMetrics", "Invalid argument while parsing Paxcount from binary data", e)
     }
-    // Fallback: Try direct base64 or bytes from raw_message
+    
     if (result == null) {
         try {
             val base64 = log.raw_message.trim()
@@ -290,7 +275,7 @@ fun unescapeProtoString(escaped: String): ByteArray {
     var i = 0
     while (i < escaped.length) {
         if (escaped[i] == '\\' && i + 3 < escaped.length && escaped[i + 1].isDigit()) {
-            // Octal escape: \\ddd
+            
             val octal = escaped.substring(i + 1, i + 4)
             out.add(octal.toInt(8).toByte())
             i += 4

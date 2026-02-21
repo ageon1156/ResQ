@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.service
 
 import io.mockk.every
@@ -64,13 +49,12 @@ class MeshCommandSenderHopLimitTest {
             DataPacket(
                 to = DataPacket.ID_BROADCAST,
                 bytes = byteArrayOf(1, 2, 3),
-                dataType = 1, // PortNum.TEXT_MESSAGE_APP
+                dataType = 1, 
             )
 
         val meshPacketSlot = slot<MeshPacket>()
         every { packetHandler.sendToRadio(capture(meshPacketSlot)) } returns Unit
 
-        // Ensure localConfig has lora.hopLimit = 0
         localConfigFlow.value =
             LocalConfig.newBuilder().setLora(Config.LoRaConfig.newBuilder().setHopLimit(0)).build()
 

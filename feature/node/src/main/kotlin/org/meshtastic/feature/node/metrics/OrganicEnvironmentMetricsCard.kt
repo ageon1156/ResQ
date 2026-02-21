@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.node.metrics
 
 import androidx.compose.foundation.background
@@ -43,11 +28,6 @@ import org.meshtastic.feature.node.metrics.CommonCharts.DATE_TIME_FORMAT
 import org.meshtastic.feature.node.metrics.CommonCharts.MS_PER_SEC
 import org.meshtastic.proto.TelemetryProtos.Telemetry
 
-/**
- * Organic Environment Metrics Card
- *
- * Displays environmental sensor data (temperature, humidity, pressure, etc.) with organic styling.
- */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun OrganicEnvironmentMetricsCard(telemetry: Telemetry, environmentDisplayFahrenheit: Boolean) {
@@ -70,7 +50,7 @@ fun OrganicEnvironmentMetricsCard(telemetry: Telemetry, environmentDisplayFahren
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Timestamp
+            
             Text(
                 text = DATE_TIME_FORMAT.format(time),
                 style = MaterialTheme.typography.titleMedium,
@@ -78,13 +58,12 @@ fun OrganicEnvironmentMetricsCard(telemetry: Telemetry, environmentDisplayFahren
                 color = MaterialTheme.colorScheme.onSurface
             )
 
-            // Environment metrics in flowing layout
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Temperature
+                
                 envMetrics.temperature?.let { temp ->
                     if (!temp.isNaN()) {
                         val displayTemp = if (environmentDisplayFahrenheit) {
@@ -101,7 +80,6 @@ fun OrganicEnvironmentMetricsCard(telemetry: Telemetry, environmentDisplayFahren
                     }
                 }
 
-                // Humidity
                 envMetrics.relativeHumidity?.let { humidity ->
                     if (!humidity.isNaN() && humidity > 0f) {
                         OrganicEnvMetricChip(
@@ -112,7 +90,6 @@ fun OrganicEnvironmentMetricsCard(telemetry: Telemetry, environmentDisplayFahren
                     }
                 }
 
-                // Barometric pressure
                 envMetrics.barometricPressure?.let { pressure ->
                     if (!pressure.isNaN() && pressure > 0f) {
                         OrganicEnvMetricChip(
@@ -123,7 +100,6 @@ fun OrganicEnvironmentMetricsCard(telemetry: Telemetry, environmentDisplayFahren
                     }
                 }
 
-                // Gas resistance
                 envMetrics.gasResistance?.let { gas ->
                     if (!gas.isNaN() && gas > 0f) {
                         OrganicEnvMetricChip(
@@ -134,7 +110,6 @@ fun OrganicEnvironmentMetricsCard(telemetry: Telemetry, environmentDisplayFahren
                     }
                 }
 
-                // IAQ (Indoor Air Quality)
                 envMetrics.iaq?.let { iaq ->
                     if (iaq > 0) {
                         OrganicEnvMetricChip(
@@ -145,7 +120,6 @@ fun OrganicEnvironmentMetricsCard(telemetry: Telemetry, environmentDisplayFahren
                     }
                 }
 
-                // Lux (Light)
                 envMetrics.lux?.let { lux ->
                     if (!lux.isNaN() && lux > 0f) {
                         OrganicEnvMetricChip(
@@ -160,9 +134,6 @@ fun OrganicEnvironmentMetricsCard(telemetry: Telemetry, environmentDisplayFahren
     }
 }
 
-/**
- * Organic environment metric chip
- */
 @Composable
 private fun OrganicEnvMetricChip(
     label: String,

@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 
 package org.meshtastic.feature.node.metrics
 
@@ -75,11 +60,10 @@ import org.meshtastic.proto.MeshProtos.MeshPacket
 
 @Suppress("MagicNumber")
 private enum class Metric(val color: Color, val min: Float, val max: Float) {
-    SNR(Color.Green, -20f, 12f), /* Selected 12 as the max to get 4 equal vertical sections. */
+    SNR(Color.Green, -20f, 12f), 
     RSSI(Color.Blue, -140f, -20f),
     ;
 
-    /** Difference between the metrics `max` and `min` values. */
     fun difference() = max - min
 }
 
@@ -171,15 +155,14 @@ private fun SignalMetricsChart(
             mutableStateOf(selectedTime.dp(screenWidth, time = (newest.rxTime - oldest.rxTime).toLong()))
         }
 
-    // Calculate visible time range based on scroll position and chart width
     val visibleTimeRange = run {
         val totalWidthPx = with(LocalDensity.current) { dp.toPx() }
         val scrollPx = scrollState.value.toFloat()
-        // Calculate visible width based on actual weight distribution
+        
         val visibleWidthPx = screenWidth * CHART_WIDTH_RATIO
         val leftRatio = (scrollPx / totalWidthPx).coerceIn(0f, 1f)
         val rightRatio = ((scrollPx + visibleWidthPx) / totalWidthPx).coerceIn(0f, 1f)
-        // With reverseScrolling = true, scrolling right shows older data (left side of chart)
+        
         val visibleOldest = oldest.rxTime + (timeDiff * (1f - rightRatio)).toInt()
         val visibleNewest = oldest.rxTime + (timeDiff * (1f - leftRatio)).toInt()
         visibleOldest to visibleNewest
@@ -213,15 +196,13 @@ private fun SignalMetricsChart(
                 selectedTime.lineInterval(),
             )
 
-            /* Plot SNR and RSSI */
             Canvas(modifier = modifier.width(dp)) {
                 val width = size.width
-                /* Plot */
+                
                 for (packet in meshPackets) {
                     val xRatio = (packet.rxTime - oldest.rxTime).toFloat() / timeDiff
                     val x = xRatio * width
 
-                    /* SNR */
                     plotPoint(
                         drawContext = drawContext,
                         color = Metric.SNR.color,
@@ -230,7 +211,6 @@ private fun SignalMetricsChart(
                         divisor = snrDiff,
                     )
 
-                    /* RSSI */
                     plotPoint(
                         drawContext = drawContext,
                         color = Metric.RSSI.color,
@@ -263,10 +243,10 @@ private fun SignalMetricsCard(meshPacket: MeshPacket) {
         Surface {
             SelectionContainer {
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    /* Data */
+                    
                     Box(modifier = Modifier.weight(weight = 5f).height(IntrinsicSize.Min)) {
                         Column(modifier = Modifier.padding(8.dp)) {
-                            /* Time */
+                            
                             Row(horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(
                                     text = DATE_TIME_FORMAT.format(time),
@@ -277,12 +257,10 @@ private fun SignalMetricsCard(meshPacket: MeshPacket) {
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            /* SNR and RSSI */
                             SnrAndRssi(meshPacket.rxSnr, meshPacket.rxRssi)
                         }
                     }
 
-                    /* Signal Indicator */
                     Box(modifier = Modifier.weight(weight = 3f).height(IntrinsicSize.Max)) {
                         LoraSignalIndicator(meshPacket.rxSnr, meshPacket.rxRssi)
                     }

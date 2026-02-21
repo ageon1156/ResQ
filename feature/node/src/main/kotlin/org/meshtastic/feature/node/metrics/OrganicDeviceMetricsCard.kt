@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2025-2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package org.meshtastic.feature.node.metrics
 
 import androidx.compose.foundation.background
@@ -48,18 +33,6 @@ import org.meshtastic.feature.node.metrics.CommonCharts.DATE_TIME_FORMAT
 import org.meshtastic.feature.node.metrics.CommonCharts.MS_PER_SEC
 import org.meshtastic.proto.TelemetryProtos.Telemetry
 
-/**
- * Organic Device Metrics Card
- *
- * A redesigned metrics card with organic styling:
- * - LeafShape for soft, natural appearance
- * - Enhanced visual hierarchy
- * - Better spacing and typography
- * - Metric chips with organic styling
- * - Gradient accent indicators
- *
- * Maintains all existing functionality while providing enhanced visuals.
- */
 @Composable
 fun OrganicDeviceMetricsCard(telemetry: Telemetry) {
     val deviceMetrics = telemetry.deviceMetrics
@@ -81,7 +54,7 @@ fun OrganicDeviceMetricsCard(telemetry: Telemetry) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header row: Time and Battery
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -101,13 +74,12 @@ fun OrganicDeviceMetricsCard(telemetry: Telemetry) {
                 )
             }
 
-            // Metrics row with organic chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Channel Utilization chip
+                
                 OrganicMetricChip(
                     label = "CH",
                     value = "${deviceMetrics.channelUtilization}%",
@@ -115,7 +87,6 @@ fun OrganicDeviceMetricsCard(telemetry: Telemetry) {
                     modifier = Modifier.weight(1f)
                 )
 
-                // Air Utilization chip
                 OrganicMetricChip(
                     label = "AIR",
                     value = "${deviceMetrics.airUtilTx}%",
@@ -124,7 +95,6 @@ fun OrganicDeviceMetricsCard(telemetry: Telemetry) {
                 )
             }
 
-            // Full utilization text (for compatibility)
             val utilizationText = stringResource(Res.string.channel_air_util)
                 .format(deviceMetrics.channelUtilization, deviceMetrics.airUtilTx)
 
@@ -137,9 +107,6 @@ fun OrganicDeviceMetricsCard(telemetry: Telemetry) {
     }
 }
 
-/**
- * Organic metric chip for displaying individual metric values
- */
 @Composable
 private fun OrganicMetricChip(
     label: String,
@@ -155,7 +122,7 @@ private fun OrganicMetricChip(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Color indicator dot
+        
         Box(
             modifier = Modifier
                 .size(8.dp)

@@ -1,6 +1,4 @@
-/*
- * Licensed under GPL-3.0
- */
+
 
 import com.android.build.api.dsl.ApplicationExtension
 import org.meshtastic.buildlogic.FlavorDimension
@@ -16,7 +14,7 @@ plugins {
 configure<ApplicationExtension> {
     namespace = "com.meshtastic.android.meshserviceexample"
     defaultConfig {
-        // Force this app to use the Google variant of any modules it's using that apply AndroidLibraryConventionPlugin
+        
         missingDimensionStrategy(FlavorDimension.marketplace.name, MeshtasticFlavor.google.name)
     }
 

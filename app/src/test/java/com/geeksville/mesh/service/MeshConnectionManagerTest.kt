@@ -1,19 +1,4 @@
-/*
- * Copyright (c) 2026 Meshtastic LLC
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+
 package com.geeksville.mesh.service
 
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
@@ -118,7 +103,7 @@ class MeshConnectionManagerTest {
     @Test
     fun `Disconnected state stops services`() = runTest(testDispatcher) {
         manager.start(backgroundScope)
-        // Transition to Connected first so that Disconnected actually does something
+        
         radioConnectionState.value = ConnectionState.Connected
         advanceUntilIdle()
 
@@ -137,7 +122,7 @@ class MeshConnectionManagerTest {
 
     @Test
     fun `DeviceSleep behavior when power saving is off maps to Disconnected`() = runTest(testDispatcher) {
-        // Power saving disabled + Role CLIENT
+        
         val config =
             LocalConfig.newBuilder()
                 .apply {
@@ -162,7 +147,7 @@ class MeshConnectionManagerTest {
 
     @Test
     fun `DeviceSleep behavior when power saving is on stays in DeviceSleep`() = runTest(testDispatcher) {
-        // Power saving enabled
+        
         val config = LocalConfig.newBuilder().apply { powerBuilder.setIsPowerSaving(true) }.build()
         every { radioConfigRepository.localConfigFlow } returns flowOf(config)
 
