@@ -22,7 +22,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// Atlas / Geo brand accents
+// ResQ / Geo brand accents
 val MeshtasticGreen = Color(0xFF1D9BF0) // primary accent blue
 val MeshtasticAlt = Color(0xFF020817) // deep slate background
 val HyperlinkBlue = Color(0xFF38BDF8) // link / secondary accent

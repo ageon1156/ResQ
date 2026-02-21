@@ -1,0 +1,56 @@
+﻿
+07:24:34 === MONITOR READY === 60pro(line 272) | 50pro(line 7)
+[07:25:14][50PRO] 02-20 07:25:14.958 22379 22432 D         : Ping sent to node -1636453180 (missed=1)
+[07:25:14][50PRO] 02-20 07:25:14.965 22379 22432 D         : Sending to radio packet {   to: 2658514116   decoded {     portnum: PRIVATE_APP     payload: "HEARTBEAT_PING|1771552514955"   }   id: 1183050544   hop_limit: 2   want_ack: true   priority: BACKGROUND } 
+[07:25:53][60PRO] 02-20 07:25:54.321 28920 29084 D         : onConnectionChanged: Connected -> Disconnected
+[07:25:53][60PRO] 02-20 07:25:54.534 28920 28920 D         : [FW_CHECK] Not connected (state: Disconnected), skipping firmware check
+[07:26:34][60PRO] 02-20 07:26:35.229 28920 29021 D Surface : Surface::disconnect
+[07:26:34][60PRO] 02-20 07:26:35.238 28920 28920 D BufferQueueConsumer: [com.geeksville.mesh.google.debug/com.geeksville.mesh.MainActivity#90057(BLAST Consumer)pid:28920](id:70f800000000,api:0,p:-1,c:28920) disconnect
+[07:27:14][50PRO] 02-20 07:27:14.961 22379 22468 D         : Ping sent to node -614979712 (missed=1)
+[07:27:14][50PRO] 02-20 07:27:14.984 22379 22468 D         : Sending to radio packet {   to: 3679987584   decoded {     portnum: PRIVATE_APP     payload: "HEARTBEAT_PING|1771552634959"   }   id: 1183050548   hop_limit: 2   want_ack: true   priority: BACKGROUND } 
+[07:27:46][60PRO] 02-20 07:27:47.764 28920 28920 D         : Lifecycle: ON_START
+[07:27:46][60PRO] 02-20 07:27:47.765 28920 28920 I         : Trying to start service debug=true
+[07:27:46][60PRO] 02-20 07:27:47.795 28920 28920 D BufferQueueConsumer: [](id:70f800000001,api:0,p:-1,c:28920) connect: controlledByApp=false
+[07:29:14][50PRO] 02-20 07:29:14.963 22379 22435 D         : Ping sent to node -614979712 (missed=2)
+[07:29:14][50PRO] 02-20 07:29:14.966 22379 22603 D         : Sending to radio packet {   to: 3679987584   decoded {     portnum: PRIVATE_APP     payload: "HEARTBEAT_PING|1771552754962"   }   id: 1183050553   hop_limit: 2   want_ack: true   priority: BACKGROUND } 
+[07:29:14][50PRO] 02-20 07:29:14.985 22379 22463 I         : Node -614979712 marked SILENT (2 pings unanswered)
+[07:29:15][50PRO] 02-20 07:29:15.227 22379 23059 D         : Sending to radio packet {   to: 4294967295   decoded {     portnum: PRIVATE_APP     payload: "SILENCE_REPORT|-1636487848|-614979712|1771552754986"   }   id: 1183050554   hop_limit: 2   priority: BACKGROUND } 
+[07:29:40][60PRO] 02-20 07:29:41.285 28920 29021 D Surface : Surface::disconnect
+[07:29:40][60PRO] 02-20 07:29:41.286 28920 29021 D BufferQueueConsumer: [com.geeksville.mesh.google.debug/com.geeksville.mesh.MainActivity#90084(BLAST Consumer)pid:28920](id:70f800000001,api:0,p:-1,c:28920) disconnect
+[07:30:58][60PRO] 02-20 07:30:58.705 28920 28920 D         : Lifecycle: ON_START
+[07:30:58][60PRO] 02-20 07:30:58.705 28920 28920 I         : Trying to start service debug=true
+[07:30:58][60PRO] 02-20 07:30:58.749 28920 28920 D BufferQueueConsumer: [](id:70f800000002,api:0,p:-1,c:28920) connect: controlledByApp=false
+[07:31:15][50PRO] 02-20 07:31:14.965 22379 22417 D         : Ping sent to node -614979712 (missed=3)
+[07:31:15][50PRO] 02-20 07:31:14.966 22379 22433 D         : Sending to radio packet {   to: 3679987584   decoded {     portnum: PRIVATE_APP     payload: "HEARTBEAT_PING|1771552874964"   }   id: 1183050558   hop_limit: 2   want_ack: true   priority: BACKGROUND } 
+[07:31:15][50PRO] 02-20 07:31:14.992 22379 22417 I         : Node -614979712 CONFIRMED SILENT (3 pings unanswered)
+[07:31:15][50PRO] 02-20 07:31:14.993 22379 22417 W         : SILENT NODE DETECTED
+[07:31:15][50PRO] 02-20 07:31:15.003 22379 22417 D         : Broadcast silent-node alert to LongFast channel
+[07:31:15][50PRO] 02-20 07:31:15.005 22379 22417 I         : Auto-placed RED triage pin silent--614979712 for silent node -614979712
+[07:31:15][50PRO] 02-20 07:31:15.239 22379 22415 D         : Sending to radio packet {   to: 4294967295   decoded {     portnum: TEXT_MESSAGE_APP     payload: "SILENT NODE DETECTED\nNode: module Gamma  (!db582780)\nLast seen: 7m 16s ago\nhttps://maps.google.com/maps?q=12.94951,80.12854"   }   id: 1183050559   hop_limit: 2 } 
+[07:33:14][50PRO] 02-20 07:33:14.966 22379 22461 D         : Ping sent to node -614979712 (missed=4)
+[07:33:14][50PRO] 02-20 07:33:14.968 22379 22435 D         : Sending to radio packet {   to: 3679987584   decoded {     portnum: PRIVATE_APP     payload: "HEARTBEAT_PING|1771552994965"   }   id: 1183050565   hop_limit: 2   want_ack: true   priority: BACKGROUND } 
+[07:34:17][60PRO] 02-20 07:34:17.555 28920 29084 D         : onConnectionChanged: Disconnected -> Connected
+[07:34:17][60PRO] 02-20 07:34:17.559 28920 29084 D         : Starting connect
+[07:34:22][60PRO] 02-20 07:34:23.268 28920 28974 D BluetoothGatt: onConnectionUpdated() - Device=XX:XX:XX:XX:27:81 interval=32 latency=2 timeout=600 status=0
+[07:34:25][60PRO] 02-20 07:34:25.473 28920 28975 D BluetoothGatt: onConnectionUpdated() - Device=XX:XX:XX:XX:27:81 interval=12 latency=0 timeout=600 status=0
+[07:34:25][60PRO] 02-20 07:34:25.584 28920 28974 D BluetoothGatt: onConnectionUpdated() - Device=XX:XX:XX:XX:27:81 interval=32 latency=2 timeout=600 status=0
+[07:34:43][50PRO] 02-20 07:34:43.711 22379 22467 I         : Node -614979712 came back online
+[07:34:54][60PRO] 02-20 07:34:55.679 28920 25552 D         : Ping sent to node -1636487848 (missed=1)
+[07:34:54][60PRO] 02-20 07:34:55.698 28920 25659 D         : Sending to radio packet {   to: 2658479448   decoded {     portnum: PRIVATE_APP     payload: "HEARTBEAT_PING|1771553095675"   }   id: 343902486   hop_limit: 2   want_ack: true   priority: BACKGROUND } 
+[07:34:56][50PRO] 02-20 07:34:56.875 22379 22467 D         : handlePrivateApp: not a triage packet (text prefix=HEARTBEAT_PING|17715)
+[07:35:20][60PRO] 02-20 07:35:20.888 28920 28920 D BufferQueueConsumer: [](id:70f800000003,api:0,p:-1,c:28920) connect: controlledByApp=false
+[07:35:23][60PRO] 02-20 07:35:24.419 28920 29021 D Surface : Surface::disconnect
+[07:35:23][60PRO] 02-20 07:35:24.429 28920 28975 D BufferQueueConsumer: [com.geeksville.mesh.google.debug/com.geeksville.mesh.MainActivity#90157(BLAST Consumer)pid:28920](id:70f800000003,api:0,p:-1,c:28920) disconnect
+[07:35:32][60PRO] 02-20 07:35:32.970 28920 28920 D BufferQueueConsumer: [](id:70f800000004,api:0,p:-1,c:28920) connect: controlledByApp=false
+[07:35:34][60PRO] 02-20 07:35:33.852 28920 29021 D Surface : Surface::disconnect
+[07:35:34][60PRO] 02-20 07:35:33.859 28920  2833 D BufferQueueConsumer: [com.geeksville.mesh.google.debug/com.geeksville.mesh.MainActivity#90173(BLAST Consumer)pid:28920](id:70f800000004,api:0,p:-1,c:28920) disconnect
+[07:35:43][50PRO] 02-20 07:35:43.378 22379 22419 D Surface : Surface::disconnect
+[07:35:43][50PRO] 02-20 07:35:43.378 22379 22419 D BufferQueueProducer: [com.geeksville.mesh.google.debug/com.geeksville.mesh.MainActivity#246885(BLAST Consumer)pid:22379](id:576b00000001,api:1,p:22379,c:22379) disconnect: api 1
+[07:38:26][60PRO] 02-20 07:38:27.557 28920 29021 D Surface : Surface::disconnect
+[07:38:26][60PRO] 02-20 07:38:27.560 28920 29021 D BufferQueueConsumer: [com.geeksville.mesh.google.debug/com.geeksville.mesh.MainActivity#90136(BLAST Consumer)pid:28920](id:70f800000002,api:0,p:-1,c:28920) disconnect
+[07:43:10][60PRO] 02-20 07:43:09.959 28920 28920 D         : Lifecycle: ON_START
+[07:43:10][60PRO] 02-20 07:43:09.959 28920 28920 I         : Trying to start service debug=true
+[07:43:10][60PRO] 02-20 07:43:10.046 28920 28920 D BufferQueueConsumer: [](id:70f800000005,api:0,p:-1,c:28920) connect: controlledByApp=false
+[07:45:10][60PRO] 02-20 07:45:10.439 28920 29021 D Surface : Surface::disconnect
+[07:45:10][60PRO] 02-20 07:45:10.441 28920 29021 D BufferQueueConsumer: [com.geeksville.mesh.google.debug/com.geeksville.mesh.MainActivity#90238(BLAST Consumer)pid:28920](id:70f800000005,api:0,p:-1,c:28920) disconnect
+07:48:20 Monitor timeout

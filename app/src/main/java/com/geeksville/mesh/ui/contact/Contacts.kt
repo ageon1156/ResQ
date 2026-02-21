@@ -34,7 +34,7 @@ import androidx.compose.material.icons.automirrored.twotone.VolumeUp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.SelectAll
-import androidx.compose.material.icons.rounded.QrCode2
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -79,6 +79,7 @@ import org.meshtastic.core.model.util.formatMuteRemainingTime
 import org.meshtastic.core.model.util.getChannel
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.cancel
+import org.meshtastic.core.strings.channels
 import org.meshtastic.core.strings.close_selection
 import org.meshtastic.core.strings.conversations
 import org.meshtastic.core.strings.currently
@@ -167,7 +168,7 @@ fun ContactsScreen(
         }
     // Get message count directly from repository for selected contacts
     var selectedCount by remember { mutableStateOf(0) }
-    LaunchedEffect(selectedContactKeys.size, selectedContactKeys.joinToString(",")) {
+    LaunchedEffect(selectedContactKeys.toList()) {
         selectedCount = viewModel.getTotalMessageCount(selectedContactKeys.toList())
     }
     val isAllMuted = remember(selectedContacts) { selectedContacts.all { it.isMuted } }
@@ -190,9 +191,9 @@ fun ContactsScreen(
     val onNodeChipClick: (Contact) -> Unit = { contact ->
         if (contact.contactKey.contains("!")) {
             // if it's a node, look up the nodeNum including the !
-            val nodeKey = contact.contactKey.substring(1)
+            val nodeKey = contact.contactKey.drop(1)
             val node = viewModel.getNode(nodeKey)
-            onNavigateToNodeDetails(node.num)
+            if (node != null) onNavigateToNodeDetails(node.num)
         } else {
             // Channels
         }
@@ -232,7 +233,7 @@ fun ContactsScreen(
                 ),
                 onClick = onNavigateToShare,
             ) {
-                Icon(Icons.Rounded.QrCode2, contentDescription = stringResource(Res.string.share_contact))
+                Icon(Icons.Default.Settings, contentDescription = stringResource(Res.string.channels))
             }
         },
     ) { paddingValues ->

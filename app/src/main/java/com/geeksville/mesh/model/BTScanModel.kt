@@ -41,8 +41,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
+import org.meshtastic.core.data.repository.NodeRepository
 import org.meshtastic.core.datastore.RecentAddressesDataSource
 import org.meshtastic.core.datastore.model.RecentAddress
 import org.meshtastic.core.model.util.anonymize
@@ -51,8 +53,6 @@ import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.meshtastic
 import org.meshtastic.core.ui.viewmodel.stateInWhileSubscribed
 import javax.inject.Inject
-
-// ... (DeviceListEntry sealed class remains the same) ...
 
 @HiltViewModel
 @Suppress("LongParameterList", "TooManyFunctions")
@@ -67,12 +67,13 @@ constructor(
     private val networkRepository: NetworkRepository,
     private val radioInterfaceService: RadioInterfaceService,
     private val recentAddressesDataSource: RecentAddressesDataSource,
+    private val nodeRepository: NodeRepository,
 ) : ViewModel() {
     private val context: Context
         get() = application.applicationContext
 
-    val showMockInterface: StateFlow<Boolean>
-        get() = MutableStateFlow(radioInterfaceService.isMockInterface()).asStateFlow()
+    val showMockInterface: StateFlow<Boolean> =
+        MutableStateFlow(radioInterfaceService.isMockInterface()).asStateFlow()
 
     val errorText = MutableLiveData<String?>(null)
     private val bondedBleDevicesFlow: StateFlow<List<DeviceListEntry.Ble>> =
@@ -100,7 +101,7 @@ constructor(
                         shortNameBytes?.let { String(it, Charsets.UTF_8) } ?: getString(Res.string.meshtastic)
                     val deviceId = idBytes?.let { String(it, Charsets.UTF_8) }?.replace("!", "")
                     var displayName = recentMap[address] ?: shortName
-                    if (deviceId != null && !displayName.split("_").none { it == deviceId }) {
+                    if (deviceId != null && displayName.split("_").any { it == deviceId }) {
                         displayName += "_$deviceId"
                     }
                     DeviceListEntry.Tcp(displayName, address)
@@ -109,12 +110,20 @@ constructor(
         }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    /** A combined list of bonded and scanned BLE devices for the UI. */
+    /** Persistent cache of BLE address → node long name so names survive disconnects. */
+    private val _bleNameCache = MutableStateFlow<Map<String, String>>(emptyMap())
+
+    /** A combined list of bonded and scanned BLE devices for the UI, with node long names when available. */
     val bleDevicesForUi: StateFlow<List<DeviceListEntry>> =
-        combine(bondedBleDevicesFlow, scannedBleDevicesFlow) { bonded, scanned ->
+        combine(bondedBleDevicesFlow, scannedBleDevicesFlow, _bleNameCache) { bonded, scanned, cache ->
             val bondedAddresses = bonded.map { it.fullAddress }.toSet()
             val uniqueScanned = scanned.filterNot { it.fullAddress in bondedAddresses }
-            (bonded + uniqueScanned).sortedBy { it.name }
+            (bonded + uniqueScanned)
+                .map { entry ->
+                    val cachedName = cache[entry.fullAddress]
+                    if (cachedName != null) DeviceListEntry.Ble(entry.peripheral, cachedName) else entry
+                }
+                .sortedBy { it.name }
         }
             .stateInWhileSubscribed(initialValue = emptyList())
 
@@ -164,6 +173,29 @@ constructor(
 
     init {
         serviceRepository.statusMessage.onEach { errorText.value = it }.launchIn(viewModelScope)
+
+        // Populate the BLE name cache whenever the nodeDB has data; cache entries are never removed
+        // so names persist after disconnect.
+        combine(bondedBleDevicesFlow, scannedBleDevicesFlow, nodeRepository.nodeDBbyNum) {
+                bonded, scanned, nodeDB -> Triple(bonded, scanned, nodeDB)
+        }.onEach { (bonded, scanned, nodeDB) ->
+            if (nodeDB.isEmpty()) return@onEach
+            val bondedAddresses = bonded.map { it.fullAddress }.toSet()
+            val allDevices = bonded + scanned.filterNot { it.fullAddress in bondedAddresses }
+            val updates = allDevices.mapNotNull { entry ->
+                val suffix = entry.peripheral.name?.substringAfterLast("_")
+                    ?.takeIf { it.length == 4 }?.lowercase()
+                val longName = suffix?.let { s ->
+                    nodeDB.values.find { node ->
+                        !node.isUnknownUser &&
+                            node.user.id.removePrefix("!").takeLast(4).lowercase() == s
+                    }?.user?.longName?.takeIf { it.isNotBlank() }
+                }
+                if (longName != null) entry.fullAddress to longName else null
+            }.toMap()
+            if (updates.isNotEmpty()) _bleNameCache.update { it + updates }
+        }.launchIn(viewModelScope)
+
         Logger.d { "BTScanModel created" }
     }
 

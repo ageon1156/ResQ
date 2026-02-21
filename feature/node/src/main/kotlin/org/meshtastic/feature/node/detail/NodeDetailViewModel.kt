@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.meshtastic.core.data.repository.NodeRepository
 import org.meshtastic.core.database.model.Node
 import org.meshtastic.feature.node.component.NodeMenuAction
+import org.meshtastic.proto.ConfigProtos.Config.DeviceConfig
 import javax.inject.Inject
 
 @HiltViewModel
@@ -72,6 +73,14 @@ constructor(
 
     fun setNodeNotes(nodeNum: Int, notes: String) {
         nodeManagementActions.setNodeNotes(nodeNum, notes)
+    }
+
+    fun setOwner(node: Node, longName: String, shortName: String) {
+        nodeManagementActions.setOwner(node, longName, shortName)
+    }
+
+    fun setDeviceConfig(node: Node, role: DeviceConfig.Role, rebroadcastMode: DeviceConfig.RebroadcastMode) {
+        nodeManagementActions.setDeviceConfig(node, role, rebroadcastMode)
     }
 }
 

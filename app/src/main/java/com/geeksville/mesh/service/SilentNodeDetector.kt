@@ -41,6 +41,7 @@ import org.meshtastic.core.service.MeshServiceNotifications
 import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.Portnums
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -48,7 +49,7 @@ import javax.inject.Singleton
 
 enum class NodePresenceState { ONLINE, SILENT, CONFIRMED_SILENT }
 
-data class TrackedNode(
+class TrackedNode(
     val nodeNum: Int,
     var lastSeenMs: Long = System.currentTimeMillis(),
     var state: NodePresenceState = NodePresenceState.ONLINE,
@@ -56,7 +57,7 @@ data class TrackedNode(
     var lastLatitude: Double = 0.0,
     var lastLongitude: Double = 0.0,
     var silentSinceMs: Long = 0L,
-    var notificationFired: Boolean = false,
+    val notificationFired: AtomicBoolean = AtomicBoolean(false),
     var missedPings: Int = 0,
     var lastPingMs: Long = 0L,
 )
@@ -153,7 +154,7 @@ constructor(
                 }
                 tracked.state = NodePresenceState.ONLINE
                 tracked.missedPings = 0
-                tracked.notificationFired = false
+                tracked.notificationFired.set(false)
             }
         }
         Logger.d { "cleanupStalePinsOnConnect complete" }
@@ -188,7 +189,7 @@ constructor(
             Logger.i { "Node $fromNodeNum came back online" }
             tracked.state = NodePresenceState.ONLINE
             tracked.silentSinceMs = 0L
-            tracked.notificationFired = false
+            tracked.notificationFired.set(false)
             remoteReports.remove(fromNodeNum)
         }
         gracefullyExitedNodes.remove(fromNodeNum)
@@ -247,7 +248,7 @@ constructor(
                     Logger.i { "Node $nodeNum still fresh in DB — reverting to ONLINE" }
                     tracked.state = NodePresenceState.ONLINE
                     tracked.silentSinceMs = 0L
-                    tracked.notificationFired = false
+                    tracked.notificationFired.set(false)
                     remoteReports.remove(nodeNum)
                 }
                 // Use the actual lastHeard time, not 'now', to avoid resetting the 5-min clock
@@ -300,17 +301,16 @@ constructor(
                     if (confirmedByNeighbor || timedOut) {
                         tracked.state = NodePresenceState.CONFIRMED_SILENT
                         if (confirmedByNeighbor) {
-                            Logger.i { "Node $nodeNum CONFIRMED SILENT (${reports!!.size} neighbor(s) agree)" }
+                            Logger.i { "Node $nodeNum CONFIRMED SILENT (${reports?.size ?: 0} neighbor(s) agree)" }
                         } else if (tracked.missedPings >= MISSED_PINGS_FOR_CONFIRMED) {
                             Logger.i { "Node $nodeNum CONFIRMED SILENT (${tracked.missedPings} pings unanswered)" }
                         } else {
                             Logger.i { "Node $nodeNum CONFIRMED SILENT (no neighbor response after ${silentDuration / 1000}s)" }
                         }
 
-                        if (!tracked.notificationFired) {
+                        if (tracked.notificationFired.compareAndSet(false, true)) {
                             fireNotification(tracked)
                             autoPlaceTriagePin(tracked)
-                            tracked.notificationFired = true
                         }
                     }
                 }

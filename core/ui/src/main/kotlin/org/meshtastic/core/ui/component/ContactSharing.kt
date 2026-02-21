@@ -215,7 +215,7 @@ fun Uri.toSharedContact(): AdminProtos.SharedContact {
     if (fragment.isNullOrBlank() || !host.equals(MESHTASTIC_HOST, true) || !path.equals(CONTACT_SHARE_PATH, true)) {
         throw MalformedURLException("Not a valid Meshtastic URL: ${toString().take(40)}")
     }
-    val url = AdminProtos.SharedContact.parseFrom(Base64.decode(fragment!!, BASE64FLAGS))
+    val url = AdminProtos.SharedContact.parseFrom(Base64.decode(fragment.orEmpty(), BASE64FLAGS))
     return url.toBuilder().build()
 }
 

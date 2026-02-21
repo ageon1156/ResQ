@@ -354,10 +354,7 @@ fun ChannelScreen(
             item {
                 ModemPresetInfo(
                     modemPresetName = modemPresetName,
-                    onClick = {
-                        isWaiting = true
-                        radioConfigViewModel.setResponseStateLoading(ConfigRoute.LORA)
-                    },
+                    onClick = {},
                 )
             }
             item {
@@ -492,7 +489,6 @@ private fun QrCodeImage(
     modifier = modifier,
     contentScale = ContentScale.Inside,
     alpha = if (enabled) 1.0f else 0.7f,
-    // colorFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) }),
 )
 
 @Composable

@@ -18,116 +18,187 @@
 package org.meshtastic.feature.intro
 
 import android.Manifest
-import android.content.Intent
 import android.os.Build
-import android.provider.Settings
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.NearMe
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.material.icons.outlined.SettingsInputAntenna
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.ui.NavDisplay
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.accompanist.permissions.rememberPermissionState
-import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.stringResource
+import org.meshtastic.core.strings.Res
+import org.meshtastic.core.strings.communicate_off_the_grid
+import org.meshtastic.core.strings.create_your_own_networks
+import org.meshtastic.core.strings.easily_set_up_private_mesh_networks
+import org.meshtastic.core.strings.get_started
+import org.meshtastic.core.strings.intro_welcome
+import org.meshtastic.core.strings.meshtastic
+import org.meshtastic.core.strings.share_your_location_in_real_time
+import org.meshtastic.core.strings.stay_connected_anywhere
+import org.meshtastic.core.strings.track_and_share_locations
 
 /**
- * Composable function for the main application introduction screen. This screen guides the user through initial setup
- * steps like granting permissions.
+ * Single-page introduction screen. Shows the app name, icon, and key features.
+ * Tapping "Get Started" triggers system permission popups (notifications + location)
+ * sequentially, then proceeds to the main app regardless of the user's choices.
  *
- * @param onDone Callback invoked when the introduction flow is completed.
+ * @param onDone Callback invoked when the intro flow is complete.
  */
 @OptIn(ExperimentalPermissionsApi::class)
-@Suppress("LongMethod")
 @Composable
 fun AppIntroductionScreen(onDone: () -> Unit) {
-    val context = LocalContext.current
-
-    val notificationPermissionState: PermissionState? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            null
+    // Build the full list of runtime permissions for this device/API level.
+    val allPermissions = remember {
+        buildList {
+            // Bluetooth — runtime on Android 12+ (API 31+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                add(Manifest.permission.BLUETOOTH_SCAN)
+                add(Manifest.permission.BLUETOOTH_CONNECT)
+            }
+            // Notifications — runtime on Android 13+ (API 33+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            // Location
+            add(Manifest.permission.ACCESS_FINE_LOCATION)
+            add(Manifest.permission.ACCESS_COARSE_LOCATION)
+            // Camera
+            add(Manifest.permission.CAMERA)
+            // External storage — only needed below Android 10 (API 29)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
         }
+    }
+    val permissionsState = rememberMultiplePermissionsState(permissions = allPermissions)
 
-    val locationPermissions =
-        listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
-    val locationPermissionState = rememberMultiplePermissionsState(permissions = locationPermissions)
+    // Flag set to true once the user has tapped "Get Started" and the dialogs are in flight.
+    var permissionsLaunched by remember { mutableStateOf(false) }
 
-    val backStack = rememberNavBackStack(Welcome)
+    // The Activity's ON_RESUME is the most reliable signal that all permission dialogs
+    // have been dismissed (granted or denied). Proceed to the main app at that point.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && permissionsLaunched) {
+                onDone()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
-    NavDisplay(
-        backStack = backStack,
-        onBack = { backStack.removeLastOrNull() },
-        entryProvider =
-        entryProvider {
-            entry<Welcome> { WelcomeScreen(onGetStarted = { backStack.add(Notifications) }) }
+    val features = remember {
+        listOf(
+            FeatureUIData(
+                icon = Icons.Outlined.SettingsInputAntenna,
+                titleRes = Res.string.stay_connected_anywhere,
+                subtitleRes = Res.string.communicate_off_the_grid,
+            ),
+            FeatureUIData(
+                icon = Icons.Outlined.Hub,
+                titleRes = Res.string.create_your_own_networks,
+                subtitleRes = Res.string.easily_set_up_private_mesh_networks,
+            ),
+            FeatureUIData(
+                icon = Icons.Outlined.NearMe,
+                titleRes = Res.string.track_and_share_locations,
+                subtitleRes = Res.string.share_your_location_in_real_time,
+            ),
+        )
+    }
 
-            entry<Notifications> {
-                val notificationsAlreadyGranted = notificationPermissionState?.status?.isGranted ?: true
-                NotificationsScreen(
-                    showNextButton = notificationsAlreadyGranted,
-                    onSkip = {
-                        // Skip this screen and the Critical Alerts screen. Proceed to Location screen.
-                        backStack.add(Location)
-                    },
-                    onConfigure = {
-                        if (notificationsAlreadyGranted) {
-                            backStack.add(CriticalAlerts)
+    Scaffold(
+        bottomBar = {
+            BottomAppBar(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp)) {
+                Spacer(modifier = Modifier.fillMaxWidth().weight(1f))
+                Button(
+                    onClick = {
+                        if (permissionsState.allPermissionsGranted || allPermissions.isEmpty()) {
+                            // Already granted — skip straight to the app.
+                            onDone()
                         } else {
-                            // For Android Tiramisu (API 33) and above, this requests POST_NOTIFICATIONS
-                            // For lower versions, notificationPermissionState will be null, and this branch isn't
-                            // taken.
-                            notificationPermissionState?.launchPermissionRequest()
+                            permissionsLaunched = true
+                            permissionsState.launchMultiplePermissionRequest()
                         }
                     },
-                )
-            }
-
-            entry<CriticalAlerts> {
-                CriticalAlertsScreen(
-                    onSkip = { backStack.add(Location) },
-                    onConfigure = {
-                        // Intent to open the specific notification channel settings for "my_alerts"
-                        // This allows the user to enable critical alerts if they were initially denied
-                        // or to adjust settings for notifications that can bypass Do Not Disturb.
-                        val intent =
-                            Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
-                                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                                putExtra(Settings.EXTRA_CHANNEL_ID, "my_alerts")
-                            }
-                        context.startActivity(intent)
-                        backStack.add(Location)
-                    },
-                )
-            }
-
-            entry<Location> {
-                val locationAlreadyGranted = locationPermissionState.allPermissionsGranted
-                LocationScreen(
-                    showNextButton = locationAlreadyGranted,
-                    onSkip = onDone, // Callback to signify completion of the intro flow
-                    onConfigure = {
-                        if (locationAlreadyGranted) {
-                            onDone() // Permissions already granted, proceed to finish
-                        } else {
-                            locationPermissionState.launchMultiplePermissionRequest()
-                        }
-                    },
-                )
+                ) {
+                    Text(stringResource(Res.string.get_started))
+                }
             }
         },
-    )
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(modifier = Modifier.height(48.dp))
+            Icon(
+                imageVector = ImageVector.vectorResource(id = org.meshtastic.core.ui.R.drawable.ic_meshtastic),
+                contentDescription = null,
+                modifier = Modifier.size(96.dp),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = stringResource(Res.string.intro_welcome),
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = stringResource(Res.string.meshtastic),
+                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+                textAlign = TextAlign.Center,
+            )
+            Spacer(modifier = Modifier.height(40.dp))
+            features.forEach { feature ->
+                FeatureRow(feature = feature)
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
 }
 
-@Serializable private data object Welcome : NavKey
-
-@Serializable private data object Notifications : NavKey
-
-@Serializable private data object CriticalAlerts : NavKey
-
-@Serializable private data object Location : NavKey
-
+@Preview
+@Composable
+private fun AppIntroductionScreenPreview() {
+    AppIntroductionScreen(onDone = {})
+}

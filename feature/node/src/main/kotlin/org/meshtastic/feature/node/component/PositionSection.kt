@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.SocialDistance
 import androidx.compose.material3.AssistChip
@@ -38,7 +37,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -54,12 +52,10 @@ import org.meshtastic.core.database.model.Node
 import org.meshtastic.core.model.util.toDistanceString
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.exchange_position
-import org.meshtastic.core.strings.open_compass
 import org.meshtastic.core.strings.position
 import org.meshtastic.feature.node.model.LogsType
 import org.meshtastic.feature.node.model.MetricsState
 import org.meshtastic.feature.node.model.NodeDetailAction
-import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig.DisplayUnits
 
 /**
  * Displays node position details, last update time, distance, and related actions like requesting position and
@@ -97,7 +93,7 @@ fun PositionSection(
                 Spacer(Modifier.height(8.dp))
             }
 
-            PositionActionButtons(node, hasValidPosition, metricsState.displayUnits, onAction)
+            PositionActionButtons(node, hasValidPosition, onAction)
 
             if (availableLogs.contains(LogsType.POSITIONS)) {
                 Spacer(Modifier.height(12.dp))
@@ -106,15 +102,13 @@ fun PositionSection(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    if (availableLogs.contains(LogsType.POSITIONS)) {
-                        AssistChip(
-                            onClick = {
-                                onAction(NodeDetailAction.Navigate(LogsType.POSITIONS.routeFactory(node.num)))
-                            },
-                            label = { Text(stringResource(LogsType.POSITIONS.titleRes)) },
-                            leadingIcon = { Icon(LogsType.POSITIONS.icon, null, Modifier.size(18.dp)) },
-                        )
-                    }
+                    AssistChip(
+                        onClick = {
+                            onAction(NodeDetailAction.Navigate(LogsType.POSITIONS.routeFactory(node.num)))
+                        },
+                        label = { Text(stringResource(LogsType.POSITIONS.titleRes)) },
+                        leadingIcon = { Icon(LogsType.POSITIONS.icon, null, Modifier.size(18.dp)) },
+                    )
                 }
             }
         }
@@ -150,7 +144,6 @@ private fun PositionMap(node: Node, distance: String?) {
 private fun PositionActionButtons(
     node: Node,
     hasValidPosition: Boolean,
-    displayUnits: DisplayUnits,
     onAction: (NodeDetailAction) -> Unit,
 ) {
     Row(
@@ -171,18 +164,6 @@ private fun PositionActionButtons(
             Icon(Icons.Default.LocationOn, null, Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
             Text(text = stringResource(Res.string.exchange_position), maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-
-        if (hasValidPosition) {
-            FilledTonalButton(
-                onClick = { onAction(NodeDetailAction.OpenCompass(node, displayUnits)) },
-                modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.large,
-            ) {
-                Icon(Icons.Default.Explore, null, Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(text = stringResource(Res.string.open_compass), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
         }
     }
 }

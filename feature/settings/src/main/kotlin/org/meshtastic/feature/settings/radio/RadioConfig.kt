@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.meshtastic.core.database.model.Node
-import org.meshtastic.core.navigation.FirmwareRoutes
 import org.meshtastic.core.navigation.Route
 import org.meshtastic.core.navigation.SettingsRoutes
 import org.meshtastic.core.strings.Res
@@ -58,7 +57,6 @@ import org.meshtastic.core.strings.advanced_title
 import org.meshtastic.core.strings.backup_restore
 import org.meshtastic.core.strings.clean_node_database_title
 import org.meshtastic.core.strings.debug_panel
-import org.meshtastic.core.strings.device_configuration
 import org.meshtastic.core.strings.export_configuration
 import org.meshtastic.core.strings.factory_reset
 import org.meshtastic.core.strings.firmware_update_title
@@ -67,15 +65,10 @@ import org.meshtastic.core.strings.message_device_managed
 import org.meshtastic.core.strings.module_settings
 import org.meshtastic.core.strings.nodedb_reset
 import org.meshtastic.core.strings.preserve_favorites
-import org.meshtastic.core.strings.radio_configuration
 import org.meshtastic.core.strings.reboot
 import org.meshtastic.core.strings.shutdown
-import org.meshtastic.core.ui.component.ListItem
-import org.meshtastic.core.ui.component.TitledCard
 import org.meshtastic.core.ui.theme.AppTheme
 import org.meshtastic.core.ui.theme.StatusColors.StatusRed
-import org.meshtastic.feature.settings.navigation.ConfigRoute
-import org.meshtastic.feature.settings.navigation.ModuleRoute
 import org.meshtastic.feature.settings.radio.component.ShutdownConfirmationDialog
 import org.meshtastic.feature.settings.radio.component.WarningDialog
 
@@ -94,27 +87,6 @@ fun RadioConfigItemList(
     onExport: () -> Unit = {},
     onNavigate: (Route) -> Unit,
 ) {
-    val enabled = state.connected && !state.responseState.isWaiting() && !isManaged
-
-    Column {
-        TitledCard(title = stringResource(Res.string.radio_configuration)) {
-            if (isManaged) {
-                ManagedMessage()
-            }
-            ConfigRoute.radioConfigRoutes.forEach {
-                ListItem(text = stringResource(it.title), leadingIcon = it.icon, enabled = enabled) { onRouteClick(it) }
-            }
-        }
-
-        TitledCard(title = stringResource(Res.string.device_configuration), modifier = Modifier.padding(top = 16.dp)) {
-            if (isManaged) {
-                ManagedMessage()
-            }
-            ConfigRoute.deviceConfigRoutes(state.metadata).forEach {
-                ListItem(text = stringResource(it.title), leadingIcon = it.icon, enabled = enabled) { onRouteClick(it) }
-            }
-        }
-    }
 }
 
 enum class AdminRoute(val icon: ImageVector, val title: StringResource) {

@@ -55,6 +55,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SpeakerNotes
 import androidx.compose.material.icons.filled.SpeakerNotesOff
 import androidx.compose.material.icons.filled.Warning
@@ -110,6 +111,7 @@ import org.meshtastic.core.service.RetryEvent
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.alert_bell_text
 import org.meshtastic.core.strings.cancel
+import org.meshtastic.core.strings.channels
 import org.meshtastic.core.strings.cancel_reply
 import org.meshtastic.core.strings.clear_selection
 import org.meshtastic.core.strings.copy
@@ -161,6 +163,7 @@ fun MessageScreen(
     viewModel: MessageViewModel = hiltViewModel(),
     navigateToNodeDetails: (Int) -> Unit,
     navigateToQuickChatOptions: () -> Unit,
+    navigateToChannelSettings: () -> Unit = {},
     onNavigateBack: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -190,15 +193,8 @@ fun MessageScreen(
     // Observe retry events from the service
     // Key on contactKey to restart collection when navigating between conversations
     LaunchedEffect(contactKey) {
-        android.util.Log.d("MessageScreen", "Starting retry event collection for contact: $contactKey")
         viewModel.retryEvents.collect { event ->
-            if (event != null) {
-                android.util.Log.d("MessageScreen", "Received retry event: ${event.packetId}")
-                currentRetryEvent = event
-            } else {
-                android.util.Log.d("MessageScreen", "Retry event cleared")
-                currentRetryEvent = null
-            }
+            currentRetryEvent = event
         }
     }
 
@@ -386,6 +382,7 @@ fun MessageScreen(
                     showQuickChat = showQuickChat,
                     onToggleQuickChat = viewModel::toggleShowQuickChat,
                     onNavigateToQuickChatOptions = navigateToQuickChatOptions,
+                    onNavigateToChannelSettings = navigateToChannelSettings,
                 )
             }
         },
@@ -705,6 +702,7 @@ private fun MessageTopBar(
     showQuickChat: Boolean,
     onToggleQuickChat: () -> Unit,
     onNavigateToQuickChatOptions: () -> Unit = {},
+    onNavigateToChannelSettings: () -> Unit = {},
 ) = TopAppBar(
     title = {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -731,6 +729,7 @@ private fun MessageTopBar(
             onNavigateToQuickChatOptions,
             channelIndex,
             mismatchKey,
+            onNavigateToChannelSettings,
         )
     },
 )
@@ -742,6 +741,7 @@ private fun MessageTopBarActions(
     onNavigateToQuickChatOptions: () -> Unit,
     channelIndex: Int?,
     mismatchKey: Boolean,
+    onNavigateToChannelSettings: () -> Unit = {},
 ) {
     if (channelIndex == DataPacket.PKC_CHANNEL_INDEX) {
         NodeKeyStatusIcon(hasPKC = true, mismatchKey = mismatchKey)
@@ -757,6 +757,7 @@ private fun MessageTopBarActions(
             showQuickChat = showQuickChat,
             onToggleQuickChat = onToggleQuickChat,
             onNavigateToQuickChatOptions = onNavigateToQuickChatOptions,
+            onNavigateToChannelSettings = onNavigateToChannelSettings,
         )
     }
 }
@@ -768,6 +769,7 @@ private fun OverFlowMenu(
     showQuickChat: Boolean,
     onToggleQuickChat: () -> Unit,
     onNavigateToQuickChatOptions: () -> Unit,
+    onNavigateToChannelSettings: () -> Unit = {},
 ) {
     if (expanded) {
         DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
@@ -805,6 +807,19 @@ private fun OverFlowMenu(
                     Icon(
                         imageVector = Icons.Default.ChatBubbleOutline,
                         contentDescription = stringResource(Res.string.quick_chat),
+                    )
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.channels)) },
+                onClick = {
+                    onDismiss()
+                    onNavigateToChannelSettings()
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = stringResource(Res.string.channels),
                     )
                 },
             )

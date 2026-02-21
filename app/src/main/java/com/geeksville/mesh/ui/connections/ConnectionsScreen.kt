@@ -20,7 +20,6 @@ import android.net.InetAddresses
 import android.os.Build
 import android.util.Patterns
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -31,8 +30,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -67,8 +64,6 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import org.meshtastic.core.navigation.Route
-import org.meshtastic.core.navigation.SettingsRoutes
 import org.meshtastic.core.service.ConnectionState
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.connected
@@ -76,21 +71,13 @@ import org.meshtastic.core.strings.connected_device
 import org.meshtastic.core.strings.connected_sleeping
 import org.meshtastic.core.strings.connecting
 import org.meshtastic.core.strings.connections
-import org.meshtastic.core.strings.must_set_region
 import org.meshtastic.core.strings.no_device_selected
 import org.meshtastic.core.strings.not_connected
-import org.meshtastic.core.strings.set_your_region
 import org.meshtastic.core.strings.warning_not_paired
-import org.meshtastic.core.ui.component.ListItem
 import org.meshtastic.core.ui.component.MainAppBar
 import org.meshtastic.core.ui.component.TitledCard
 import org.meshtastic.core.ui.icon.MeshtasticIcons
 import org.meshtastic.core.ui.icon.NoDevice
-import org.meshtastic.feature.settings.navigation.ConfigRoute
-import org.meshtastic.feature.settings.navigation.getNavRouteFrom
-import org.meshtastic.feature.settings.radio.RadioConfigViewModel
-import org.meshtastic.feature.settings.radio.component.PacketResponseStateDialog
-import org.meshtastic.proto.ConfigProtos
 
 fun String?.isValidAddress(): Boolean = if (this.isNullOrBlank()) {
     false
@@ -111,13 +98,9 @@ fun String?.isValidAddress(): Boolean = if (this.isNullOrBlank()) {
 fun ConnectionsScreen(
     connectionsViewModel: ConnectionsViewModel = hiltViewModel(),
     scanModel: BTScanModel = hiltViewModel(),
-    radioConfigViewModel: RadioConfigViewModel = hiltViewModel(),
     onClickNodeChip: (Int) -> Unit,
     onNavigateToNodeDetails: (Int) -> Unit,
-    onConfigNavigate: (Route) -> Unit,
 ) {
-    val radioConfigState by radioConfigViewModel.radioConfigState.collectAsStateWithLifecycle()
-    val config by connectionsViewModel.localConfig.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
     val scanStatusText by scanModel.errorText.observeAsState("")
     val connectionState by
@@ -126,33 +109,11 @@ fun ConnectionsScreen(
     val ourNode by connectionsViewModel.ourNodeInfo.collectAsStateWithLifecycle()
     val selectedDevice by scanModel.selectedNotNullFlow.collectAsStateWithLifecycle()
     val bluetoothState by connectionsViewModel.bluetoothState.collectAsStateWithLifecycle()
-    val regionUnset = config.lora.region == ConfigProtos.Config.LoRaConfig.RegionCode.UNSET
 
     val bleDevices by scanModel.bleDevicesForUi.collectAsStateWithLifecycle()
     val discoveredTcpDevices by scanModel.discoveredTcpDevicesForUi.collectAsStateWithLifecycle()
     val recentTcpDevices by scanModel.recentTcpDevicesForUi.collectAsStateWithLifecycle()
     val usbDevices by scanModel.usbDevicesForUi.collectAsStateWithLifecycle()
-
-    /* Animate waiting for the configurations */
-    var isWaiting by remember { mutableStateOf(false) }
-    if (isWaiting) {
-        PacketResponseStateDialog(
-            state = radioConfigState.responseState,
-            onDismiss = {
-                isWaiting = false
-                radioConfigViewModel.clearPacketResponse()
-            },
-            onComplete = {
-                getNavRouteFrom(radioConfigState.route)?.let { route ->
-                    isWaiting = false
-                    radioConfigViewModel.clearPacketResponse()
-                    if (route == SettingsRoutes.LoRa) {
-                        onConfigNavigate(SettingsRoutes.LoRa)
-                    }
-                }
-            },
-        )
-    }
 
     // when scanning is true - wait 10000ms and then stop scanning
     LaunchedEffect(scanning) {
@@ -162,14 +123,10 @@ fun ConnectionsScreen(
         }
     }
 
-    LaunchedEffect(connectionState, regionUnset) {
+    LaunchedEffect(connectionState) {
         when (connectionState) {
-            ConnectionState.Connected -> {
-                if (regionUnset) Res.string.must_set_region else Res.string.connected
-            }
-
+            ConnectionState.Connected -> Res.string.connected
             ConnectionState.Connecting -> Res.string.connecting
-
             ConnectionState.Disconnected -> Res.string.not_connected
             ConnectionState.DeviceSleep -> Res.string.connected_sleeping
         }.let { scanModel.setErrorText(getString(it)) }
@@ -213,30 +170,16 @@ fun ConnectionsScreen(
                 ) { state ->
                     when (state) {
                         2 -> {
-                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                ourNode?.let { node ->
-                                    TitledCard(title = stringResource(Res.string.connected_device)) {
-                                        CurrentlyConnectedInfo(
-                                            node = node,
-                                            bleDevice =
-                                            bleDevices.firstOrNull { it.fullAddress == selectedDevice }
-                                                as DeviceListEntry.Ble?,
-                                            onNavigateToNodeDetails = onNavigateToNodeDetails,
-                                            onClickDisconnect = { scanModel.disconnect() },
-                                        )
-                                    }
-                                }
-
-                                if (regionUnset && selectedDevice != "m") {
-                                    TitledCard(title = null) {
-                                        ListItem(
-                                            leadingIcon = Icons.Rounded.Language,
-                                            text = stringResource(Res.string.set_your_region),
-                                        ) {
-                                            isWaiting = true
-                                            radioConfigViewModel.setResponseStateLoading(ConfigRoute.LORA)
-                                        }
-                                    }
+                            ourNode?.let { node ->
+                                TitledCard(title = stringResource(Res.string.connected_device)) {
+                                    CurrentlyConnectedInfo(
+                                        node = node,
+                                        bleDevice =
+                                        bleDevices.firstOrNull { it.fullAddress == selectedDevice }
+                                            as? DeviceListEntry.Ble,
+                                        onNavigateToNodeDetails = onNavigateToNodeDetails,
+                                        onClickDisconnect = { scanModel.disconnect() },
+                                    )
                                 }
                             }
                         }
@@ -336,7 +279,7 @@ fun ConnectionsScreen(
                     }
                 }
             }
-            scanStatusText?.let {
+            scanStatusText?.takeIf { it.isNotEmpty() }?.let {
                 Card(
                     modifier = Modifier.padding(8.dp).align(Alignment.BottomStart),
                     colors =

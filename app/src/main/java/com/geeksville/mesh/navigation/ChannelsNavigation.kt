@@ -29,11 +29,10 @@ import org.meshtastic.core.navigation.ChannelsRoutes
 import org.meshtastic.core.navigation.DEEP_LINK_BASE_URI
 import org.meshtastic.core.navigation.SettingsRoutes
 import org.meshtastic.feature.settings.radio.channel.ChannelConfigScreen
-import org.meshtastic.feature.settings.radio.component.LoRaConfigScreen
 
 /** Navigation graph for for the top level ChannelScreen - [ChannelsRoutes.Channels]. */
 fun NavGraphBuilder.channelsGraph(navController: NavHostController) {
-    navigation<ChannelsRoutes.ChannelsGraph>(startDestination = ChannelsRoutes.Channels) {
+    navigation<ChannelsRoutes.ChannelsGraph>(startDestination = SettingsRoutes.ChannelConfig) {
         composable<ChannelsRoutes.Channels>(
             deepLinks = listOf(navDeepLink<ChannelsRoutes.Channels>(basePath = "$DEEP_LINK_BASE_URI/channels")),
         ) { backStackEntry ->
@@ -47,10 +46,6 @@ fun NavGraphBuilder.channelsGraph(navController: NavHostController) {
 
         navController.configComposable<SettingsRoutes.ChannelConfig, ChannelsRoutes.ChannelsGraph> {
             ChannelConfigScreen(viewModel = it, onBack = navController::popBackStack)
-        }
-
-        navController.configComposable<SettingsRoutes.LoRa, ChannelsRoutes.ChannelsGraph> {
-            LoRaConfigScreen(viewModel = it, onBack = navController::popBackStack)
         }
     }
 }

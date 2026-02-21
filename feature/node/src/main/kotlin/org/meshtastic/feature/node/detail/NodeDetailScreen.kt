@@ -23,9 +23,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -36,7 +34,6 @@ import org.meshtastic.core.navigation.Route
 import org.meshtastic.core.ui.component.MainAppBar
 import org.meshtastic.feature.node.component.NodeMenuAction
 import org.meshtastic.feature.node.metrics.MetricsViewModel
-import org.meshtastic.feature.node.model.LogsType
 import org.meshtastic.feature.node.model.NodeDetailAction
 
 @Suppress("LongMethod")
@@ -53,26 +50,7 @@ fun NodeDetailScreen(
     LaunchedEffect(nodeId) { metricsViewModel.setNodeId(nodeId) }
 
     val metricsState by metricsViewModel.state.collectAsStateWithLifecycle()
-    val environmentMetricsState by metricsViewModel.environmentState.collectAsStateWithLifecycle()
     val ourNode by nodeDetailViewModel.ourNodeInfo.collectAsStateWithLifecycle()
-
-    val availableLogs by
-        remember(metricsState, environmentMetricsState) {
-            derivedStateOf {
-                buildSet {
-                    if (metricsState.hasDeviceMetrics()) add(LogsType.DEVICE)
-                    if (metricsState.hasPositionLogs()) {
-                        add(LogsType.POSITIONS)
-                    }
-                    if (environmentMetricsState.hasEnvironmentMetrics()) add(LogsType.ENVIRONMENT)
-                    if (metricsState.hasSignalMetrics()) add(LogsType.SIGNAL)
-                    if (metricsState.hasPowerMetrics()) add(LogsType.POWER)
-                    if (metricsState.hasTracerouteLogs()) add(LogsType.TRACEROUTE)
-                    if (metricsState.hasHostMetrics()) add(LogsType.HOST)
-                    if (metricsState.hasPaxMetrics()) add(LogsType.PAX)
-                }
-            }
-        }
 
     val node = metricsState.node
 
@@ -93,9 +71,7 @@ fun NodeDetailScreen(
         if (node != null) {
             NodeDetailContent(
                 node = node,
-                ourNode = ourNode,
                 metricsState = metricsState,
-                availableLogs = availableLogs,
                 onAction = { action ->
                     handleNodeAction(
                         action = action,
@@ -152,9 +128,8 @@ private fun handleNodeAction(
             /* Handled in NodeDetailContent */
         }
 
-        is NodeDetailAction.OpenCompass -> {
-            /* Handled in NodeDetailList */
-        }
+        is NodeDetailAction.SetOwner -> nodeDetailViewModel.setOwner(action.node, action.longName, action.shortName)
+        is NodeDetailAction.SetDeviceConfig -> nodeDetailViewModel.setDeviceConfig(action.node, action.role, action.rebroadcastMode)
     }
 }
 

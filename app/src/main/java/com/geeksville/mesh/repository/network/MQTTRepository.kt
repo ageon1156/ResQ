@@ -38,11 +38,9 @@ import org.meshtastic.core.model.util.subscribeList
 import org.meshtastic.proto.MeshProtos.MqttClientProxyMessage
 import org.meshtastic.proto.mqttClientProxyMessage
 import java.net.URI
-import java.security.SecureRandom
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
 
 @Singleton
 class MQTTRepository
@@ -84,8 +82,8 @@ constructor(
         val mqttConfig = radioConfigRepository.moduleConfigFlow.first().mqtt
 
         val sslContext = SSLContext.getInstance("TLS")
-        // Create a custom SSLContext that trusts all certificates
-        sslContext.init(null, arrayOf<TrustManager>(TrustAllX509TrustManager()), SecureRandom())
+        // Use system default trust managers so TLS certificates are properly validated
+        sslContext.init(null, null, null)
 
         val rootTopic = mqttConfig.root.ifEmpty { DEFAULT_TOPIC_ROOT }
 

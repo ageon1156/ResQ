@@ -140,6 +140,7 @@ fun AdaptiveContactsScreen(
                             message = if (contactKey == initialContactKey) initialMessage else "",
                             navigateToNodeDetails = { navController.navigate(NodesRoutes.NodeDetailGraph(it)) },
                             navigateToQuickChatOptions = { navController.navigate(ContactsRoutes.QuickChat) },
+                            navigateToChannelSettings = { navController.navigate(ChannelsRoutes.ChannelsGraph) },
                             onNavigateBack = handleBack,
                         )
                     }

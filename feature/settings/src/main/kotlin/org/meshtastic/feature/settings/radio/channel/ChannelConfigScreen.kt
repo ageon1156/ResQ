@@ -17,11 +17,6 @@
 
 package org.meshtastic.feature.settings.radio.channel
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -37,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,6 +63,7 @@ import org.meshtastic.core.ui.component.PreferenceFooter
 import org.meshtastic.core.ui.component.dragContainer
 import org.meshtastic.core.ui.component.dragDropItemsIndexed
 import org.meshtastic.core.ui.component.rememberDragDropState
+import org.meshtastic.feature.settings.navigation.ConfigRoute
 import org.meshtastic.feature.settings.radio.RadioConfigViewModel
 import org.meshtastic.feature.settings.radio.channel.component.ChannelCard
 import org.meshtastic.feature.settings.radio.channel.component.ChannelConfigHeader
@@ -82,6 +79,12 @@ import org.meshtastic.proto.channelSettings
 @Composable
 fun ChannelConfigScreen(viewModel: RadioConfigViewModel, onBack: () -> Unit) {
     val state by viewModel.radioConfigState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.connected) {
+        if (state.connected && state.channelList.isEmpty() && !state.responseState.isWaiting()) {
+            viewModel.setResponseStateLoading(ConfigRoute.CHANNELS)
+        }
+    }
 
     if (state.responseState.isWaiting()) {
         PacketResponseStateDialog(state = state.responseState, onDismiss = viewModel::clearPacketResponse)
@@ -255,20 +258,6 @@ private fun ChannelConfigScreen(
                 }
             }
 
-            AnimatedVisibility(
-                visible = maxChannels > settingsListInput.size,
-                modifier = Modifier.align(Alignment.BottomEnd),
-                enter =
-                slideInHorizontally(
-                    initialOffsetX = { it },
-                    animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
-                ),
-                exit =
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
-                ),
-            ) {}
         }
     }
 }
@@ -281,6 +270,7 @@ private fun ChannelConfigScreen(
  * @return the index of the channel within `settingsList`.
  */
 private fun determineLocationSharingChannel(firmwareVersion: DeviceVersion, settingsList: List<ChannelSettings>): Int {
+    if (settingsList.isEmpty()) return -1
     var output = -1
     if (firmwareVersion >= DeviceVersion(asString = SECONDARY_CHANNEL_EPOCH)) {
         /* Essentially the first index with the setting enabled */

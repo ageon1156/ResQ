@@ -26,10 +26,8 @@ import android.util.Base64
 import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
 import co.touchlab.kermit.Logger
 import com.google.protobuf.MessageLite
 import com.meshtastic.core.strings.getString
@@ -57,7 +55,7 @@ import org.meshtastic.core.database.model.Node
 import org.meshtastic.core.database.model.getStringResFrom
 import org.meshtastic.core.model.Position
 import org.meshtastic.core.model.util.toChannelSet
-import org.meshtastic.core.navigation.SettingsRoutes
+
 import org.meshtastic.core.prefs.analytics.AnalyticsPrefs
 import org.meshtastic.core.prefs.map.MapConsentPrefs
 import org.meshtastic.core.service.ConnectionState
@@ -69,7 +67,6 @@ import org.meshtastic.core.strings.fetching_channel_indexed
 import org.meshtastic.core.strings.fetching_config
 import org.meshtastic.core.ui.util.getChannelList
 import org.meshtastic.feature.settings.navigation.ConfigRoute
-import org.meshtastic.feature.settings.navigation.ModuleRoute
 import org.meshtastic.feature.settings.util.UiText
 import org.meshtastic.proto.AdminProtos
 import org.meshtastic.proto.ChannelProtos
@@ -80,7 +77,9 @@ import org.meshtastic.proto.ConnStatusProtos
 import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.ModuleConfigProtos
 import org.meshtastic.proto.Portnums
+import org.meshtastic.proto.ConfigProtos.Config.DisplayConfig
 import org.meshtastic.proto.config
+import org.meshtastic.proto.copy
 import org.meshtastic.proto.deviceProfile
 import org.meshtastic.proto.moduleConfig
 import java.io.FileOutputStream
@@ -110,7 +109,6 @@ data class RadioConfigState(
 class RadioConfigViewModel
 @Inject
 constructor(
-    savedStateHandle: SavedStateHandle,
     private val app: Application,
     private val radioConfigRepository: RadioConfigRepository,
     private val packetRepository: PacketRepository,
@@ -129,7 +127,6 @@ constructor(
         analyticsPrefs.analyticsAllowed = !analyticsPrefs.analyticsAllowed
     }
 
-    private val destNum = savedStateHandle.toRoute<SettingsRoutes.Settings>().destNum
     private val _destNode = MutableStateFlow<Node?>(null)
     val destNode: StateFlow<Node?>
         get() = _destNode
@@ -137,6 +134,15 @@ constructor(
     private val requestIds = MutableStateFlow(emptySet<Int>())
     private val _radioConfigState = MutableStateFlow(RadioConfigState())
     val radioConfigState: StateFlow<RadioConfigState> = _radioConfigState
+
+    @Suppress("DEPRECATION")
+    private val defaultDisplayConfig = config {
+        display = DisplayConfig.getDefaultInstance().copy {
+            compassNorthTop = true
+            use12HClock = true
+            screenOnSecs = 60
+        }
+    }
 
     fun setPreserveFavorites(preserveFavorites: Boolean) {
         viewModelScope.launch { _radioConfigState.update { it.copy(nodeDbResetPreserveFavorites = preserveFavorites) } }
@@ -158,7 +164,7 @@ constructor(
 
     init {
         nodeRepository.nodeDBbyNum
-            .mapLatest { nodes -> nodes[destNum] ?: nodes.values.firstOrNull() }
+            .mapLatest { nodes -> nodes.values.firstOrNull() }
             .distinctUntilChanged()
             .onEach {
                 _destNode.value = it
@@ -176,8 +182,18 @@ constructor(
             .launchIn(viewModelScope)
 
         nodeRepository.myNodeInfo
-            .onEach { ni ->
-                _radioConfigState.update { it.copy(isLocal = destNum == null || destNum == ni?.myNodeNum) }
+            .onEach { _ ->
+                _radioConfigState.update { it.copy(isLocal = true) }
+            }
+            .launchIn(viewModelScope)
+
+        serviceRepository.connectionState
+            .onEach { connState ->
+                if (connState == ConnectionState.Connected) {
+                    viewModelScope.launch {
+                        meshService?.setConfig(defaultDisplayConfig.toByteArray())
+                    }
+                }
             }
             .launchIn(viewModelScope)
 
@@ -566,7 +582,6 @@ constructor(
 
     private fun getTitleForRoute(route: Enum<*>) = when (route) {
         is ConfigRoute -> route.title
-        is ModuleRoute -> route.title
         is AdminRoute -> route.title
         else -> null
     }
@@ -592,11 +607,9 @@ constructor(
         }
 
         when (route) {
-            ConfigRoute.USER -> getOwner(destNum)
-
             ConfigRoute.CHANNELS -> {
                 getChannel(destNum, 0)
-                getConfig(destNum, ConfigRoute.LORA.type)
+                getConfig(destNum, AdminProtos.AdminMessage.ConfigType.LORA_CONFIG_VALUE)
                 // channel editor is synchronous, so we don't use requestIds as total
                 setResponseStateTotal(maxChannels + 1)
             }
@@ -607,23 +620,7 @@ constructor(
             }
 
             is ConfigRoute -> {
-                if (route == ConfigRoute.LORA) {
-                    getChannel(destNum, 0)
-                }
-                if (route == ConfigRoute.NETWORK) {
-                    getDeviceConnectionStatus(destNum)
-                }
                 getConfig(destNum, route.type)
-            }
-
-            is ModuleRoute -> {
-                if (route == ModuleRoute.CANNED_MESSAGE) {
-                    getCannedMessages(destNum)
-                }
-                if (route == ModuleRoute.EXT_NOTIFICATION) {
-                    getRingtone(destNum)
-                }
-                getModuleConfig(destNum, route.type)
             }
         }
     }
@@ -706,7 +703,7 @@ constructor(
             val parsed = AdminProtos.AdminMessage.parseFrom(data.payload)
             Logger.d { debugMsg.format(parsed.payloadVariantCase.name) }
             if (destNum != packet.from) {
-                sendError("Unexpected sender: ${packet.from.toUInt()} instead of ${destNum.toUInt()}.")
+                Logger.w { "Unexpected sender: ${packet.from.toUInt()} instead of ${destNum.toUInt()}." }
                 return
             }
             when (parsed.payloadVariantCase) {

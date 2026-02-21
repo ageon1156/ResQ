@@ -3,7 +3,7 @@
   -->
 
 <resources>
-    <string name="meshtastic_app_name">Atlas</string>
+    <string name="meshtastic_app_name">ResQ</string>
 
     <!-- Language tags native names (not available via .getDisplayLanguage) -->
     <string name="fr_HT" translatable="false">Kreyòl ayisyen</string>
@@ -16,7 +16,7 @@
 
     <string name="default_mqtt_address" translatable="false">mqtt.example.com</string>
 
-    <string name="fallback_node_name">Atlas</string>
+    <string name="fallback_node_name">ResQ</string>
     <string name="node_filter_placeholder">Filter</string>
     <string name="desc_node_filter_clear">clear node filter</string>
     <string name="node_filter_title">Filter by</string>
@@ -181,7 +181,7 @@
     <string name="qr_code">QR code</string>
     <string name="unknown_username">Unknown Username</string>
     <string name="send">Send</string>
-    <string name="warning_not_paired">You haven't yet paired a Atlas compatible radio with this phone. Please pair a device and set your username.\n\nThis open-source application is in development, if you find problems please post on our forum: https://example.com.\n\nFor more information see our web page - www.example.com</string>
+    <string name="warning_not_paired">You haven't yet paired a ResQ compatible radio with this phone. Please pair a device and set your username.\n\nThis open-source application is in development, if you find problems please post on our forum: https://example.com.\n\nFor more information see our web page - www.example.com</string>
     <string name="you">You</string>
     <string name="analytics_okay">Allow analytics and crash reporting.</string>
     <string name="accept">Accept</string>
@@ -189,7 +189,7 @@
     <string name="discard_changes">Discard</string>
     <string name="save_changes">Save</string>
     <string name="new_channel_rcvd">New Channel URL received</string>
-    <string name="permission_missing">Atlas needs location permissions enabled to find new devices via Bluetooth. You can disable when not in use.</string>
+    <string name="permission_missing">ResQ needs location permissions enabled to find new devices via Bluetooth. You can disable when not in use.</string>
     <string name="report_bug">Report Bug</string>
     <string name="report_a_bug">Report a bug</string>
     <string name="report_bug_text">Are you sure you want to report a bug? After reporting, please post in https://example.com so we can match up the report with what you found.</string>
@@ -322,7 +322,7 @@
     <string name="bluetooth_disabled">Bluetooth is disabled. Please enable it in your device settings.</string>
     <string name="open_settings">Open settings</string>
     <string name="firmware_version">Firmware version: %1$s</string>
-    <string name="permission_missing_31">Atlas needs "Nearby devices" permissions enabled to find and connect to devices via Bluetooth. You can disable when not in use.</string>
+    <string name="permission_missing_31">ResQ needs "Nearby devices" permissions enabled to find and connect to devices via Bluetooth. You can disable when not in use.</string>
     <string name="direct_message">Direct Message</string>
     <string name="nodedb_reset">NodeDB reset</string>
     <string name="delivery_confirmed">Delivery confirmed</string>
@@ -405,7 +405,7 @@
     <string name="meshtastic_new_nodes_notifications">New node notifications</string>
     <string name="more_details">More details</string>
     <string name="snr">SNR</string>
-    <string name="snr_definition">Signal-to-Noise Ratio, a measure used in communications to quantify the level of a desired signal to the level of background noise. In Atlas and other wireless systems, a higher SNR indicates a clearer signal that can enhance the reliability and quality of data transmission.</string>
+    <string name="snr_definition">Signal-to-Noise Ratio, a measure used in communications to quantify the level of a desired signal to the level of background noise. In ResQ and other wireless systems, a higher SNR indicates a clearer signal that can enhance the reliability and quality of data transmission.</string>
     <string name="rssi">RSSI</string>
     <string name="rssi_definition">Received Signal Strength Indicator, a measurement used to determine the power level being received by the antenna. A higher RSSI value generally indicates a stronger and more stable connection.</string>
     <string name="iaq_definition">(Indoor Air Quality) relative scale IAQ value as measured by Bosch BME680. Value Range 0–500.</string>
@@ -727,7 +727,7 @@
     <string name="short_name">Short Name</string>
     <string name="hardware_model">Hardware model</string>
     <string name="licensed_amateur_radio">Licensed amateur radio (HAM)</string>
-    <string name="licensed_amateur_radio_text">Enabling this option disables encryption and is not compatible with the default Atlas network.</string>
+    <string name="licensed_amateur_radio_text">Enabling this option disables encryption and is not compatible with the default ResQ network.</string>
     <string name="dew_point">Dew Point</string>
     <string name="pressure">Pressure</string>
     <string name="gas_resistance">Gas Resistance</string>
@@ -835,7 +835,7 @@
     <string name="no_network_devices">No Network devices found.</string>
     <string name="no_usb_devices">No USB Serial devices found.</string>
     <string name="scroll_to_bottom">Scroll to bottom</string>
-    <string name="meshtastic">Atlas</string>
+    <string name="meshtastic">ResQ</string>
     <string name="scanning">Scanning</string>
     <string name="security_icon_description">Security Status</string>
     <string name="security_icon_secure">Secure</string>
@@ -902,7 +902,7 @@
     <string name="installed_firmware_version">Currently Installed</string>
     <string name="latest_stable_firmware">Latest stable</string>
     <string name="latest_alpha_firmware">Latest alpha</string>
-    <string name="supported_by_community">Supported by Atlas Community</string>
+    <string name="supported_by_community">Supported by ResQ Community</string>
     <string name="firmware_edition">Firmware Edition</string>
     <string name="recent_network_devices">Recent Network Devices</string>
     <string name="discovered_network_devices">Discovered Network Devices</string>
@@ -925,7 +925,7 @@
     <string name="critical_alerts_description">Select packets sent as critical will ignore the mute switch and Do Not Disturb settings in the OS notification center.</string>
     <string name="configure_notification_permissions">Configure notification permissions</string>
     <string name="phone_location">Phone Location</string>
-    <string name="phone_location_description">Atlas uses your phone's location to enable a number of features. You can update your location permissions at any time from settings.</string>
+    <string name="phone_location_description">ResQ uses your phone's location to enable a number of features. You can update your location permissions at any time from settings.</string>
     <string name="share_location">Share Location</string>
     <string name="share_location_description">Use your phone GPS to send locations to your node to instead of using a hardware GPS on your node.</string>
     <string name="distance_measurements">Distance Measurements</string>
@@ -943,7 +943,7 @@
         permission. Please enable this in the notification settings.
     </string>
     <string name="configure_critical_alerts">Configure Critical Alerts</string>
-    <string name="notification_permissions_description">Atlas uses notifications to keep you updated on new messages and other important events. You can update your notification permissions at any time from settings.</string>
+    <string name="notification_permissions_description">ResQ uses notifications to keep you updated on new messages and other important events. You can update your notification permissions at any time from settings.</string>
     <string name="next">Next</string>
     <string name="grant_permissions">Grant Permissions</string>
     <string name="nodes_queued_for_deletion">%1$d nodes queued for deletion:</string>

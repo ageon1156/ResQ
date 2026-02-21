@@ -42,9 +42,9 @@ sealed class DeviceListEntry(open val name: String, open val fullAddress: String
         "DeviceListEntry(name=${name.anonymize}, addr=${address.anonymize}, bonded=$bonded)"
 
     @Suppress("MissingPermission")
-    data class Ble(val peripheral: Peripheral) :
+    data class Ble(val peripheral: Peripheral, val nameOverride: String? = null) :
         DeviceListEntry(
-            name = peripheral.name ?: "unnamed-${peripheral.address}",
+            name = nameOverride ?: peripheral.name ?: "unnamed-${peripheral.address}",
             fullAddress = "x${peripheral.address}",
             bonded = peripheral.bondState.value == BondState.BONDED,
         )
