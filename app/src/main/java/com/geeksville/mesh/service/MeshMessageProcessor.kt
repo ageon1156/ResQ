@@ -197,7 +197,8 @@ constructor(
                 it.lastHeard = (System.currentTimeMillis().milliseconds.inWholeSeconds).toInt()
             }
             nodeManager.updateNodeInfo(packet.from, withBroadcast = false, channel = packet.channel) {
-                it.lastHeard = packet.rxTime
+                it.lastHeard = packet.rxTime.takeIf { it > 0 }
+                    ?: (System.currentTimeMillis().milliseconds.inWholeSeconds).toInt()
                 it.snr = packet.rxSnr
                 it.rssi = packet.rxRssi
                 it.hopsAway =

@@ -61,9 +61,8 @@ This file serves as a comprehensive guide for AI agents and developers working o
 -   **Alpha Libraries:** Do not be shy about using alpha libraries from Google if they provide necessary features.
 
 ### E. Build Variants (Flavors)
--   **`google`**: Includes Google Play Services (Maps, Firebase, Crashlytics).
--   **`fdroid`**: FOSS version. **Strictly segregate sensitive data** (Crashlytics, Firebase, etc.) out of this flavor.
--   **Task Example:** `./gradlew assembleFdroidDebug`
+-   **`google`**: The only supported flavor. Includes Google Play Services (Maps, Firebase, Crashlytics).
+-   **Task Example:** `./gradlew assembleGoogleDebug`
 
 ## 4. Quality Assurance
 

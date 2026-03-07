@@ -1,12 +1,14 @@
 package org.meshtastic.core.data.repository
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.meshtastic.core.database.DatabaseManager
 import org.meshtastic.core.database.entity.TriagePinEntity
 import org.meshtastic.core.di.CoroutineDispatchers
+import org.meshtastic.core.model.triage.AssignmentPacket
 import org.meshtastic.core.model.triage.TriageLevel
 import org.meshtastic.core.model.triage.TriagePin
 import javax.inject.Inject
@@ -17,6 +19,8 @@ class TriagePinRepository @Inject constructor(
     private val dbManager: DatabaseManager,
     private val dispatchers: CoroutineDispatchers,
 ) {
+    val incomingAssignments = MutableSharedFlow<AssignmentPacket>(extraBufferCapacity = 16)
+
     fun getTriagePinsFlow(): Flow<List<TriagePin>> =
         dbManager.currentDb
             .flatMapLatest { db -> db.triagePinDao().getAllFlow() }
@@ -44,6 +48,10 @@ class TriagePinRepository @Inject constructor(
 
     suspend fun deletePin(pinId: String) = withContext(dispatchers.io) {
         dbManager.currentDb.value.triagePinDao().delete(pinId)
+    }
+
+    suspend fun deleteAllPins() = withContext(dispatchers.io) {
+        dbManager.currentDb.value.triagePinDao().deleteAll()
     }
 }
 

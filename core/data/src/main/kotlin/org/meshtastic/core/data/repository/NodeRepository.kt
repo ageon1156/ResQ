@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -173,5 +174,23 @@ constructor(
 
     suspend fun setNodeNotes(num: Int, notes: String) =
         withContext(dispatchers.io) { nodeInfoWriteDataSource.setNodeNotes(num, notes) }
+
+    val simulatedChannelUtil = MutableStateFlow(0f)
+
+    suspend fun simulateChannelUtil(nodeNum: Int?, percent: Float) {
+        simulatedChannelUtil.value = percent
+        val num = nodeNum ?: return
+        withContext(dispatchers.io) {
+            val entity = getNodeDBbyNum().first()[num] ?: return@withContext
+            val updatedTelemetry = entity.deviceTelemetry.toBuilder()
+                .setDeviceMetrics(
+                    entity.deviceTelemetry.deviceMetrics.toBuilder()
+                        .setChannelUtilization(percent)
+                        .build()
+                )
+                .build()
+            nodeInfoWriteDataSource.upsert(entity.copy(deviceTelemetry = updatedTelemetry))
+        }
+    }
 }
 

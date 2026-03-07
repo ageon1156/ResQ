@@ -5,6 +5,7 @@ include(
     ":core:analytics",
     ":core:common",
     ":core:data",
+    ":core:audio",
     ":core:database",
     ":core:datastore",
     ":core:di",
@@ -23,6 +24,7 @@ include(
     ":feature:settings",
     ":feature:emergency",
     ":feature:sos",
+    ":feature:voicemessage",
     ":mesh_service_example",
 )
 rootProject.name = "MeshtasticAndroid"

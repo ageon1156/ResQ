@@ -3,10 +3,15 @@
 
 package org.meshtastic.feature.messaging
 
+import android.Manifest
 import android.content.ClipData
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -22,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -43,6 +49,7 @@ import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SpeakerNotes
 import androidx.compose.material.icons.filled.SpeakerNotesOff
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -73,7 +80,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -125,6 +134,7 @@ import org.meshtastic.core.ui.theme.AppTheme
 import org.meshtastic.feature.messaging.component.RetryConfirmationDialog
 import org.meshtastic.proto.AppOnlyProtos
 import org.meshtastic.proto.MeshProtos.MeshPacket
+import androidx.core.content.ContextCompat
 import java.nio.charset.StandardCharsets
 
 private const val MESSAGE_CHARACTER_LIMIT_BYTES = 200
@@ -145,6 +155,7 @@ fun MessageScreen(
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboard.current
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
 
     val nodes by viewModel.nodeList.collectAsStateWithLifecycle()
     val ourNode by viewModel.ourNodeInfo.collectAsStateWithLifecycle()
@@ -161,6 +172,9 @@ fun MessageScreen(
     val messageInputState = rememberTextFieldState(message)
     var selectedPriority by rememberSaveable { mutableStateOf(MeshPacket.Priority.DEFAULT_VALUE) }
     val showQuickChat by viewModel.showQuickChat.collectAsStateWithLifecycle()
+    val pttRecording by viewModel.pttRecording.collectAsStateWithLifecycle()
+
+    val micPermLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
     var currentRetryEvent by remember { mutableStateOf<RetryEvent?>(null) }
 
@@ -376,6 +390,7 @@ fun MessageScreen(
                         onDeleteMessages = { viewModel.deleteMessages(it) },
                         onSendMessage = { text, key -> viewModel.sendMessage(text, key) },
                         onReply = { message -> replyingToPacketId = message?.packetId },
+                        onPlayVoice = viewModel::playVoiceMessage,
                     ),
                     quickEmojis = viewModel.frequentEmojis,
                 )
@@ -416,17 +431,56 @@ fun MessageScreen(
                 selectedPriority = selectedPriority,
                 onPrioritySelected = { selectedPriority = it },
             )
-            MessageInput(
-                isEnabled = connectionState.isConnected(),
-                textFieldState = messageInputState,
-                onSendMessage = {
-                    val messageText = messageInputState.text.toString().trim()
-                    if (messageText.isNotEmpty()) {
-                        onEvent(MessageScreenEvent.SendMessage(messageText, replyingToPacketId, selectedPriority))
-                        selectedPriority = MeshPacket.Priority.DEFAULT_VALUE 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MessageInput(
+                    modifier = Modifier.weight(1f),
+                    isEnabled = connectionState.isConnected(),
+                    textFieldState = messageInputState,
+                    onSendMessage = {
+                        val messageText = messageInputState.text.toString().trim()
+                        if (messageText.isNotEmpty()) {
+                            onEvent(MessageScreenEvent.SendMessage(messageText, replyingToPacketId, selectedPriority))
+                            selectedPriority = MeshPacket.Priority.DEFAULT_VALUE
+                        }
+                    },
+                )
+                val isConnected = connectionState.isConnected()
+                Surface(
+                    shape = CircleShape,
+                    color = if (pttRecording) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .size(48.dp)
+                        .pointerInput(isConnected) {
+                            detectTapGestures(onPress = {
+                                if (!isConnected) return@detectTapGestures
+                                val hasMic = ContextCompat.checkSelfPermission(
+                                    context, Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                                if (!hasMic) {
+                                    micPermLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                    return@detectTapGestures
+                                }
+                                viewModel.startPttRecording()
+                                tryAwaitRelease()
+                                viewModel.stopPttAndSend(contactKey)
+                            })
+                        },
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Filled.Mic,
+                            contentDescription = "Push to talk",
+                            tint = if (pttRecording) MaterialTheme.colorScheme.onError
+                                   else MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
                     }
-                },
-            )
+                }
+            }
         }
     }
 }

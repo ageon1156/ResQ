@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,17 +19,22 @@ import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.DoDisturbOn
 import androidx.compose.material.icons.outlined.DoDisturbOn
+import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarBorder
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -100,10 +106,24 @@ fun NodeListScreen(
     }
 
     val connectionState by viewModel.connectionState.collectAsStateWithLifecycle()
+    val simulatedChannelUtil by viewModel.simulatedChannelUtil.collectAsStateWithLifecycle()
+    var showChUtilDialog by remember { mutableStateOf(false) }
 
     val isScrollInProgress by remember {
         derivedStateOf { listState.isScrollInProgress && (listState.canScrollForward || listState.canScrollBackward) }
     }
+
+    if (showChUtilDialog) {
+        ChUtilSimulatorDialog(
+            current = simulatedChannelUtil,
+            onConfirm = { value ->
+                viewModel.setSimulatedChannelUtil(value)
+                showChUtilDialog = false
+            },
+            onDismiss = { showChUtilDialog = false },
+        )
+    }
+
     Scaffold(
         topBar = {
             MainAppBar(
@@ -113,7 +133,16 @@ fun NodeListScreen(
                 showNodeChip = false,
                 canNavigateUp = false,
                 onNavigateUp = {},
-                actions = {},
+                actions = {
+                    IconButton(onClick = { showChUtilDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Speed,
+                            contentDescription = "Simulate channel utilization",
+                            tint = if (simulatedChannelUtil > 0f) MaterialTheme.colorScheme.error
+                                   else LocalContentColor.current,
+                        )
+                    }
+                },
                 onClickChip = {},
             )
         },
@@ -308,6 +337,31 @@ private fun MuteMenuItem(node: Node, onMute: () -> Unit, onDismiss: () -> Unit) 
             )
         },
         text = { Text(text = stringResource(if (isMuted) Res.string.unmute else Res.string.mute_always)) },
+    )
+}
+
+@Composable
+private fun ChUtilSimulatorDialog(
+    current: Float,
+    onConfirm: (Float) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var sliderValue by remember { mutableStateOf(current) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Simulate Channel Utilization") },
+        text = {
+            Column {
+                Text("${sliderValue.toInt()}%")
+                Slider(
+                    value = sliderValue,
+                    onValueChange = { sliderValue = it },
+                    valueRange = 0f..100f,
+                )
+            }
+        },
+        confirmButton = { TextButton(onClick = { onConfirm(sliderValue) }) { Text("Apply") } },
+        dismissButton = { TextButton(onClick = { onConfirm(0f) }) { Text("Reset") } },
     )
 }
 

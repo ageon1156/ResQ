@@ -114,8 +114,16 @@ constructor(
     @SuppressLint("MissingPermission")
     suspend fun bond(peripheral: Peripheral) {
         peripheral.createBond()
-        refreshState()
+        updateBluetoothState()
     }
+
+    @SuppressLint("MissingPermission")
+    fun isBonded(address: String): Boolean =
+        if (application.hasBluetoothPermission()) {
+            centralManager.getBondedPeripherals().any { it.address == address }
+        } else {
+            false
+        }
 
     @OptIn(ExperimentalUuidApi::class)
     internal suspend fun updateBluetoothState() {

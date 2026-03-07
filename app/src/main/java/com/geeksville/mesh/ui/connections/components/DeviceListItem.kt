@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.BluetoothSearching
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BluetoothConnected
 import androidx.compose.material.icons.rounded.Usb
@@ -33,7 +32,6 @@ import com.geeksville.mesh.model.DeviceListEntry
 import org.jetbrains.compose.resources.stringResource
 import org.meshtastic.core.service.ConnectionState
 import org.meshtastic.core.strings.Res
-import org.meshtastic.core.strings.add
 import org.meshtastic.core.strings.bluetooth
 import org.meshtastic.core.strings.network
 import org.meshtastic.core.strings.serial
@@ -61,7 +59,6 @@ fun DeviceListItem(
 
             is DeviceListEntry.Usb -> Icons.Rounded.Usb
             is DeviceListEntry.Tcp -> Icons.Rounded.Wifi
-            is DeviceListEntry.Mock -> Icons.Rounded.Add
         }
 
     val contentDescription =
@@ -69,7 +66,6 @@ fun DeviceListItem(
             is DeviceListEntry.Ble -> stringResource(Res.string.bluetooth)
             is DeviceListEntry.Usb -> stringResource(Res.string.serial)
             is DeviceListEntry.Tcp -> stringResource(Res.string.network)
-            is DeviceListEntry.Mock -> stringResource(Res.string.add)
         }
 
     val useSelectable = modifier == Modifier

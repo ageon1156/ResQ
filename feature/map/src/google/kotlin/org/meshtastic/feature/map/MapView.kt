@@ -1,9 +1,10 @@
 
 package org.meshtastic.feature.map
 
-import android.Manifest 
+import android.Manifest
 import android.graphics.Paint
 import android.text.format.DateUtils
+import android.view.MotionEvent
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Lens
 import androidx.compose.material.icons.filled.LocationDisabled
 import androidx.compose.material.icons.filled.PinDrop
@@ -68,9 +70,17 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import org.meshtastic.core.model.triage.TriageLevel
 import org.meshtastic.core.model.triage.TriagePin
+import org.meshtastic.feature.map.component.IcModeFab
+import org.meshtastic.feature.map.component.IncidentCommanderPanel
 import org.meshtastic.feature.map.component.MapModeTabRow
+import org.meshtastic.feature.map.component.MyAssignmentCard
+import org.meshtastic.feature.map.component.ClearTriagePinsDialog
+import org.meshtastic.feature.map.component.ClearWaypointsDialog
+import org.meshtastic.feature.map.component.SilentNodeTriageDialog
 import org.meshtastic.feature.map.component.TriageLevelPickerDialog
 import org.meshtastic.feature.map.component.TriagePinInfoDialog
+import org.meshtastic.feature.map.component.WaypointInfoDialog
+import org.meshtastic.feature.map.triage.SilentNodeRecord
 import org.meshtastic.feature.map.triage.TriageMapViewModel
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
@@ -156,14 +166,33 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 private class TriageMarker(mapView: MapView, val claimed: Boolean) : Marker(mapView) {
+    private val density = mapView.context.resources.displayMetrics.density
     private val labelPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.WHITE
-        textSize = 32f
+        textSize = 12f * density
         isFakeBoldText = true
         textAlign = android.graphics.Paint.Align.CENTER
     }
     private val labelBgPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xCC388E3C.toInt()
+    }
+
+    var onTap: (() -> Unit)? = null
+
+    private fun isTapped(event: MotionEvent): Boolean {
+        val touchRadiusPx = 44f * density
+        val dx = event.x - mPositionPixels.x
+        val dy = event.y - mPositionPixels.y
+        return dx * dx + dy * dy <= touchRadiusPx * touchRadiusPx
+    }
+
+    override fun hitTest(event: MotionEvent?, mapView: MapView?): Boolean =
+        event != null && isTapped(event)
+
+    override fun onSingleTapConfirmed(event: MotionEvent, mapView: MapView): Boolean {
+        if (!isTapped(event)) return false
+        onTap?.invoke()
+        return true
     }
 
     override fun draw(c: android.graphics.Canvas, osmv: MapView?, shadow: Boolean) {
@@ -173,7 +202,7 @@ private class TriageMarker(mapView: MapView, val claimed: Boolean) : Marker(mapV
         val x = px.x.toFloat()
         val y = px.y.toFloat() - 60f
         val halfW = labelPaint.measureText("Claimed") / 2 + 10f
-        val rect = android.graphics.RectF(x - halfW, y - 30f, x + halfW, y + 6f)
+        val rect = android.graphics.RectF(x - halfW, y - labelPaint.textSize, x + halfW, y + labelPaint.textSize * 0.3f)
         c.drawRoundRect(rect, 8f, 8f, labelBgPaint)
         c.drawText("Claimed", x, y, labelPaint)
     }
@@ -189,7 +218,7 @@ private fun createTriageMarkerIcon(
     val canvas = android.graphics.Canvas(bmp)
     val fillPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
         color = if (isSilentNode) {
-            0xFFFF6D00.toInt() 
+            0xFFFF6D00.toInt()
         } else {
             when (level) {
                 TriageLevel.RED    -> 0xFFD32F2F.toInt()
@@ -202,13 +231,12 @@ private fun createTriageMarkerIcon(
     val borderPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.WHITE
         style = android.graphics.Paint.Style.STROKE
-        strokeWidth = 4f
+        strokeWidth = 2f
     }
     val r = sizePx / 2f - 4f
     canvas.drawCircle(sizePx / 2f, sizePx / 2f, r, fillPaint)
     canvas.drawCircle(sizePx / 2f, sizePx / 2f, r, borderPaint)
     if (isSilentNode) {
-        
         val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
             color = android.graphics.Color.WHITE
             textSize = 26f
@@ -220,10 +248,31 @@ private fun createTriageMarkerIcon(
     return android.graphics.drawable.BitmapDrawable(resources, bmp)
 }
 
+@Suppress("MagicNumber")
+private fun createEmojiMarkerIcon(
+    emoji: String,
+    resources: android.content.res.Resources,
+    density: Float,
+): android.graphics.drawable.BitmapDrawable {
+    val sizePx = (64 * density).toInt()
+    val bmp = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bmp)
+    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = 38f * density
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    val x = sizePx / 2f
+    val y = sizePx / 2f + paint.textSize / 3f
+    canvas.drawText(emoji, x, y, paint)
+    return android.graphics.drawable.BitmapDrawable(resources, bmp)
+}
+
 private fun MapView.updateTriageMarkers(
     pins: List<TriagePin>,
+    silentNodes: List<SilentNodeRecord>,
     mode: MapMode,
     onPinTapped: (TriagePin) -> Unit,
+    onSilentNodeTapped: (SilentNodeRecord) -> Unit,
 ) {
     overlays.removeAll { it is Marker && (it as Marker).id?.startsWith("triage:") == true }
     if (mode != MapMode.TriageMap) {
@@ -242,10 +291,20 @@ private fun MapView.updateTriageMarkers(
             }
             icon = createTriageMarkerIcon(pin.triageLevel, res, pin.isSilentNodeConversion)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-            setOnMarkerClickListener { _, _ ->
-                onPinTapped(pin)
-                true
-            }
+            onTap = { onPinTapped(pin) }
+        }.also { overlays.add(it) }
+    }
+    val pinNodeNums = pins.filter { it.isSilentNodeConversion }.mapNotNull { it.sourceNodeNum }.toSet()
+    silentNodes.filter { it.node.num !in pinNodeNums }.forEach { record ->
+        if (record.node.validPosition == null) return@forEach
+        TriageMarker(this, claimed = false).apply {
+            id = "triage:silent-${record.node.num}"
+            position = GeoPoint(record.node.latitude, record.node.longitude)
+            title = "⚠ ${record.node.user.longName}"
+            snippet = record.displayLabel
+            icon = createTriageMarkerIcon(TriageLevel.RED, res, isSilentNode = true)
+            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+            onTap = { onSilentNodeTapped(record) }
         }.also { overlays.add(it) }
     }
     invalidate()
@@ -313,6 +372,7 @@ fun MapView(
 
     var showDownloadButton: Boolean by remember { mutableStateOf(false) }
     var showEditWaypointDialog by remember { mutableStateOf<Waypoint?>(null) }
+    var showWaypointInfoDialog by remember { mutableStateOf<Packet?>(null) }
     var showCacheManagerDialog by remember { mutableStateOf(false) }
     var showCurrentCacheInfo by remember { mutableStateOf(false) }
     var showPurgeTileSourceDialog by remember { mutableStateOf(false) }
@@ -322,7 +382,14 @@ fun MapView(
     var activeMapMode by remember { mutableStateOf(MapMode.CustomMap) }
     var pendingTriageLatLng by remember { mutableStateOf<GeoPoint?>(null) }
     var selectedTriagePin by remember { mutableStateOf<TriagePin?>(null) }
+    var selectedSilentNode by remember { mutableStateOf<SilentNodeRecord?>(null) }
+    var showClearTriagePinsDialog by remember { mutableStateOf(false) }
+    var showClearWaypointsDialog by remember { mutableStateOf(false) }
     val triageMapState by triageMapViewModel.triageMapState.collectAsStateWithLifecycle()
+    val isIcMode by triageMapViewModel.isIcMode.collectAsStateWithLifecycle()
+    val currentAssignments by triageMapViewModel.currentAssignments.collectAsStateWithLifecycle()
+    val lockedAssignments by triageMapViewModel.lockedAssignments.collectAsStateWithLifecycle()
+    val myAssignment by triageMapViewModel.myAssignment.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -364,6 +431,70 @@ fun MapView(
         )
 
     val nodeClusterer = remember { RadiusMarkerClusterer(context) }
+
+    fun downloadTilesAround(center: GeoPoint) {
+        val tileSource = map.tileProvider.tileSource
+        if (tileSource !is OnlineTileSourceBase || !tileSource.tileSourcePolicy.acceptsBulkDownload()) {
+            Logger.d { "Auto tile download skipped: tile source does not support bulk download" }
+            return
+        }
+        val lastLat = mapViewModel.lastDownloadLat
+        val lastLng = mapViewModel.lastDownloadLng
+        val neverDownloaded = lastLat == 0f && lastLng == 0f
+        val farEnough = abs(center.latitude - lastLat) > 0.045 || abs(center.longitude - lastLng) > 0.045
+        if (!neverDownloaded && !farEnough) return
+        val radiusDeg = 0.09
+        val box = BoundingBox(
+            center.latitude + radiusDeg,
+            center.longitude + radiusDeg,
+            center.latitude - radiusDeg,
+            center.longitude - radiusDeg,
+        )
+        try {
+            val outputName = buildString {
+                append(Configuration.getInstance().osmdroidBasePath.absolutePath)
+                append(File.separator)
+                append("mainFile.sqlite")
+            }
+            val writer = SqliteArchiveTileWriter(outputName)
+            val cacheManager = CacheManager(map, writer)
+            cacheManager.downloadAreaAsync(
+                context,
+                box,
+                5,
+                16,
+                cacheManagerCallback(
+                    onTaskComplete = {
+                        mapViewModel.updateLastDownloadCenter(center.latitude, center.longitude)
+                        writer.onDetach()
+                        scope.launch { context.showToast(Res.string.map_download_complete) }
+                    },
+                    onTaskFailed = { errors ->
+                        writer.onDetach()
+                        scope.launch { context.showToast(Res.string.map_download_errors, errors) }
+                    },
+                ),
+            )
+        } catch (ex: Exception) {
+            Logger.d { "Auto tile download failed: ${ex.message}" }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        val node = mapViewModel.ourNodeInfo.value
+        if (node?.validPosition != null) {
+            downloadTilesAround(GeoPoint(node.latitude, node.longitude))
+        }
+    }
+
+    LaunchedEffect(isConnected) {
+        if (isConnected) {
+            val node = mapViewModel.ourNodeInfo.value
+            if (node?.validPosition != null) {
+                downloadTilesAround(GeoPoint(node.latitude, node.longitude))
+            }
+        }
+    }
 
     fun MapView.toggleMyLocation() {
         if (context.gpsDisabled()) {
@@ -620,7 +751,7 @@ fun MapView(
                         )
                             .toString()
                 }
-            MarkerWithLabel(this, label, emoji).apply {
+            MarkerWithLabel(this, label).apply {
                 id = "${pt.id}"
                 title = "${pt.name} (${getUsername(waypoint.data.from)}$lock)"
                 snippet =
@@ -628,6 +759,8 @@ fun MapView(
                     com.meshtastic.core.strings.getString(Res.string.expires) +
                     ": $expireTimeStr"
                 position = GeoPoint(pt.latitudeI * 1e-7, pt.longitudeI * 1e-7)
+                icon = createEmojiMarkerIcon(emoji, context.resources, context.resources.displayMetrics.density)
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                 if (selectedWaypointId == pt.id) {
                     showInfoWindow()
                 }
@@ -636,7 +769,7 @@ fun MapView(
                     true
                 }
                 setOnMarkerClickListener { _, _ ->
-                    showMarkerLongPressDialog(pt.id)
+                    showWaypointInfoDialog = waypoint
                     true
                 }
             }
@@ -816,8 +949,10 @@ fun MapView(
                         )
                         updateTriageMarkers(
                             pins = triageMapState.pins,
+                            silentNodes = triageMapState.silentNodes,
                             mode = activeMapMode,
                             onPinTapped = { pin -> selectedTriagePin = pin },
+                            onSilentNodeTapped = { record -> selectedSilentNode = record },
                         )
                     }
                     mapView.drawOverlays()
@@ -959,7 +1094,58 @@ fun MapView(
                             }
                         }
                     }
+                    if (activeMapMode == MapMode.TriageMap) {
+                        IcModeFab(
+                            isIcMode = isIcMode,
+                            onClick = { triageMapViewModel.toggleIcMode() },
+                        )
+                    }
+                    if (activeMapMode == MapMode.TriageMap && triageMapState.pins.isNotEmpty()) {
+                        OrganicMapButton(
+                            onClick = { showClearTriagePinsDialog = true },
+                            icon = Icons.Default.DeleteSweep,
+                            contentDescription = "Clear all triage pins",
+                        )
+                    }
+                    if (waypoints.isNotEmpty()) {
+                        OrganicMapButton(
+                            onClick = { showClearWaypointsDialog = true },
+                            icon = Icons.Default.PinDrop,
+                            contentDescription = "Clear all waypoints",
+                        )
+                    }
                 }
+            }
+
+            if (isIcMode && activeMapMode == MapMode.TriageMap) {
+                val rescuerNames = remember(nodes) { nodes.associate { it.user.id to it.user.longName } }
+                IncidentCommanderPanel(
+                    assignments       = currentAssignments,
+                    rescuerNames      = rescuerNames,
+                    pins              = triageMapState.pins,
+                    lockedAssignments = lockedAssignments.keys,
+                    onLock            = { rescuerId ->
+                        currentAssignments[rescuerId]?.let { pinId ->
+                            triageMapViewModel.lockAssignment(rescuerId, pinId)
+                        }
+                    },
+                    onUnlock          = { triageMapViewModel.unlockAssignment(it) },
+                    onRecompute       = { triageMapViewModel.recomputeAssignments() },
+                    modifier          = Modifier.align(Alignment.BottomCenter),
+                )
+            }
+
+            val myAssignmentPin = remember(myAssignment, triageMapState.pins) {
+                myAssignment?.let { a -> triageMapState.pins.firstOrNull { it.pinId == a.pinId } }
+            }
+            if (!isIcMode && myAssignmentPin != null) {
+                MyAssignmentCard(
+                    pin       = myAssignmentPin,
+                    onDismiss = { triageMapViewModel.dismissMyAssignment() },
+                    modifier  = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
+                )
             }
         }
     }
@@ -1025,6 +1211,63 @@ fun MapView(
             },
             onDismiss = { selectedTriagePin = null },
         )
+    }
+
+    selectedSilentNode?.let { record ->
+        SilentNodeTriageDialog(
+            record = record,
+            onConvert = {
+                triageMapViewModel.convertSilentNodeToTriage(record)
+                selectedSilentNode = null
+            },
+            onDismiss = { selectedSilentNode = null },
+        )
+    }
+
+    if (showClearTriagePinsDialog) {
+        ClearTriagePinsDialog(
+            onConfirm = {
+                triageMapViewModel.clearAllPins()
+                showClearTriagePinsDialog = false
+            },
+            onDismiss = { showClearTriagePinsDialog = false },
+        )
+    }
+
+    if (showClearWaypointsDialog) {
+        ClearWaypointsDialog(
+            showDeleteForEveryone = isConnected,
+            onDeleteForMe = {
+                mapViewModel.deleteAllWaypoints()
+                showClearWaypointsDialog = false
+            },
+            onDeleteForEveryone = {
+                mapViewModel.sendAllWaypointsExpired(waypoints)
+                mapViewModel.deleteAllWaypoints()
+                showClearWaypointsDialog = false
+            },
+            onDismiss = { showClearWaypointsDialog = false },
+        )
+    }
+
+    showWaypointInfoDialog?.let { packet ->
+        val pt = packet.data.waypoint
+        if (pt != null) {
+            WaypointInfoDialog(
+                waypoint = pt,
+                createdBy = getUsername(packet.data.from),
+                canEdit = pt.lockedTo in setOf(0, mapViewModel.myNodeNum ?: 0) && isConnected,
+                onEdit = {
+                    showWaypointInfoDialog = null
+                    showEditWaypointDialog = pt
+                },
+                onDelete = {
+                    showWaypointInfoDialog = null
+                    showDeleteMarkerDialog(pt)
+                },
+                onDismiss = { showWaypointInfoDialog = null },
+            )
+        }
     }
 
     if (showEditWaypointDialog != null) {

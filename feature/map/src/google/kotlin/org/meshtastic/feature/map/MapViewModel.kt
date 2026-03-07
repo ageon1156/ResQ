@@ -42,6 +42,14 @@ constructor(
             mapPrefs.mapStyle = value
         }
 
+    val lastDownloadLat: Float get() = mapPrefs.lastDownloadLat
+    val lastDownloadLng: Float get() = mapPrefs.lastDownloadLng
+
+    fun updateLastDownloadCenter(lat: Double, lng: Double) {
+        mapPrefs.lastDownloadLat = lat.toFloat()
+        mapPrefs.lastDownloadLng = lng.toFloat()
+    }
+
     val localConfig =
         radioConfigRepository.localConfigFlow.stateInWhileSubscribed(initialValue = LocalConfig.getDefaultInstance())
 

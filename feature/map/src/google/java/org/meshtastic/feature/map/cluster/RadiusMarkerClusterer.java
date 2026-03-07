@@ -104,7 +104,7 @@ public class RadiusMarkerClusterer extends MarkerClusterer {
     }
 
     @Override public MarkerWithLabel buildClusterMarker(StaticCluster cluster, MapView mapView) {
-        MarkerWithLabel m = new MarkerWithLabel(mapView, "", null);
+        MarkerWithLabel m = new MarkerWithLabel(mapView, "");
         m.setPosition(cluster.getPosition());
         m.setInfoWindow(null);
         m.setAnchor(mAnchorU, mAnchorV);

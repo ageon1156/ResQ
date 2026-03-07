@@ -37,7 +37,5 @@ sealed class DeviceListEntry(open val name: String, open val fullAddress: String
 
     data class Tcp(override val name: String, override val fullAddress: String) :
         DeviceListEntry(name, fullAddress, true)
-
-    data class Mock(override val name: String) : DeviceListEntry(name, "m", true)
 }
 

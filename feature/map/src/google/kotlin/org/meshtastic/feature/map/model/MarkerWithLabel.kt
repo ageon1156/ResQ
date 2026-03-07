@@ -13,13 +13,12 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polygon
 
-class MarkerWithLabel(mapView: MapView?, label: String, emoji: String? = null) : Marker(mapView) {
+class MarkerWithLabel(mapView: MapView?, label: String) : Marker(mapView) {
 
     companion object {
         private const val LABEL_CORNER_RADIUS_DP = 4f
         private const val LABEL_Y_OFFSET_DP = 34f
         private const val FONT_SIZE_SP = 14f
-        private const val EMOJI_FONT_SIZE_SP = 20f
     }
 
     private val labelYOffsetPx by lazy { mapView?.context?.dpToPx(LABEL_Y_OFFSET_DP) ?: 100 }
@@ -60,19 +59,12 @@ class MarkerWithLabel(mapView: MapView?, label: String, emoji: String? = null) :
     }
 
     private val mLabel = label
-    private val mEmoji = emoji
     private val textPaint =
         Paint().apply {
             textSize = mapView?.context?.spToPx(FONT_SIZE_SP)?.toFloat() ?: 40f
             color = Color.DKGRAY
             isAntiAlias = true
             isFakeBoldText = true
-            textAlign = Paint.Align.CENTER
-        }
-    private val emojiPaint =
-        Paint().apply {
-            textSize = mapView?.context?.spToPx(EMOJI_FONT_SIZE_SP)?.toFloat() ?: 80f
-            isAntiAlias = true
             textAlign = Paint.Align.CENTER
         }
 
@@ -103,7 +95,6 @@ class MarkerWithLabel(mapView: MapView?, label: String, emoji: String? = null) :
             c.drawRoundRect(bgRect, labelCornerRadiusPx.toFloat(), labelCornerRadiusPx.toFloat(), bgPaint)
             c.drawText(mLabel, (p.x - 0F), (p.y - labelYOffsetPx.toFloat()), textPaint)
         }
-        mEmoji?.let { c.drawText(it, (p.x - 0f), (p.y - 30f), emojiPaint) }
 
         getPrecisionMeters()?.let { radius ->
             val polygon =

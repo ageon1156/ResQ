@@ -90,13 +90,6 @@ jobs:
           directory: .
           files: "**/build/test-results/**/*.xml,**/build/outputs/androidTest-results/**/*.xml"
 
-      - name: Upload F-Droid debug artifact
-        if: ${{ inputs.upload_artifacts }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: fdroidDebug
-          path: app/build/outputs/apk/fdroid/debug/app-fdroid-debug.apk
-          retention-days: 14
       - name: Upload Google debug artifact
         if: ${{ inputs.upload_artifacts }}
         uses: actions/upload-artifact@v6

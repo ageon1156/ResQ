@@ -21,7 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,7 +51,6 @@ import org.meshtastic.core.strings.battery
 import org.meshtastic.core.strings.ch_util_definition
 import org.meshtastic.core.strings.channel_air_util
 import org.meshtastic.core.strings.channel_utilization
-import org.meshtastic.core.ui.component.MainAppBar
 import org.meshtastic.core.ui.component.MaterialBatteryInfo
 import org.meshtastic.core.ui.component.OptionLabel
 import org.meshtastic.core.ui.component.SlidingSelector
@@ -60,18 +58,17 @@ import org.meshtastic.core.ui.theme.AppTheme
 import org.meshtastic.core.ui.theme.GraphColors.Cyan
 import org.meshtastic.core.ui.theme.GraphColors.Green
 import org.meshtastic.core.ui.theme.GraphColors.Magenta
+import org.meshtastic.feature.node.metrics.CommonCharts.CHART_WIDTH_RATIO
+import org.meshtastic.feature.node.metrics.CommonCharts.CHART_WEIGHT
 import org.meshtastic.feature.node.metrics.CommonCharts.DATE_TIME_FORMAT
 import org.meshtastic.feature.node.metrics.CommonCharts.MAX_PERCENT_VALUE
 import org.meshtastic.feature.node.metrics.CommonCharts.MS_PER_SEC
+import org.meshtastic.feature.node.metrics.CommonCharts.Y_AXIS_WEIGHT
 import org.meshtastic.feature.node.metrics.GraphUtil.createPath
 import org.meshtastic.feature.node.metrics.GraphUtil.plotPoint
 import org.meshtastic.feature.node.model.TimeFrame
 import org.meshtastic.proto.TelemetryProtos
 import org.meshtastic.proto.TelemetryProtos.Telemetry
-
-private const val CHART_WEIGHT = 1f
-private const val Y_AXIS_WEIGHT = 0.1f
-private const val CHART_WIDTH_RATIO = CHART_WEIGHT / (CHART_WEIGHT + Y_AXIS_WEIGHT + Y_AXIS_WEIGHT)
 
 private enum class Device(val color: Color) {
     BATTERY(Green) {
@@ -111,48 +108,13 @@ fun DeviceMetricsScreen(viewModel: MetricsViewModel = hiltViewModel(), onNavigat
     val selectedTimeFrame by viewModel.timeFrame.collectAsState()
     val data = state.deviceMetricsFiltered(selectedTimeFrame)
 
-    Scaffold(
-        topBar = {
-            MainAppBar(
-                title = state.node?.user?.longName ?: "",
-                ourNode = null,
-                showNodeChip = false,
-                canNavigateUp = true,
-                onNavigateUp = onNavigateUp,
-                actions = {},
-                onClickChip = {},
-            )
-        },
-    ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
-            if (displayInfoDialog) {
-                LegendInfoDialog(
-                    pairedRes =
-                    listOf(
-                        Pair(Res.string.channel_utilization, Res.string.ch_util_definition),
-                        Pair(Res.string.air_utilization, Res.string.air_util_definition),
-                    ),
-                    onDismiss = { displayInfoDialog = false },
-                )
-            }
-
-            DeviceMetricsChart(
-                modifier = Modifier.fillMaxWidth().fillMaxHeight(fraction = 0.33f),
-                telemetries = data.reversed(),
-                selectedTimeFrame,
-                promptInfoDialog = { displayInfoDialog = true },
-            )
-
-            SlidingSelector(
-                TimeFrame.entries.toList(),
-                selectedTimeFrame,
-                onOptionSelected = { viewModel.setTimeFrame(it) },
-            ) {
-                OptionLabel(stringResource(it.strRes))
-            }
-
-            LazyColumn(modifier = Modifier.fillMaxSize()) { items(data) { telemetry -> OrganicDeviceMetricsCard(telemetry) } }
+    MetricsScaffold(title = state.node?.user?.longName ?: "", onNavigateUp = onNavigateUp) {
+        if (displayInfoDialog) {
+            LegendInfoDialog(pairedRes = listOf(Pair(Res.string.channel_utilization, Res.string.ch_util_definition), Pair(Res.string.air_utilization, Res.string.air_util_definition)), onDismiss = { displayInfoDialog = false })
         }
+        DeviceMetricsChart(modifier = Modifier.fillMaxWidth().fillMaxHeight(fraction = 0.33f), telemetries = data.reversed(), selectedTimeFrame, promptInfoDialog = { displayInfoDialog = true })
+        SlidingSelector(TimeFrame.entries.toList(), selectedTimeFrame, onOptionSelected = { viewModel.setTimeFrame(it) }) { OptionLabel(stringResource(it.strRes)) }
+        LazyColumn(modifier = Modifier.fillMaxSize()) { items(data) { OrganicDeviceMetricsCard(it) } }
     }
 }
 

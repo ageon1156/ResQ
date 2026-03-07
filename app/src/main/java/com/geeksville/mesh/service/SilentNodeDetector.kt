@@ -234,7 +234,7 @@ constructor(
                         it.timestampMs - tracked.silentSinceMs >= MIN_CONFIRM_DELAY_MS
                     }
                     val silentDuration = now - tracked.silentSinceMs
-                    
+
                     val promoteTimeout = if (tracked.missedPings >= MISSED_PINGS_FOR_CONFIRMED) {
                         PING_CONFIRMED_PROMOTE_MS
                     } else {

@@ -17,8 +17,10 @@ dependencies {
     implementation(projects.core.proto)
     implementation(projects.core.service)
     implementation(projects.core.strings)
+    implementation(projects.core.audio)
     implementation(projects.core.ui)
 
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material.iconsExtended)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.text)

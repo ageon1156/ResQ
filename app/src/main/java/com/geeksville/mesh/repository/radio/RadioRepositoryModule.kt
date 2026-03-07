@@ -19,9 +19,6 @@ abstract class RadioRepositoryModule {
     @[Binds IntoMap InterfaceMapKey(InterfaceId.BLUETOOTH)]
     abstract fun bindBluetoothInterfaceSpec(spec: NordicBleInterfaceSpec): @JvmSuppressWildcards InterfaceSpec<*>
 
-    @[Binds IntoMap InterfaceMapKey(InterfaceId.MOCK)]
-    abstract fun bindMockInterfaceSpec(spec: MockInterfaceSpec): @JvmSuppressWildcards InterfaceSpec<*>
-
     @[Binds IntoMap InterfaceMapKey(InterfaceId.NOP)]
     abstract fun bindNopInterfaceSpec(spec: NopInterfaceSpec): @JvmSuppressWildcards InterfaceSpec<*>
 

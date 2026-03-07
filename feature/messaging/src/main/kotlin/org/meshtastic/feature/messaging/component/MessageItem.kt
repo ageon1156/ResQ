@@ -247,7 +247,7 @@ internal fun MessageItem(
 
             Column(modifier = Modifier.padding(8.dp)) {
                 AutoLinkText(
-                    text = message.text,
+                    text = message.text.substringBefore('\u0000'),
                     style = MaterialTheme.typography.bodyLarge,
                     color = cardColors.contentColor,
                 )

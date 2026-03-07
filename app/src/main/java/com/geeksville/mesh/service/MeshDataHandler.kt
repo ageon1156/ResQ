@@ -4,6 +4,7 @@ package com.geeksville.mesh.service
 import android.util.Log
 import co.touchlab.kermit.Logger
 import com.geeksville.mesh.BuildConfig
+import org.meshtastic.core.audio.AudioPlayer
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.repository.radio.InterfaceId
 import com.meshtastic.core.strings.getString
@@ -18,6 +19,9 @@ import org.meshtastic.core.analytics.platform.PlatformAnalytics
 import org.meshtastic.core.data.repository.PacketRepository
 import org.meshtastic.core.data.repository.RadioConfigRepository
 import org.meshtastic.core.data.repository.TriagePinRepository
+import org.meshtastic.core.data.repository.VoiceMessageRepository
+import org.meshtastic.core.model.voice.decodeVoiceFragment
+import org.meshtastic.core.model.triage.AssignmentPacket
 import org.meshtastic.core.model.triage.ClaimPinPacket
 import org.meshtastic.core.model.triage.ManualTriagePinPacket
 import org.meshtastic.core.model.triage.TriageLevel
@@ -74,6 +78,8 @@ constructor(
     private val radioConfigRepository: RadioConfigRepository,
     private val silentNodeDetector: SilentNodeDetector,
     private val triagePinRepository: TriagePinRepository,
+    private val voiceMessageRepository: VoiceMessageRepository,
+    private val audioPlayer: AudioPlayer,
 ) {
     private var scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -180,8 +186,49 @@ constructor(
                 handlePrivateApp(packet)
                 shouldBroadcast = false
             }
+
+            Portnums.PortNum.AUDIO_APP_VALUE -> {
+                handleAudioPacket(packet, myNodeNum)
+                shouldBroadcast = false
+            }
         }
         return shouldBroadcast
+    }
+
+    private fun handleAudioPacket(packet: MeshPacket, myNodeNum: Int) {
+        val fragment = packet.decoded.payload.toByteArray().decodeVoiceFragment() ?: run {
+            Logger.w { "handleAudioPacket: malformed voice fragment from ${packet.from}" }
+            return
+        }
+        scope.handledLaunch {
+            val assembled = voiceMessageRepository.addFragment(fragment, packet.from)
+            if (assembled != null) {
+                audioPlayer.play(assembled.codec2Bytes)
+                val fromId = DataPacket.nodeNumToDefaultId(packet.from)
+                val toBroadcast = packet.to == DataPacket.NODENUM_BROADCAST
+                val toId = if (toBroadcast) DataPacket.ID_BROADCAST else DataPacket.nodeNumToDefaultId(packet.to)
+                val contactKey = "${packet.channel}${if (toBroadcast) toId else fromId}"
+                val durationStr = "%.1f".format(assembled.durationSeconds)
+                val placeholderData = DataPacket(
+                    to = toId,
+                    bytes = "🎤 Voice message (${durationStr}s)\u0000${assembled.sessionId}".encodeToByteArray(),
+                    dataType = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
+                    from = fromId,
+                    channel = packet.channel,
+                )
+                packetRepository.get().insert(
+                    Packet(
+                        uuid = 0L,
+                        myNodeNum = myNodeNum,
+                        port_num = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
+                        contact_key = contactKey,
+                        received_time = System.currentTimeMillis(),
+                        read = false,
+                        data = placeholderData,
+                    )
+                )
+            }
+        }
     }
 
     private fun handlePrivateApp(packet: MeshPacket) {
@@ -212,6 +259,10 @@ constructor(
                 is ClaimPinPacket -> {
                     Logger.i { "Received claim for pin ${decoded.pinId} by ${decoded.rescuerId}" }
                     triagePinRepository.claimPin(decoded.pinId, decoded.rescuerId)
+                }
+                is AssignmentPacket -> {
+                    Logger.i { "Received assignment: rescuer=${decoded.rescuerId} pin=${decoded.pinId}" }
+                    triagePinRepository.incomingAssignments.emit(decoded)
                 }
                 else -> Logger.d { "handlePrivateApp: not a triage packet (text prefix=${text.take(20)})" }
             }
@@ -818,7 +869,6 @@ constructor(
         InterfaceId.BLUETOOTH.id -> "BLE"
         InterfaceId.TCP.id -> "TCP"
         InterfaceId.SERIAL.id -> "Serial"
-        InterfaceId.MOCK.id -> "Mock"
         InterfaceId.NOP.id -> "NOP"
         else -> "Unknown"
     }

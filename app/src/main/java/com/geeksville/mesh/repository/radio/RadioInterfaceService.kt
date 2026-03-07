@@ -2,13 +2,9 @@
 package com.geeksville.mesh.repository.radio
 
 import android.app.Application
-import android.provider.Settings
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
 import co.touchlab.kermit.Logger
-import com.geeksville.mesh.BuildConfig
-import com.geeksville.mesh.android.BinaryLogFile
-import com.geeksville.mesh.android.BuildUtils
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.repository.bluetooth.BluetoothRepository
 import com.geeksville.mesh.repository.network.NetworkRepository
@@ -65,13 +61,6 @@ constructor(
     private val _currentDeviceAddressFlow = MutableStateFlow(radioPrefs.devAddr)
     val currentDeviceAddressFlow: StateFlow<String?> = _currentDeviceAddressFlow.asStateFlow()
 
-    private val logSends = false
-    private val logReceives = false
-    private lateinit var sentPacketsLog: BinaryLogFile
-    private lateinit var receivedPacketsLog: BinaryLogFile
-
-    val mockInterfaceAddress: String by lazy { toInterfaceAddress(InterfaceId.MOCK, "") }
-
     var serviceScope = CoroutineScope(dispatchers.io + SupervisorJob())
 
     private var radioIf: IRadioInterface = NopInterface("")
@@ -124,21 +113,7 @@ constructor(
     fun toInterfaceAddress(interfaceId: InterfaceId, rest: String): String =
         interfaceFactory.toInterfaceAddress(interfaceId, rest)
 
-    fun isMockInterface(): Boolean =
-        BuildConfig.DEBUG || Settings.System.getString(context.contentResolver, "firebase.test.lab") == "true"
-
-    private fun shouldDefaultToMockInterface(): Boolean = BuildUtils.isEmulator
-
-    fun getDeviceAddress(): String? {
-        
-        var address = radioPrefs.devAddr
-
-        if (address == null && shouldDefaultToMockInterface()) {
-            address = mockInterfaceAddress
-        }
-
-        return address
-    }
+    fun getDeviceAddress(): String? = radioPrefs.devAddr
 
     fun getBondedDeviceAddress(): String? {
         
@@ -161,15 +136,6 @@ constructor(
     }
 
     fun handleFromRadio(p: ByteArray) {
-        if (logReceives) {
-            try {
-                receivedPacketsLog.write(p)
-                receivedPacketsLog.flush()
-            } catch (t: Throwable) {
-                Logger.w(t) { "Failed to write receive log in handleFromRadio" }
-            }
-        }
-
         try {
             processLifecycle.coroutineScope.launch(dispatchers.io) { _receivedData.emit(p) }
             emitReceiveActivity()
@@ -207,13 +173,6 @@ constructor(
                 Logger.i { "Starting radio ${address.anonymize}" }
                 isStarted = true
 
-                if (logSends) {
-                    sentPacketsLog = BinaryLogFile(context, "sent_log.pb")
-                }
-                if (logReceives) {
-                    receivedPacketsLog = BinaryLogFile(context, "receive_log.pb")
-                }
-
                 radioIf = interfaceFactory.createInterface(address)
                 startHeartbeat()
             }
@@ -242,13 +201,6 @@ constructor(
 
         serviceScope.cancel("stopping interface")
         serviceScope = CoroutineScope(dispatchers.io + SupervisorJob())
-
-        if (logSends) {
-            sentPacketsLog.close()
-        }
-        if (logReceives) {
-            receivedPacketsLog.close()
-        }
 
         if (r !is NopInterface) {
             onDisconnect(isPermanent = true) 

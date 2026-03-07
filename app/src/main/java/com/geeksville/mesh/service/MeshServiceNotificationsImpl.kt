@@ -438,7 +438,6 @@ constructor(
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(Notification.CATEGORY_ALARM)
             .setAutoCancel(true)
-            .setOnlyAlertOnce(true) 
             .setContentTitle(title)
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))

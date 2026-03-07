@@ -15,7 +15,6 @@ enum class FlavorDimension {
 
 @Suppress("EnumEntryName")
 enum class MeshtasticFlavor(val dimension: FlavorDimension, val default: Boolean = false) {
-    fdroid(FlavorDimension.marketplace),
     google(FlavorDimension.marketplace, default = true),
 }
 

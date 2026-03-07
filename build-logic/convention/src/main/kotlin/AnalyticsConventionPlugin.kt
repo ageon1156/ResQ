@@ -27,31 +27,8 @@ class AnalyticsConventionPlugin : Plugin<Project> {
                 }
             }
 
-            plugins.withId("com.google.gms.google-services") {
-                tasks.configureEach {
-                    if (name.contains("fdroid", ignoreCase = true) && name.contains("GoogleServices")) {
-                        enabled = false
-                    }
-                }
-            }
 
-            plugins.withId("com.google.firebase.crashlytics") {
-                tasks.configureEach {
-                    if (name.contains("fdroid", ignoreCase = true) &&
-                        (name.contains("Crashlytics", ignoreCase = true) || name.contains("buildId", ignoreCase = true))
-                    ) {
-                        enabled = false
-                    }
-                }
-            }
 
-            plugins.withId("com.datadoghq.dd-sdk-android-gradle-plugin") {
-                tasks.configureEach {
-                    if (name.contains("fdroid", ignoreCase = true) && name.contains("Datadog", ignoreCase = true)) {
-                        enabled = false
-                    }
-                }
-            }
 
             extensions.configure<ApplicationAndroidComponentsExtension> {
                 onVariants { variant ->

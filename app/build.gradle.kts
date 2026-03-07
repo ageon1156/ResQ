@@ -104,6 +104,9 @@ configure<ApplicationExtension> {
             ),
         )
         ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64") }
+        externalNativeBuild {
+            cmake { arguments("-DANDROID_STL=c++_shared") }
+        }
 
         dependenciesInfo {
             
@@ -115,7 +118,6 @@ configure<ApplicationExtension> {
 
     productFlavors {
         named("google") { versionName = "${defaultConfig.versionName} (${defaultConfig.versionCode}) google" }
-        named("fdroid") { versionName = "${defaultConfig.versionName} (${defaultConfig.versionCode}) fdroid" }
     }
 
     buildTypes {
@@ -131,6 +133,13 @@ configure<ApplicationExtension> {
         }
     }
     bundle { language { enableSplit = false } }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
 }
 
 secrets {
@@ -140,9 +149,6 @@ secrets {
 
 androidComponents {
     onVariants(selector().all()) { variant ->
-        if (variant.name == "fdroidDebug") {
-            variant.applicationId = "com.geeksville.mesh.fdroid.debug"
-        }
 
         if (variant.name == "googleDebug") {
             variant.applicationId = "com.geeksville.mesh.google.debug"
@@ -184,6 +190,8 @@ dependencies {
     implementation(projects.feature.settings)
     implementation(projects.feature.emergency)
     implementation(projects.feature.sos)
+    implementation(projects.feature.voicemessage)
+    implementation(projects.core.audio)
 
     implementation(libs.androidx.compose.material3.adaptive)
     implementation(libs.androidx.compose.material3.adaptive.layout)
@@ -221,7 +229,6 @@ dependencies {
 
     googleImplementation(libs.osmdroid.android)
 
-    fdroidImplementation(libs.osmdroid.android)
 
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.hilt.android.testing)

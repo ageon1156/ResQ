@@ -57,9 +57,6 @@ constructor(
     private val context: Context
         get() = application.applicationContext
 
-    val showMockInterface: StateFlow<Boolean> =
-        MutableStateFlow(radioInterfaceService.isMockInterface()).asStateFlow()
-
     val errorText = MutableLiveData<String?>(null)
     private val bondedBleDevicesFlow: StateFlow<List<DeviceListEntry.Ble>> =
         bluetoothRepository.state
@@ -114,13 +111,8 @@ constructor(
             .map { usb -> usb.map { (_, d) -> DeviceListEntry.Usb(radioInterfaceService, usbManagerLazy.get(), d) } }
             .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    val mockDevice = DeviceListEntry.Mock("Demo Mode")
-
     val usbDevicesForUi: StateFlow<List<DeviceListEntry>> =
-        combine(usbDevicesFlow, showMockInterface) { usb, showMock ->
-            usb + if (showMock) listOf(mockDevice) else emptyList()
-        }
-            .stateInWhileSubscribed(initialValue = if (showMockInterface.value) listOf(mockDevice) else emptyList())
+        usbDevicesFlow.stateInWhileSubscribed(initialValue = emptyList())
 
     private val filteredRecentTcpDevicesFlow: StateFlow<List<DeviceListEntry.Tcp>> =
         combine(recentAddressesDataSource.recentAddresses, processedDiscoveredTcpDevicesFlow) {
@@ -273,10 +265,6 @@ constructor(
                 addRecentAddress(it.fullAddress, it.name)
                 changeDeviceAddress(it.fullAddress)
             }
-            true
-        }
-        is DeviceListEntry.Mock -> {
-            changeDeviceAddress(it.fullAddress)
             true
         }
     }

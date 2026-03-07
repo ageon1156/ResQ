@@ -21,7 +21,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,13 +50,15 @@ import org.meshtastic.core.strings.channel_2
 import org.meshtastic.core.strings.channel_3
 import org.meshtastic.core.strings.current
 import org.meshtastic.core.strings.voltage
-import org.meshtastic.core.ui.component.MainAppBar
 import org.meshtastic.core.ui.component.OptionLabel
 import org.meshtastic.core.ui.component.SlidingSelector
 import org.meshtastic.core.ui.theme.GraphColors.InfantryBlue
 import org.meshtastic.core.ui.theme.GraphColors.Red
+import org.meshtastic.feature.node.metrics.CommonCharts.CHART_WIDTH_RATIO
+import org.meshtastic.feature.node.metrics.CommonCharts.CHART_WEIGHT
 import org.meshtastic.feature.node.metrics.CommonCharts.DATE_TIME_FORMAT
 import org.meshtastic.feature.node.metrics.CommonCharts.MS_PER_SEC
+import org.meshtastic.feature.node.metrics.CommonCharts.Y_AXIS_WEIGHT
 import org.meshtastic.feature.node.metrics.GraphUtil.createPath
 import org.meshtastic.feature.node.model.TimeFrame
 import org.meshtastic.proto.TelemetryProtos.Telemetry
@@ -77,10 +78,6 @@ private enum class PowerChannel(val strRes: StringResource) {
     TWO(Res.string.channel_2),
     THREE(Res.string.channel_3),
 }
-
-private const val CHART_WEIGHT = 1f
-private const val Y_AXIS_WEIGHT = 0.1f
-private const val CHART_WIDTH_RATIO = CHART_WEIGHT / (CHART_WEIGHT + Y_AXIS_WEIGHT + Y_AXIS_WEIGHT)
 
 private const val VOLTAGE_STICK_TO_ZERO_RANGE = 2f
 
@@ -111,45 +108,13 @@ fun PowerMetricsScreen(viewModel: MetricsViewModel = hiltViewModel(), onNavigate
     val selectedTimeFrame by viewModel.timeFrame.collectAsState()
     var selectedChannel by remember { mutableStateOf(PowerChannel.ONE) }
     val data = state.powerMetricsFiltered(selectedTimeFrame)
-    Scaffold(
-        topBar = {
-            MainAppBar(
-                title = state.node?.user?.longName ?: "",
-                ourNode = null,
-                showNodeChip = false,
-                canNavigateUp = true,
-                onNavigateUp = onNavigateUp,
-                actions = {},
-                onClickChip = {},
-            )
-        },
-    ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
-            PowerMetricsChart(
-                modifier = Modifier.fillMaxWidth().fillMaxHeight(fraction = 0.33f),
-                telemetries = data.reversed(),
-                selectedTimeFrame,
-                selectedChannel,
-            )
 
-            SlidingSelector(
-                PowerChannel.entries.toList(),
-                selectedChannel,
-                onOptionSelected = { selectedChannel = it },
-            ) {
-                OptionLabel(stringResource(it.strRes))
-            }
-            Spacer(modifier = Modifier.height(2.dp))
-            SlidingSelector(
-                TimeFrame.entries.toList(),
-                selectedTimeFrame,
-                onOptionSelected = { viewModel.setTimeFrame(it) },
-            ) {
-                OptionLabel(stringResource(it.strRes))
-            }
-
-            LazyColumn(modifier = Modifier.fillMaxSize()) { items(data) { telemetry -> OrganicPowerMetricsCard(telemetry) } }
-        }
+    MetricsScaffold(title = state.node?.user?.longName ?: "", onNavigateUp = onNavigateUp) {
+        PowerMetricsChart(modifier = Modifier.fillMaxWidth().fillMaxHeight(fraction = 0.33f), telemetries = data.reversed(), selectedTimeFrame, selectedChannel)
+        SlidingSelector(PowerChannel.entries.toList(), selectedChannel, onOptionSelected = { selectedChannel = it }) { OptionLabel(stringResource(it.strRes)) }
+        Spacer(modifier = Modifier.height(2.dp))
+        SlidingSelector(TimeFrame.entries.toList(), selectedTimeFrame, onOptionSelected = { viewModel.setTimeFrame(it) }) { OptionLabel(stringResource(it.strRes)) }
+        LazyColumn(modifier = Modifier.fillMaxSize()) { items(data) { OrganicPowerMetricsCard(it) } }
     }
 }
 

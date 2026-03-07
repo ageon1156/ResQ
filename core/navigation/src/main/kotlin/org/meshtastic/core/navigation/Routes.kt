@@ -87,3 +87,9 @@ object SOSRoutes {
     @Serializable data object SOSHome : Route
 }
 
+object VoiceMessageRoutes {
+    @Serializable data object VoiceMessageGraph : Graph
+
+    @Serializable data object VoiceMessageHome : Route
+}
+

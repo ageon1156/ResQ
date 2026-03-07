@@ -29,6 +29,7 @@ import org.meshtastic.core.strings.two_days
 import org.meshtastic.core.ui.viewmodel.stateInWhileSubscribed
 import org.meshtastic.feature.map.model.TracerouteOverlay
 import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.copy
 import java.util.concurrent.TimeUnit
 
 @Suppress("MagicNumber")
@@ -144,6 +145,18 @@ abstract class BaseMapViewModel(
     }
 
     fun deleteWaypoint(id: Int) = viewModelScope.launch(Dispatchers.IO) { packetRepository.deleteWaypoint(id) }
+
+    fun deleteAllWaypoints() = viewModelScope.launch(Dispatchers.IO) { packetRepository.deleteAllWaypoints() }
+
+    fun sendAllWaypointsExpired(waypoints: Map<Int, Packet>) {
+        val myNum = myNodeNum ?: 0
+        waypoints.values.forEach { packet ->
+            val wpt = packet.data.waypoint ?: return@forEach
+            if (wpt.lockedTo in setOf(0, myNum)) {
+                sendWaypoint(wpt.copy { expire = 1 })
+            }
+        }
+    }
 
     fun sendWaypoint(wpt: MeshProtos.Waypoint, contactKey: String = "0${DataPacket.ID_BROADCAST}") {
         

@@ -62,6 +62,7 @@ internal data class MessageListHandlers(
     val onDeleteMessages: (List<Long>) -> Unit,
     val onSendMessage: (String, String) -> Unit,
     val onReply: (Message?) -> Unit,
+    val onPlayVoice: (String) -> Unit = {},
 )
 
 internal data class MessageListPagedState(
@@ -288,7 +289,14 @@ private fun LazyItemScope.renderPagedChatMessageRow(
         message = message,
         selected = selected,
         inSelectionMode = inSelectionMode,
-        onClick = { if (inSelectionMode) state.selectedIds.toggle(message.uuid) },
+        onClick = {
+            if (inSelectionMode) {
+                state.selectedIds.toggle(message.uuid)
+            } else {
+                val sessionId = message.text.substringAfter('\u0000', "")
+                if (sessionId.isNotEmpty()) handlers.onPlayVoice(sessionId)
+            }
+        },
         onLongClick = {
             if (inSelectionMode) {
                 state.selectedIds.toggle(message.uuid)

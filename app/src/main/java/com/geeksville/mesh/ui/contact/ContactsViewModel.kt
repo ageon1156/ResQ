@@ -19,7 +19,6 @@ import org.meshtastic.core.data.repository.NodeRepository
 import org.meshtastic.core.data.repository.PacketRepository
 import org.meshtastic.core.data.repository.RadioConfigRepository
 import org.meshtastic.core.database.entity.ContactSettings
-import org.meshtastic.core.database.entity.MyNodeEntity
 import org.meshtastic.core.database.entity.Packet
 import org.meshtastic.core.model.DataPacket
 import org.meshtastic.core.model.util.getChannel
@@ -43,121 +42,32 @@ constructor(
     serviceRepository: ServiceRepository,
 ) : ViewModel() {
     val ourNodeInfo = nodeRepository.ourNodeInfo
-
     val connectionState = serviceRepository.connectionState
-
     val channels = radioConfigRepository.channelSetFlow.stateInWhileSubscribed(initialValue = channelSet {})
 
-    private val identityFlow: Flow<Pair<MyNodeEntity?, String?>> =
-        combine(nodeRepository.myNodeInfo, nodeRepository.myId) { info, id -> Pair(info, id) }
+    private val identityFlow = combine(nodeRepository.myNodeInfo, nodeRepository.myId) { info, id -> info to id }
 
     val contactList =
         combine(identityFlow, packetRepository.getContacts(), channels, packetRepository.getContactSettings()) {
-                identity,
-                contacts,
-                channelSet,
-                settings,
-            ->
-            val (myNodeInfo, myId) = identity
+                (myNodeInfo, myId), contacts, channelSet, settings ->
             val myNodeNum = myNodeInfo?.myNodeNum ?: return@combine emptyList()
-            
-            val placeholder =
-                (0 until channelSet.settingsCount).associate { ch ->
-                    val contactKey = "$ch${DataPacket.ID_BROADCAST}"
-                    val data = DataPacket(bytes = null, dataType = 1, time = 0L, channel = ch)
-                    contactKey to Packet(0L, myNodeNum, 1, contactKey, 0L, true, data)
-                }
-
-            (contacts + (placeholder - contacts.keys)).values.collectionsMap { packet ->
-                val data = packet.data
-                val contactKey = packet.contact_key
-
-                val fromLocal = data.from == DataPacket.ID_LOCAL || (myId != null && data.from == myId)
-                val toBroadcast = data.to == DataPacket.ID_BROADCAST
-
-                val user = getUser(if (fromLocal) data.to else data.from)
-                val node = getNode(if (fromLocal) data.to else data.from)
-
-                val shortName = user.shortName
-                val longName =
-                    if (toBroadcast) {
-                        channelSet.getChannel(data.channel)?.name ?: getString(Res.string.channel_name)
-                    } else {
-                        user.longName
-                    }
-
-                Contact(
-                    contactKey = contactKey,
-                    shortName = if (toBroadcast) "${data.channel}" else shortName,
-                    longName = longName,
-                    lastMessageTime = getShortDate(data.time),
-                    lastMessageText = if (fromLocal) data.text else "$shortName: ${data.text}",
-                    unreadCount = packetRepository.getUnreadCount(contactKey),
-                    messageCount = packetRepository.getMessageCount(contactKey),
-                    isMuted = settings[contactKey]?.isMuted == true,
-                    isUnmessageable = user.isUnmessagable,
-                    nodeColors =
-                    if (!toBroadcast) {
-                        node.colors
-                    } else {
-                        null
-                    },
-                )
+            val placeholder = (0 until channelSet.settingsCount).associate { ch ->
+                val contactKey = "$ch${DataPacket.ID_BROADCAST}"
+                val data = DataPacket(bytes = null, dataType = 1, time = 0L, channel = ch)
+                contactKey to Packet(0L, myNodeNum, 1, contactKey, 0L, true, data)
             }
-        }
-            .stateInWhileSubscribed(initialValue = emptyList())
+            (contacts + (placeholder - contacts.keys)).values.collectionsMap { it.toContact(myId, channelSet, settings) }
+        }.stateInWhileSubscribed(initialValue = emptyList())
 
     val contactListPaged: Flow<PagingData<Contact>> =
-        combine(identityFlow, channels, packetRepository.getContactSettings()) { identity, channelSet, settings ->
-            val (myNodeInfo, myId) = identity
-            ContactsPagedParams(myNodeInfo?.myNodeNum, channelSet, settings, myId)
-        }
-            .flatMapLatest { params ->
-                val myNodeNum = params.myNodeNum
-                val channelSet = params.channelSet
-                val settings = params.settings
-                val myId = params.myId
-
-                packetRepository.getContactsPaged().map { pagingData ->
-                    pagingData.map { packet ->
-                        val data = packet.data
-                        val contactKey = packet.contact_key
-
-                        val fromLocal = data.from == DataPacket.ID_LOCAL || (myId != null && data.from == myId)
-                        val toBroadcast = data.to == DataPacket.ID_BROADCAST
-
-                        val user = getUser(if (fromLocal) data.to else data.from)
-                        val node = getNode(if (fromLocal) data.to else data.from)
-
-                        val shortName = user.shortName
-                        val longName =
-                            if (toBroadcast) {
-                                channelSet.getChannel(data.channel)?.name ?: getString(Res.string.channel_name)
-                            } else {
-                                user.longName
-                            }
-
-                        Contact(
-                            contactKey = contactKey,
-                            shortName = if (toBroadcast) "${data.channel}" else shortName,
-                            longName = longName,
-                            lastMessageTime = getShortDate(data.time),
-                            lastMessageText = if (fromLocal) data.text else "$shortName: ${data.text}",
-                            unreadCount = packetRepository.getUnreadCount(contactKey),
-                            messageCount = packetRepository.getMessageCount(contactKey),
-                            isMuted = settings[contactKey]?.isMuted == true,
-                            isUnmessageable = user.isUnmessagable,
-                            nodeColors =
-                            if (!toBroadcast) {
-                                node.colors
-                            } else {
-                                null
-                            },
-                        )
-                    }
-                }
+        combine(identityFlow, channels, packetRepository.getContactSettings()) { (myNodeInfo, myId), channelSet, settings ->
+            Triple(myNodeInfo?.myNodeNum, channelSet, Pair(settings, myId))
+        }.flatMapLatest { (_, channelSet, extra) ->
+            val (settings, myId) = extra
+            packetRepository.getContactsPaged().map { pagingData ->
+                pagingData.map { it.toContact(myId, channelSet, settings) }
             }
-            .cachedIn(viewModelScope)
+        }.cachedIn(viewModelScope)
 
     fun getNode(userId: String?) = nodeRepository.getNode(userId ?: DataPacket.ID_BROADCAST)
 
@@ -169,19 +79,33 @@ constructor(
 
     fun getContactSettings() = packetRepository.getContactSettings()
 
-    suspend fun getTotalMessageCount(contactKeys: List<String>): Int = if (contactKeys.isEmpty()) {
-        0
-    } else {
-        contactKeys.sumOf { contactKey -> packetRepository.getMessageCount(contactKey) }
-    }
+    suspend fun getTotalMessageCount(contactKeys: List<String>): Int =
+        contactKeys.sumOf { packetRepository.getMessageCount(it) }
 
     private fun getUser(userId: String?) = nodeRepository.getUser(userId ?: DataPacket.ID_BROADCAST)
 
-    private data class ContactsPagedParams(
-        val myNodeNum: Int?,
-        val channelSet: AppOnlyProtos.ChannelSet,
-        val settings: Map<String, ContactSettings>,
-        val myId: String?,
-    )
+    private suspend fun Packet.toContact(
+        myId: String?,
+        channelSet: AppOnlyProtos.ChannelSet,
+        settings: Map<String, ContactSettings>,
+    ): Contact {
+        val fromLocal = data.from == DataPacket.ID_LOCAL || (myId != null && data.from == myId)
+        val toBroadcast = data.to == DataPacket.ID_BROADCAST
+        val user = getUser(if (fromLocal) data.to else data.from)
+        val node = getNode(if (fromLocal) data.to else data.from)
+        val shortName = user.shortName
+        val longName = if (toBroadcast) channelSet.getChannel(data.channel)?.name ?: getString(Res.string.channel_name) else user.longName
+        return Contact(
+            contactKey = contact_key,
+            shortName = if (toBroadcast) "${data.channel}" else shortName,
+            longName = longName,
+            lastMessageTime = getShortDate(data.time),
+            lastMessageText = if (fromLocal) data.text else "$shortName: ${data.text}",
+            unreadCount = packetRepository.getUnreadCount(contact_key),
+            messageCount = packetRepository.getMessageCount(contact_key),
+            isMuted = settings[contact_key]?.isMuted == true,
+            isUnmessageable = user.isUnmessagable,
+            nodeColors = if (!toBroadcast) node.colors else null,
+        )
+    }
 }
-

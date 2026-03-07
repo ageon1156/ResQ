@@ -372,21 +372,12 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
         }
     }
 
+    val navSelColor = colorScheme.primary
+    val navUnselColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+    val navIndicatorColor = colorScheme.primary.copy(alpha = 0.12f)
     val minimalItemColors = NavigationSuiteDefaults.itemColors(
-        navigationBarItemColors = NavigationBarItemDefaults.colors(
-            selectedIconColor = colorScheme.primary,
-            selectedTextColor = colorScheme.primary,
-            indicatorColor = colorScheme.primary.copy(alpha = 0.12f),
-            unselectedIconColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            unselectedTextColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-        ),
-        navigationRailItemColors = NavigationRailItemDefaults.colors(
-            selectedIconColor = colorScheme.primary,
-            selectedTextColor = colorScheme.primary,
-            indicatorColor = colorScheme.primary.copy(alpha = 0.12f),
-            unselectedIconColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            unselectedTextColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-        ),
+        navigationBarItemColors = NavigationBarItemDefaults.colors(selectedIconColor = navSelColor, selectedTextColor = navSelColor, indicatorColor = navIndicatorColor, unselectedIconColor = navUnselColor, unselectedTextColor = navUnselColor),
+        navigationRailItemColors = NavigationRailItemDefaults.colors(selectedIconColor = navSelColor, selectedTextColor = navSelColor, indicatorColor = navIndicatorColor, unselectedIconColor = navUnselColor, unselectedTextColor = navUnselColor),
     )
 
     NavigationSuiteScaffold(

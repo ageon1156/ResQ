@@ -7,21 +7,13 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Card
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,44 +29,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-
-@Preview
-@Composable
-fun LazyColumnDragAndDropDemo() {
-    var list by remember { mutableStateOf(List(50) { it }) }
-
-    val listState = rememberLazyListState()
-    val dragDropState =
-        rememberDragDropState(listState, headerCount = 1) { fromIndex, toIndex ->
-            if (fromIndex in list.indices && toIndex in list.indices) {
-                list = list.toMutableList().apply { add(toIndex, removeAt(fromIndex)) }
-            }
-        }
-
-    LazyColumn(
-        modifier = Modifier.dragContainer(dragDropState = dragDropState, haptics = LocalHapticFeedback.current),
-        state = listState,
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item { Text("Header", Modifier.fillMaxWidth().padding(20.dp)) }
-
-        itemsIndexed(list, key = { _, item -> item }) { index, item ->
-            DraggableItem(dragDropState, index + 1) { isDragging ->
-                Card { Text("Item $item", Modifier.fillMaxWidth().padding(20.dp)) }
-            }
-        }
-
-        item { Text("Footer", Modifier.fillMaxWidth().padding(20.dp)) }
-    }
-}
 
 @Composable
 fun rememberDragDropState(

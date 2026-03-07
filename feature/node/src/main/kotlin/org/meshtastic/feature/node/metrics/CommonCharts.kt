@@ -8,10 +8,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -21,6 +23,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,6 +51,7 @@ import org.meshtastic.core.strings.info
 import org.meshtastic.core.strings.logs
 import org.meshtastic.core.strings.rssi
 import org.meshtastic.core.strings.snr
+import org.meshtastic.core.ui.component.MainAppBar
 import org.meshtastic.feature.node.metrics.CommonCharts.DATE_TIME_MINUTE_FORMAT
 import org.meshtastic.feature.node.metrics.CommonCharts.MAX_PERCENT_VALUE
 import org.meshtastic.feature.node.metrics.CommonCharts.MS_PER_SEC
@@ -59,6 +63,22 @@ object CommonCharts {
     val DATE_TIME_MINUTE_FORMAT: DateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
     const val MS_PER_SEC = 1000L
     const val MAX_PERCENT_VALUE = 100f
+    const val CHART_WEIGHT = 1f
+    const val Y_AXIS_WEIGHT = 0.1f
+    const val CHART_WIDTH_RATIO = CHART_WEIGHT / (CHART_WEIGHT + Y_AXIS_WEIGHT + Y_AXIS_WEIGHT)
+}
+
+@Composable
+fun MetricText(text: String, modifier: Modifier = Modifier) =
+    Text(text = text, color = MaterialTheme.colorScheme.onSurface, fontSize = MaterialTheme.typography.labelLarge.fontSize, modifier = modifier)
+
+@Composable
+fun MetricsScaffold(title: String, onNavigateUp: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    Scaffold(
+        topBar = { MainAppBar(title = title, ourNode = null, showNodeChip = false, canNavigateUp = true, onNavigateUp = onNavigateUp, actions = {}, onClickChip = {}) },
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding), content = content)
+    }
 }
 
 private const val LINE_ON = 10f

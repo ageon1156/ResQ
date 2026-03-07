@@ -10,6 +10,7 @@ import androidx.paging.cachedIn
 import co.touchlab.kermit.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,11 +19,22 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.meshtastic.core.audio.AudioPlayer
+import org.meshtastic.core.audio.AudioRecorder
+import org.meshtastic.core.audio.Codec2Wrapper
+import org.meshtastic.core.model.voice.VoiceFragment
+import org.meshtastic.core.model.voice.encode
+import org.meshtastic.proto.MeshProtos
+import org.meshtastic.proto.Portnums
+import java.util.UUID
 import org.meshtastic.core.data.repository.NodeRepository
 import org.meshtastic.core.data.repository.PacketRepository
+import org.meshtastic.core.data.repository.VoiceMessageRepository
 import org.meshtastic.core.data.repository.QuickChatActionRepository
 import org.meshtastic.core.data.repository.RadioConfigRepository
 import org.meshtastic.core.database.entity.ContactSettings
+import org.meshtastic.core.database.entity.Packet
 import org.meshtastic.core.database.model.Message
 import org.meshtastic.core.database.model.Node
 import org.meshtastic.core.model.Capabilities
@@ -52,7 +64,15 @@ constructor(
     private val uiPrefs: UiPrefs,
     private val customEmojiPrefs: CustomEmojiPrefs,
     private val meshServiceNotifications: MeshServiceNotifications,
+    private val audioRecorder: AudioRecorder,
+    private val audioPlayer: AudioPlayer,
+    private val codec2: Codec2Wrapper,
+    private val voiceMessageRepository: VoiceMessageRepository,
 ) : ViewModel() {
+
+    private val _pttRecording = MutableStateFlow(false)
+    val pttRecording: StateFlow<Boolean> = _pttRecording.asStateFlow()
+    private val recordedPcm = mutableListOf<ShortArray>()
     private val _title = MutableStateFlow("")
     val title: StateFlow<String> = _title.asStateFlow()
 
@@ -195,6 +215,78 @@ constructor(
         } catch (ex: RemoteException) {
             Logger.e(ex) { "Send shared contact error" }
         }
+    }
+
+    fun startPttRecording() {
+        if (_pttRecording.value) return
+        recordedPcm.clear()
+        _pttRecording.value = true
+        audioRecorder.start { samples -> recordedPcm.add(samples) }
+    }
+
+    fun stopPttAndSend(contactKey: String) {
+        if (!_pttRecording.value) return
+        _pttRecording.value = false
+        audioRecorder.stop()
+        viewModelScope.launch { encodePttAndSend(contactKey) }
+    }
+
+    fun playVoiceMessage(sessionId: String) {
+        val message = voiceMessageRepository.getRecent(sessionId) ?: return
+        viewModelScope.launch {
+            runCatching { audioPlayer.play(message.codec2Bytes) }
+                .onFailure { Logger.e(it) { "Voice replay failed" } }
+        }
+    }
+
+    private suspend fun encodePttAndSend(contactKey: String) = withContext(Dispatchers.Default) {
+        if (recordedPcm.isEmpty()) return@withContext
+        val allPcm = ShortArray(recordedPcm.sumOf { it.size })
+        var offset = 0
+        for (chunk in recordedPcm) { chunk.copyInto(allPcm, offset); offset += chunk.size }
+        recordedPcm.clear()
+        val codec2Bytes = runCatching { codec2.encode(allPcm, Codec2Wrapper.DEFAULT_MODE) }
+            .getOrElse { Logger.e(it) { "PTT encode failed" }; return@withContext }
+        val sessionId = UUID.randomUUID().toString().replace("-", "").take(16)
+            .chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+        val timestamp = (System.currentTimeMillis() / 1000L).toInt()
+        val channel = contactKey[0].digitToIntOrNull() ?: 0
+        val dest = if (contactKey[0].isDigit()) contactKey.substring(1) else contactKey
+        val chunks = codec2Bytes.toList().chunked(216)
+        chunks.forEachIndexed { index, chunk ->
+            val fragment = VoiceFragment(index, chunks.size, sessionId, timestamp, chunk.toByteArray())
+            val packet = DataPacket(
+                to = dest,
+                bytes = fragment.encode(),
+                dataType = Portnums.PortNum.AUDIO_APP_VALUE,
+                channel = channel,
+                priority = MeshProtos.MeshPacket.Priority.HIGH_VALUE,
+                wantAck = false,
+            )
+            sendDataPacket(packet)
+            if (index < chunks.lastIndex) delay(500)
+        }
+
+        val localUserId = ourNodeInfo.value?.user?.id ?: DataPacket.ID_LOCAL
+        val myNodeNum = ourNodeInfo.value?.num ?: 0
+        val placeholderData = DataPacket(
+            to = dest,
+            bytes = "🎤 Voice message".encodeToByteArray(),
+            dataType = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
+            from = localUserId,
+            channel = channel,
+        )
+        packetRepository.insert(
+            Packet(
+                uuid = 0L,
+                myNodeNum = myNodeNum,
+                port_num = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
+                contact_key = contactKey,
+                received_time = System.currentTimeMillis(),
+                read = true,
+                data = placeholderData,
+            )
+        )
     }
 
     private fun sendDataPacket(p: DataPacket) {

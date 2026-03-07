@@ -11,6 +11,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.meshtastic.core.data.repository.NodeRepository
 import org.meshtastic.core.data.repository.RadioConfigRepository
 import org.meshtastic.core.model.DataPacket
 import org.meshtastic.core.model.MessageStatus
@@ -44,6 +45,7 @@ constructor(
     private val nodeManager: MeshNodeManager?,
     private val connectionStateHolder: ConnectionStateHandler?,
     private val radioConfigRepository: RadioConfigRepository?,
+    private val nodeRepository: NodeRepository?,
 ) {
     private var scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val currentPacketId = AtomicLong(java.util.Random(System.currentTimeMillis()).nextLong().absoluteValue)
@@ -70,7 +72,7 @@ constructor(
         radioConfigRepository?.channelSetFlow?.onEach { channelSet.value = it }?.launchIn(scope)
     }
 
-    @VisibleForTesting internal constructor() : this(null, null, null, null)
+    @VisibleForTesting internal constructor() : this(null, null, null, null, null)
 
     fun getCurrentPacketId(): Long = currentPacketId.get()
 
@@ -110,9 +112,23 @@ constructor(
         if (bytes.size >= MeshProtos.Constants.DATA_PAYLOAD_LEN_VALUE) {
             p.status = MessageStatus.ERROR
             throw RemoteException("Message too long")
-        } else {
-            p.status = MessageStatus.QUEUED
         }
+
+        if (p.dataType == Portnums.PortNum.TEXT_MESSAGE_APP_VALUE) {
+            val util = nodeRepository?.simulatedChannelUtil?.value ?: 0f
+            when {
+                util >= CHANNEL_UTIL_CRITICAL_THRESHOLD && p.priority < MeshPacket.Priority.ALERT_VALUE -> {
+                    p.status = MessageStatus.ERROR
+                    throw RemoteException("Channel congested: only critical messages allowed")
+                }
+                util >= CHANNEL_UTIL_HIGH_THRESHOLD && p.priority < MeshPacket.Priority.HIGH_VALUE -> {
+                    p.status = MessageStatus.ERROR
+                    throw RemoteException("Channel congested: only high-priority messages allowed")
+                }
+            }
+        }
+
+        p.status = MessageStatus.QUEUED
 
         if (connectionStateHolder?.connectionState?.value == ConnectionState.Connected) {
             try {
@@ -124,6 +140,11 @@ constructor(
         } else {
             enqueueForSending(p)
         }
+    }
+
+    private fun isChannelCongested(): Boolean {
+        val channelUtil = nodeRepository?.simulatedChannelUtil?.value ?: 0f
+        return channelUtil >= CHANNEL_UTIL_CONGESTION_THRESHOLD
     }
 
     private fun sendNow(p: DataPacket) {
@@ -411,6 +432,9 @@ constructor(
         private const val HEX_RADIX = 16
 
         private const val DEFAULT_HOP_LIMIT = 3
+        const val CHANNEL_UTIL_CONGESTION_THRESHOLD = 70f
+        const val CHANNEL_UTIL_HIGH_THRESHOLD = 70f
+        const val CHANNEL_UTIL_CRITICAL_THRESHOLD = 85f
     }
 }
 

@@ -40,6 +40,7 @@ keystore.properties
 /fastlane/report.xml
 
 /build-logic/convention/build/*
+/build-logic/convention/bin/
 /build-logic/build/
 
 # Personal build scripts

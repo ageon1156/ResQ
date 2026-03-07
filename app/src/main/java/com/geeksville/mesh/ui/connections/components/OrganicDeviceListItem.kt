@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.BluetoothSearching
-import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BluetoothConnected
 import androidx.compose.material.icons.rounded.Usb
@@ -47,7 +46,6 @@ import com.geeksville.mesh.model.DeviceListEntry
 import org.jetbrains.compose.resources.stringResource
 import org.meshtastic.core.service.ConnectionState
 import org.meshtastic.core.strings.Res
-import org.meshtastic.core.strings.add
 import org.meshtastic.core.strings.bluetooth
 import org.meshtastic.core.strings.network
 import org.meshtastic.core.strings.serial
@@ -69,21 +67,18 @@ fun OrganicDeviceListItem(
             else Icons.Rounded.Bluetooth
         is DeviceListEntry.Usb -> Icons.Rounded.Usb
         is DeviceListEntry.Tcp -> Icons.Rounded.Wifi
-        is DeviceListEntry.Mock -> Icons.Rounded.Add
     }
 
     val contentDescription = when (device) {
         is DeviceListEntry.Ble -> stringResource(Res.string.bluetooth)
         is DeviceListEntry.Usb -> stringResource(Res.string.serial)
         is DeviceListEntry.Tcp -> stringResource(Res.string.network)
-        is DeviceListEntry.Mock -> stringResource(Res.string.add)
     }
 
     val iconColor = when (device) {
         is DeviceListEntry.Ble -> MaterialTheme.colorScheme.primary
         is DeviceListEntry.Usb -> MaterialTheme.colorScheme.secondary
         is DeviceListEntry.Tcp -> MaterialTheme.colorScheme.tertiary
-        is DeviceListEntry.Mock -> MaterialTheme.colorScheme.outline
     }
 
     val isSelected = connectionState.isConnected()

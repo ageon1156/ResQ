@@ -246,6 +246,9 @@ constructor(
     suspend fun deleteWaypoint(id: Int) =
         withContext(dispatchers.io) { dbManager.currentDb.value.packetDao().deleteWaypoint(id) }
 
+    suspend fun deleteAllWaypoints() =
+        withContext(dispatchers.io) { dbManager.currentDb.value.packetDao().deleteAllWaypoints() }
+
     suspend fun delete(packet: Packet) =
         withContext(dispatchers.io) { dbManager.currentDb.value.packetDao().delete(packet) }
 

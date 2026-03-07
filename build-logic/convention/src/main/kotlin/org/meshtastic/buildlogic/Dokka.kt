@@ -22,7 +22,7 @@ fun Project.configureDokka() {
                 suppress.set(true)
             }
 
-            val isCoreSourceSet = name in listOf("main", "commonMain", "androidMain", "fdroid", "google")
+            val isCoreSourceSet = name in listOf("main", "commonMain", "androidMain", "google")
             if (isCoreSourceSet) {
                 suppress.set(false)
             }

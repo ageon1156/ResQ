@@ -59,6 +59,7 @@ fun ByteArray.decodeTriagePacket(): Any? = runCatching {
     when (probe.type) {
         "MANUAL_TRIAGE_PIN" -> triageJson.decodeFromString<ManualTriagePinPacket>(text)
         "CLAIM_PIN"         -> triageJson.decodeFromString<ClaimPinPacket>(text)
+        "ASSIGNMENT"        -> triageJson.decodeFromString<AssignmentPacket>(text)
         else                -> null
     }
 }.getOrNull()

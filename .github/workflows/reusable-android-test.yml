@@ -14,10 +14,10 @@ on:
         type: string
         default: '[26, 35]' # Default to running both if not specified by caller
       test_flavors:
-        description: 'Which flavors to test: "google", "fdroid", or "both"'
+        description: 'Which flavors to test (currently only "google" is supported)'
         required: false
         type: string
-        default: 'both'
+        default: 'google'
     secrets:
       GRADLE_ENCRYPTION_KEY:
         required: false
@@ -84,13 +84,7 @@ jobs:
       - name: Determine test tasks
         id: test-tasks
         run: |
-          if [ "${{ inputs.test_flavors }}" = "google" ]; then
-            echo "tasks=connectedGoogleDebugAndroidTest" >> $GITHUB_OUTPUT
-          elif [ "${{ inputs.test_flavors }}" = "fdroid" ]; then
-            echo "tasks=connectedFdroidDebugAndroidTest" >> $GITHUB_OUTPUT
-          else
-            echo "tasks=connectedFdroidDebugAndroidTest connectedGoogleDebugAndroidTest" >> $GITHUB_OUTPUT
-          fi
+          echo "tasks=connectedGoogleDebugAndroidTest" >> $GITHUB_OUTPUT
 
       - name: Run Android Instrumented Tests and Generate Coverage
         uses: reactivecircus/android-emulator-runner@v2

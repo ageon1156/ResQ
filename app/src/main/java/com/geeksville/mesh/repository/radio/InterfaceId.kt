@@ -4,7 +4,6 @@ package com.geeksville.mesh.repository.radio
 
 enum class InterfaceId(val id: Char) {
     BLUETOOTH('x'),
-    MOCK('m'),
     NOP('n'),
     SERIAL('s'),
     TCP('t'),

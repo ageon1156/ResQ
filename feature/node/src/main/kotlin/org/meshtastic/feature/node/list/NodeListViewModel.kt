@@ -148,6 +148,14 @@ constructor(
 
     fun removeNode(nodeNum: Int) = viewModelScope.launch { nodeActions.removeNode(nodeNum) }
 
+    private val _simulatedChannelUtil = MutableStateFlow(0f)
+    val simulatedChannelUtil: StateFlow<Float> = _simulatedChannelUtil.asStateFlow()
+
+    fun setSimulatedChannelUtil(percent: Float) = viewModelScope.launch {
+        nodeRepository.simulateChannelUtil(ourNodeInfo.value?.num, percent)
+        _simulatedChannelUtil.value = percent
+    }
+
     companion object {
         private const val KEY_FILTER_TEXT = "filter_text"
     }

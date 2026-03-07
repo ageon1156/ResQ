@@ -1,6 +1,7 @@
 
 package com.geeksville.mesh.service
 
+import android.os.RemoteException
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.util.ignoreException
 import com.google.protobuf.ByteString
@@ -165,7 +166,13 @@ constructor(
     }
 
     fun handleSend(p: DataPacket, myNodeNum: Int) {
-        commandSender.sendData(p)
+        try {
+            commandSender.sendData(p)
+        } catch (ex: RemoteException) {
+            dataHandler.rememberDataPacket(p, myNodeNum, false)
+            serviceBroadcasts.broadcastMessageStatus(p)
+            return
+        }
         serviceBroadcasts.broadcastMessageStatus(p)
         dataHandler.rememberDataPacket(p, myNodeNum, false)
         val bytes = p.bytes ?: ByteArray(0)
