@@ -7,20 +7,25 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -77,14 +82,31 @@ fun SOSScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(Res.string.sos_screen_title),
-                        fontWeight = FontWeight.Bold,
-                    )
-                },
-            )
+            Column {
+                TopAppBar(
+                    navigationIcon = {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(id = org.meshtastic.core.ui.R.drawable.ic_meshtastic),
+                            contentDescription = null,
+                            modifier = Modifier.padding(start = 16.dp).size(28.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    },
+                    title = {
+                        Text(
+                            text = stringResource(Res.string.sos_screen_title),
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleLarge.copy(letterSpacing = 1.sp),
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        actionIconContentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                )
+                HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+            }
         },
     ) { innerPadding ->
         SOSContent(
@@ -121,14 +143,10 @@ private fun SOSContent(
     ) {
         
         Text(
-            text = if (isConnected) {
-                "\u2022 Connected"
-            } else {
-                stringResource(Res.string.sos_not_connected)
-            },
-            color = if (isConnected) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
+            text = if (isConnected) "● CONNECTED" else stringResource(Res.string.sos_not_connected).uppercase(),
+            color = if (isConnected) Color(0xFF2DB53E) else MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -143,7 +161,7 @@ private fun SOSContent(
                 },
                 enabled = isConnected && !isSending,
                 modifier = Modifier.size(200.dp),
-                shape = CircleShape,
+                shape = MaterialTheme.shapes.extraSmall,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SOSRed,
                     contentColor = Color.White,
@@ -162,6 +180,7 @@ private fun SOSContent(
                         text = stringResource(Res.string.sos_send_button),
                         fontSize = 28.sp,
                         fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 2.sp,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -266,32 +285,43 @@ private fun SOSConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialTheme.shapes.extraSmall,
         title = {
             Text(
-                text = stringResource(Res.string.sos_confirm_title),
+                text = stringResource(Res.string.sos_confirm_title).uppercase(),
                 fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         },
         text = {
-            Text(text = stringResource(Res.string.sos_confirm_message))
+            Text(
+                text = stringResource(Res.string.sos_confirm_message),
+                style = MaterialTheme.typography.bodySmall,
+            )
         },
         confirmButton = {
             Button(
                 onClick = onConfirm,
+                shape = MaterialTheme.shapes.extraSmall,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SOSRed,
                     contentColor = Color.White,
                 ),
             ) {
                 Text(
-                    text = stringResource(Res.string.sos_confirm_send),
+                    text = stringResource(Res.string.sos_confirm_send).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(Res.string.sos_cancel))
+                Text(
+                    text = stringResource(Res.string.sos_cancel).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                )
             }
         },
     )

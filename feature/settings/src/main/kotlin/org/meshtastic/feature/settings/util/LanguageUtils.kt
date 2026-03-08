@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalResources
 import androidx.core.os.LocaleListCompat
-import co.touchlab.kermit.Logger
 import org.jetbrains.compose.resources.stringResource
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.fr_HT
@@ -53,7 +52,6 @@ object LanguageUtils {
                             }
                         }
                     } catch (e: Exception) {
-                        Logger.e { "Error parsing locale_config.xml: ${e.message}" }
                     }
                 }
             }

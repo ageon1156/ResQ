@@ -63,7 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import co.touchlab.kermit.Logger
+
 import com.google.accompanist.permissions.ExperimentalPermissionsApi 
 import com.google.accompanist.permissions.rememberMultiplePermissionsState 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -315,7 +315,6 @@ private fun MapView.updateMarkers(
     waypointMarkers: List<MarkerWithLabel>,
     nodeClusterer: RadiusMarkerClusterer,
 ) {
-    Logger.d { "Showing on map: ${nodeMarkers.size} nodes ${waypointMarkers.size} waypoints" }
     overlays.removeAll { it is MarkerWithLabel }
     
     overlays.addAll(waypointMarkers)
@@ -406,7 +405,6 @@ fun MapView(
 
     fun loadOnlineTileSourceBase(): ITileSource {
         val id = mapViewModel.mapStyleId
-        Logger.d { "mapStyleId from prefs: $id" }
         return CustomTileSource.getTileSource(id).also {
             zoomLevelMax = it.maximumZoomLevel.toDouble()
             showDownloadButton = if (it is OnlineTileSourceBase) it.tileSourcePolicy.acceptsBulkDownload() else false
@@ -435,7 +433,6 @@ fun MapView(
     fun downloadTilesAround(center: GeoPoint) {
         val tileSource = map.tileProvider.tileSource
         if (tileSource !is OnlineTileSourceBase || !tileSource.tileSourcePolicy.acceptsBulkDownload()) {
-            Logger.d { "Auto tile download skipped: tile source does not support bulk download" }
             return
         }
         val lastLat = mapViewModel.lastDownloadLat
@@ -476,7 +473,6 @@ fun MapView(
                 ),
             )
         } catch (ex: Exception) {
-            Logger.d { "Auto tile download failed: ${ex.message}" }
         }
     }
 
@@ -498,11 +494,9 @@ fun MapView(
 
     fun MapView.toggleMyLocation() {
         if (context.gpsDisabled()) {
-            Logger.d { "Telling user we need location turned on for MyLocationNewOverlay" }
             scope.launch { context.showToast(Res.string.location_disabled) }
             return
         }
-        Logger.d { "user clicked MyLocationNewOverlay ${myLocationOverlay == null}" }
         if (myLocationOverlay == null) {
             myLocationOverlay =
                 MyLocationNewOverlay(this).apply {
@@ -635,15 +629,13 @@ fun MapView(
 
             val (p, u) = node.position to node.user
             val nodePosition = GeoPoint(node.latitude, node.longitude)
-            MarkerWithLabel(mapView = this, label = "${u.shortName} ${formatAgo(p.time)}").apply {
+            MarkerWithLabel(mapView = this, label = u.shortName).apply {
                 id = u.id
                 title = u.longName
                 snippet =
                     com.meshtastic.core.strings.getString(
                         Res.string.map_node_popup_details,
                         node.gpsString(),
-                        formatAgo(node.lastHeard),
-                        formatAgo(p.time),
                         if (node.batteryStr != "") node.batteryStr else "?",
                     )
                 ourNode?.distanceStr(node, displayUnits)?.let { dist ->
@@ -675,15 +667,12 @@ fun MapView(
         val builder = MaterialAlertDialogBuilder(context)
         builder.setTitle(com.meshtastic.core.strings.getString(Res.string.waypoint_delete))
         builder.setNeutralButton(com.meshtastic.core.strings.getString(Res.string.cancel)) { _, _ ->
-            Logger.d { "User canceled marker delete dialog" }
         }
         builder.setNegativeButton(com.meshtastic.core.strings.getString(Res.string.delete_for_me)) { _, _ ->
-            Logger.d { "User deleted waypoint ${waypoint.id} for me" }
             mapViewModel.deleteWaypoint(waypoint.id)
         }
         if (waypoint.lockedTo in setOf(0, mapViewModel.myNodeNum ?: 0) && isConnected) {
             builder.setPositiveButton(com.meshtastic.core.strings.getString(Res.string.delete_for_everyone)) { _, _ ->
-                Logger.d { "User deleted waypoint ${waypoint.id} for everyone" }
                 mapViewModel.sendWaypoint(waypoint.copy { expire = 1 })
                 mapViewModel.deleteWaypoint(waypoint.id)
             }
@@ -706,7 +695,6 @@ fun MapView(
 
     fun showMarkerLongPressDialog(id: Int) {
         performHapticFeedback()
-        Logger.d { "marker long pressed id=$id" }
         val waypoint = waypoints[id]?.data?.waypoint ?: return
         
         if (waypoint.lockedTo in setOf(0, mapViewModel.myNodeNum ?: 0) && isConnected) {
@@ -919,9 +907,7 @@ fun MapView(
                 ),
             )
         } catch (ex: TileSourcePolicyException) {
-            Logger.d { "Tile source does not allow archiving: ${ex.message}" }
         } catch (ex: Exception) {
-            Logger.d { "Tile source exception: ${ex.message}" }
         }
     }
 
@@ -964,7 +950,7 @@ fun MapView(
                 onModeSelected = { activeMapMode = it },
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = 16.dp),
+                    .fillMaxWidth(),
             )
 
             if (downloadRegionBoundingBox != null) {
@@ -980,7 +966,7 @@ fun MapView(
                 )
             } else {
                 Column(
-                    modifier = Modifier.padding(top = 16.dp, end = 16.dp).align(Alignment.TopEnd),
+                    modifier = Modifier.padding(top = 48.dp, end = 16.dp).align(Alignment.TopEnd),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     OrganicMapButton(
@@ -1274,7 +1260,6 @@ fun MapView(
         OrganicEditWaypointDialog(
             waypoint = showEditWaypointDialog ?: return, 
             onSendClicked = { waypoint ->
-                Logger.d { "User clicked send waypoint ${waypoint.id}" }
                 showEditWaypointDialog = null
                 mapViewModel.sendWaypoint(
                     waypoint.copy {
@@ -1287,12 +1272,10 @@ fun MapView(
                 )
             },
             onDeleteClicked = { waypoint ->
-                Logger.d { "User clicked delete waypoint ${waypoint.id}" }
                 showEditWaypointDialog = null
                 showDeleteMarkerDialog(waypoint)
             },
             onDismissRequest = {
-                Logger.d { "User clicked cancel marker edit dialog" }
                 showEditWaypointDialog = null
             },
         )

@@ -2,7 +2,6 @@
 
 package com.geeksville.mesh.repository.network
 
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.util.ignoreException
 import com.google.protobuf.ByteString
 import kotlinx.coroutines.channels.awaitClose
@@ -47,7 +46,6 @@ constructor(
     private var mqttClient: MqttAsyncClient? = null
 
     fun disconnect() {
-        Logger.i { "MQTT Disconnected" }
         mqttClient?.apply {
             ignoreException { disconnect() }
             close(true)
@@ -87,7 +85,6 @@ constructor(
         val callback =
             object : MqttCallbackExtended {
                 override fun connectComplete(reconnect: Boolean, serverURI: String) {
-                    Logger.i { "MQTT connectComplete: $serverURI reconnect: $reconnect" }
                     channelSet.subscribeList
                         .ifEmpty {
                             return
@@ -100,7 +97,6 @@ constructor(
                 }
 
                 override fun connectionLost(cause: Throwable) {
-                    Logger.i { "MQTT connectionLost cause: $cause" }
                     if (cause is IllegalArgumentException) close(cause)
                 }
 
@@ -115,7 +111,6 @@ constructor(
                 }
 
                 override fun deliveryComplete(token: IMqttDeliveryToken?) {
-                    Logger.i { "MQTT deliveryComplete messageId: ${token?.messageId}" }
                 }
             }
 
@@ -138,15 +133,12 @@ constructor(
 
     private fun subscribe(topic: String) {
         mqttClient?.subscribe(topic, DEFAULT_QOS)
-        Logger.i { "MQTT Subscribed to topic: $topic" }
     }
 
     fun publish(topic: String, data: ByteArray, retained: Boolean) {
         try {
-            val token = mqttClient?.publish(topic, data, DEFAULT_QOS, retained)
-            Logger.i { "MQTT Publish messageId: ${token?.messageId}" }
+            mqttClient?.publish(topic, data, DEFAULT_QOS, retained)
         } catch (ex: Exception) {
-            Logger.e { "MQTT Publish error: ${ex.message}" }
         }
     }
 }

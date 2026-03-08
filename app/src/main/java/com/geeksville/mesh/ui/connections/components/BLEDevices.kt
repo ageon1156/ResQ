@@ -18,9 +18,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BluetoothDisabled
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -54,7 +55,7 @@ import org.meshtastic.core.strings.scan
 import org.meshtastic.core.strings.scanning_bluetooth
 import org.meshtastic.core.ui.util.showToast
 
-@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalPermissionsApi::class)
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 fun BLEDevices(
@@ -150,20 +151,27 @@ fun BLEDevices(
                         Button(
                             enabled = !isScanning,
                             onClick = { checkPermissionsAndScan(permissionsState, scanModel, true) },
+                            shape = MaterialTheme.shapes.extraSmall,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            ),
                         ) {
                             Box {
-
                                 Row(modifier = Modifier.alpha(if (isScanning) 0f else 1f)) {
                                     Icon(
                                         imageVector = Icons.Rounded.Search,
                                         contentDescription = stringResource(Res.string.scan),
                                     )
-                                    Text(stringResource(Res.string.scan))
+                                    Text(stringResource(Res.string.scan).uppercase())
                                 }
-
                                 if (isScanning) {
-                                    CircularWavyProgressIndicator(
-                                        modifier = Modifier.size(24.dp).align(Alignment.Center),
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp).align(Alignment.Center),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                     )
                                 }
                             }

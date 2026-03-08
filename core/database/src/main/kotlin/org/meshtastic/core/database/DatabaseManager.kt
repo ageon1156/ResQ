@@ -5,7 +5,6 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,7 +80,6 @@ class DatabaseManager @Inject constructor(private val app: Application, private 
 
         managerScope.launch(dispatchers.io) { cleanupLegacyDbIfNeeded(activeDbName = dbName) }
 
-        Logger.i { "Switched active DB to ${anonymizeDbName(dbName)} for address ${anonymizeAddress(address)}" }
     }
 
     inline fun <T> withDb(block: (MeshtasticDatabase) -> T): T = block(currentDb.value)
@@ -112,28 +110,13 @@ class DatabaseManager @Inject constructor(private val app: Application, private 
         
         val deviceDbs =
             all.filterNot { it == DatabaseConstants.LEGACY_DB_NAME || it == DatabaseConstants.DEFAULT_DB_NAME }
-        Logger.d {
-            "LRU check: limit=$limit, active=${anonymizeDbName(
-                activeDbName,
-            )}, deviceDbs=${deviceDbs.joinToString(", ") {
-                anonymizeDbName(it)
-            }}"
-        }
         if (deviceDbs.size <= limit) return@withLock
         val usageSnapshot = deviceDbs.associateWith { lastUsed(it) }
-        Logger.d {
-            "LRU lastUsed(ms): ${usageSnapshot.entries.joinToString(", ") { (name, ts) ->
-                "${anonymizeDbName(name)}=$ts"
-            }}"
-        }
         val victims = selectEvictionVictims(deviceDbs, activeDbName, limit, usageSnapshot)
-        Logger.i { "LRU victims: ${victims.joinToString(", ") { anonymizeDbName(it) }}" }
         victims.forEach { name ->
             runCatching { dbCache.remove(name)?.close() }
-                .onFailure { Logger.w(it) { "Failed to close database $name" } }
             app.deleteDatabase(name)
             prefs.edit().remove(lastUsedKey(name)).apply()
-            Logger.i { "Evicted cached DB ${anonymizeDbName(name)}" }
         }
     }
 
@@ -162,13 +145,7 @@ class DatabaseManager @Inject constructor(private val app: Application, private 
         val legacyFile = getDbFile(app, legacy)
         if (legacyFile != null) {
             runCatching { dbCache.remove(legacy)?.close() }
-                .onFailure { Logger.w(it) { "Failed to close legacy database $legacy before deletion" } }
-            val deleted = app.deleteDatabase(legacy)
-            if (deleted) {
-                Logger.i { "Deleted legacy DB ${anonymizeDbName(legacy)}" }
-            } else {
-                Logger.w { "Attempted to delete legacy DB $legacy but deleteDatabase returned false" }
-            }
+            app.deleteDatabase(legacy)
         }
         prefs.edit().putBoolean(DatabaseConstants.LEGACY_DB_CLEANED_KEY, true).apply()
     }

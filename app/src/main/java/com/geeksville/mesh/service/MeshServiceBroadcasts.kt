@@ -4,12 +4,10 @@ package com.geeksville.mesh.service
 import android.content.Context
 import android.content.Intent
 import android.os.Parcelable
-import co.touchlab.kermit.Logger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.meshtastic.core.model.DataPacket
 import org.meshtastic.core.model.MessageStatus
 import org.meshtastic.core.model.NodeInfo
-import org.meshtastic.core.model.util.toPIIString
 import org.meshtastic.core.service.ServiceRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -34,7 +32,6 @@ constructor(
     }
 
     fun broadcastNodeChange(info: NodeInfo) {
-        Logger.d { "Broadcasting node change ${info.user?.toPIIString()}" }
         val intent = Intent(ACTION_NODE_CHANGE).putExtra(EXTRA_NODEINFO, info)
         explicitBroadcast(intent)
     }
@@ -42,10 +39,7 @@ constructor(
     fun broadcastMessageStatus(p: DataPacket) = broadcastMessageStatus(p.id, p.status)
 
     fun broadcastMessageStatus(id: Int, status: MessageStatus?) {
-        if (id == 0) {
-            Logger.d { "Ignoring anonymous packet status" }
-        } else {
-
+        if (id != 0) {
             val intent =
                 Intent(ACTION_MESSAGE_STATUS).apply {
                     putExtra(EXTRA_PACKET_ID, id)

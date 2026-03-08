@@ -3,8 +3,6 @@
 package org.meshtastic.feature.map.model
 
 import android.content.res.Resources
-import android.util.Log
-import org.osmdroid.api.IMapView
 import org.osmdroid.tileprovider.tilesource.OnlineTileSourceBase
 import org.osmdroid.tileprovider.tilesource.TileSourcePolicy
 import org.osmdroid.util.MapTileIndex
@@ -59,7 +57,6 @@ open class NOAAWmsTileSource(
     private var forceHttp = false
 
     init {
-        Log.i(IMapView.LOGTAG, "WMS support is BETA. Please report any issues")
         layer = layername
         this.version = version
         this.srs = srs
@@ -128,7 +125,6 @@ open class NOAAWmsTileSource(
         sb.append(bbox[minY]).append(",")
         sb.append(bbox[maxX]).append(",")
         sb.append(bbox[maxY])
-        Log.i(IMapView.LOGTAG, sb.toString())
         return sb.toString()
     }
 

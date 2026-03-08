@@ -4,7 +4,6 @@ package org.meshtastic.feature.map
 import android.os.RemoteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -139,7 +138,6 @@ abstract class BaseMapViewModel(
         return try {
             serviceRepository.meshService?.packetId
         } catch (ex: RemoteException) {
-            Logger.e { "RemoteException: ${ex.message}" }
             return null
         }
     }
@@ -171,7 +169,6 @@ abstract class BaseMapViewModel(
         try {
             serviceRepository.meshService?.send(p)
         } catch (ex: RemoteException) {
-            Logger.e { "Send DataPacket error: ${ex.message}" }
         }
     }
 

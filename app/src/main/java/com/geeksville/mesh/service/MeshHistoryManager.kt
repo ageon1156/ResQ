@@ -1,10 +1,7 @@
 
 package com.geeksville.mesh.service
 
-import android.util.Log
 import androidx.annotation.VisibleForTesting
-import co.touchlab.kermit.Logger
-import com.geeksville.mesh.BuildConfig
 import com.geeksville.mesh.model.NO_DEVICE_SELECTED
 import com.google.protobuf.ByteString
 import org.meshtastic.core.prefs.mesh.MeshPrefs
@@ -23,7 +20,6 @@ constructor(
     private val packetHandler: PacketHandler,
 ) {
     companion object {
-        private const val HISTORY_TAG = "HistoryReplay"
         private const val DEFAULT_HISTORY_RETURN_WINDOW_MINUTES = 60 * 24
         private const val DEFAULT_HISTORY_RETURN_MAX_MESSAGES = 100
 
@@ -51,20 +47,6 @@ constructor(
         }
     }
 
-    private fun historyLog(priority: Int = Log.INFO, throwable: Throwable? = null, message: () -> String) {
-        if (!BuildConfig.DEBUG) return
-        val logger = Logger.withTag(HISTORY_TAG)
-        val msg = message()
-        when (priority) {
-            Log.VERBOSE -> logger.v(throwable) { msg }
-            Log.DEBUG -> logger.d(throwable) { msg }
-            Log.INFO -> logger.i(throwable) { msg }
-            Log.WARN -> logger.w(throwable) { msg }
-            Log.ERROR -> logger.e(throwable) { msg }
-            else -> logger.i(throwable) { msg }
-        }
-    }
-
     private fun activeDeviceAddress(): String? =
         meshPrefs.deviceAddress?.takeIf { !it.equals(NO_DEVICE_SELECTED, ignoreCase = true) && it.isNotBlank() }
 
@@ -76,8 +58,6 @@ constructor(
     ) {
         val address = activeDeviceAddress()
         if (address == null || myNodeNum == null) {
-            val reason = if (address == null) "no_addr" else "no_my_node"
-            historyLog { "requestHistory skipped trigger=$trigger reason=$reason" }
             return
         }
 
@@ -89,11 +69,6 @@ constructor(
             )
 
         val request = buildStoreForwardHistoryRequest(lastRequest, window, max)
-
-        historyLog {
-            "requestHistory trigger=$trigger transport=$transport addr=$address " +
-                "lastRequest=$lastRequest window=$window max=$max"
-        }
 
         runCatching {
             packetHandler.sendToRadio(
@@ -112,7 +87,7 @@ constructor(
                     .build(),
             )
         }
-            .onFailure { ex -> historyLog(Log.WARN, ex) { "requestHistory failed" } }
+            .onFailure { }
     }
 
     fun updateStoreForwardLastRequest(source: String, lastRequest: Int, transport: String) {
@@ -121,10 +96,6 @@ constructor(
         val current = meshPrefs.getStoreForwardLastRequest(address)
         if (lastRequest != current) {
             meshPrefs.setStoreForwardLastRequest(address, lastRequest)
-            historyLog {
-                "historyMarker updated source=$source transport=$transport " +
-                    "addr=$address from=$current to=$lastRequest"
-            }
         }
     }
 }

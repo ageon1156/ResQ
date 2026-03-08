@@ -51,15 +51,14 @@ import org.meshtastic.core.strings.wifi_devices
 import org.meshtastic.core.ui.component.MainAppBar
 import org.meshtastic.core.ui.component.OptionLabel
 import org.meshtastic.core.ui.component.SlidingSelector
+import org.meshtastic.feature.node.metrics.CommonCharts.CHART_WIDTH_RATIO
+import org.meshtastic.feature.node.metrics.CommonCharts.CHART_WEIGHT
+import org.meshtastic.feature.node.metrics.CommonCharts.Y_AXIS_WEIGHT
 import org.meshtastic.feature.node.model.TimeFrame
 import org.meshtastic.proto.PaxcountProtos
 import org.meshtastic.proto.Portnums.PortNum
 import java.text.DateFormat
 import java.util.Date
-
-private const val CHART_WEIGHT = 1f
-private const val Y_AXIS_WEIGHT = 0.1f
-private const val CHART_WIDTH_RATIO = CHART_WEIGHT / (CHART_WEIGHT + Y_AXIS_WEIGHT + Y_AXIS_WEIGHT)
 
 private enum class PaxSeries(val color: Color, val legendRes: StringResource) {
     PAX(Color.Black, Res.string.pax),
@@ -243,9 +242,7 @@ fun decodePaxFromLog(log: MeshLog): PaxcountProtos.Paxcount? {
             if (pax.ble != 0 || pax.wifi != 0 || pax.uptime != 0) result = pax
         }
     } catch (e: com.google.protobuf.InvalidProtocolBufferException) {
-        android.util.Log.e("PaxMetrics", "Failed to parse Paxcount from binary data", e)
     } catch (e: IllegalArgumentException) {
-        android.util.Log.e("PaxMetrics", "Invalid argument while parsing Paxcount from binary data", e)
     }
     
     if (result == null) {
@@ -261,9 +258,7 @@ fun decodePaxFromLog(log: MeshLog): PaxcountProtos.Paxcount? {
                 result = pax
             }
         } catch (e: IllegalArgumentException) {
-            android.util.Log.e("PaxMetrics", "Invalid Base64 or hex input", e)
         } catch (e: com.google.protobuf.InvalidProtocolBufferException) {
-            android.util.Log.e("PaxMetrics", "Failed to parse Paxcount from decoded data", e)
         }
     }
     return result

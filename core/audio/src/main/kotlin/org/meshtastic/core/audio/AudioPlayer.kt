@@ -3,7 +3,6 @@ package org.meshtastic.core.audio
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -20,7 +19,6 @@ class AudioPlayer @Inject constructor(
     suspend fun play(codec2Bytes: ByteArray, mode: Int = Codec2Wrapper.DEFAULT_MODE) = withContext(Dispatchers.IO) {
         val pcm = codec2.decode(codec2Bytes, mode)
         if (pcm.isEmpty()) {
-            Logger.e { "Codec2 decode produced empty PCM" }
             return@withContext
         }
 

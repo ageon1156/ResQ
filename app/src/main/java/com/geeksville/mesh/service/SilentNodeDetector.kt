@@ -4,7 +4,6 @@ package com.geeksville.mesh.service
 import android.annotation.SuppressLint
 import android.app.Application
 import android.location.LocationManager
-import co.touchlab.kermit.Logger
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,7 +84,6 @@ constructor(
         scanJob = scope.launch { scanLoop() }
         pingJob = scope.launch { pingLoop() }
         scope.launch { cleanupStalePinsOnConnect() }
-        Logger.i { "SilentNodeDetector started" }
     }
 
     fun stop() {
@@ -119,7 +117,6 @@ constructor(
                 tracked.notificationFired.set(false)
             }
         }
-        Logger.d { "cleanupStalePinsOnConnect complete" }
     }
 
     fun onPacketReceived(fromNodeNum: Int) {
@@ -144,7 +141,6 @@ constructor(
         }
 
         if (tracked.state != NodePresenceState.ONLINE) {
-            Logger.i { "Node $fromNodeNum came back online" }
             tracked.state = NodePresenceState.ONLINE
             tracked.silentSinceMs = 0L
             tracked.notificationFired.set(false)
@@ -160,7 +156,6 @@ constructor(
         
         if (list.none { it.reporterNodeNum == report.reporterNodeNum }) {
             list.add(report)
-            Logger.d { "Received silence report for ${report.silentNodeNum} from ${report.reporterNodeNum}" }
         }
     }
 
@@ -192,7 +187,6 @@ constructor(
                 && tracked.missedPings == 0
             ) {
                 if (tracked.state != NodePresenceState.ONLINE) {
-                    Logger.i { "Node $nodeNum still fresh in DB — reverting to ONLINE" }
                     tracked.state = NodePresenceState.ONLINE
                     tracked.silentSinceMs = 0L
                     tracked.notificationFired.set(false)
@@ -212,17 +206,10 @@ constructor(
                     if (pingsFailed || elapsed > SILENCE_TIMEOUT_MS) {
                         
                         if (tracked.lastBatteryPercent in 1 until LOW_BATTERY_THRESHOLD) {
-                            Logger.d { "Ignoring silence for node $nodeNum (battery was ${tracked.lastBatteryPercent}%)" }
                             continue
                         }
                         tracked.state = NodePresenceState.SILENT
                         tracked.silentSinceMs = now
-                        if (pingsFailed) {
-                            Logger.i { "Node $nodeNum marked SILENT (${tracked.missedPings} pings unanswered)" }
-                        } else {
-                            Logger.i { "Node $nodeNum marked SILENT (no heartbeat for ${elapsed}ms)" }
-                        }
-
                         broadcastSilenceReport(nodeNum)
                     }
                 }
@@ -244,14 +231,6 @@ constructor(
 
                     if (confirmedByNeighbor || timedOut) {
                         tracked.state = NodePresenceState.CONFIRMED_SILENT
-                        if (confirmedByNeighbor) {
-                            Logger.i { "Node $nodeNum CONFIRMED SILENT (${reports?.size ?: 0} neighbor(s) agree)" }
-                        } else if (tracked.missedPings >= MISSED_PINGS_FOR_CONFIRMED) {
-                            Logger.i { "Node $nodeNum CONFIRMED SILENT (${tracked.missedPings} pings unanswered)" }
-                        } else {
-                            Logger.i { "Node $nodeNum CONFIRMED SILENT (no neighbor response after ${silentDuration / 1000}s)" }
-                        }
-
                         if (tracked.notificationFired.compareAndSet(false, true)) {
                             fireNotification(tracked)
                             autoPlaceTriagePin(tracked)
@@ -291,8 +270,6 @@ constructor(
             append(locationStr)
         }
 
-        Logger.w { alert }
-
         serviceNotifications.showSilentNodeNotification(
             nodeNum = tracked.nodeNum,
             title = "Silent Node: $nodeName",
@@ -317,15 +294,12 @@ constructor(
             commandSender.sendData(packet)
             serviceBroadcasts.broadcastMessageStatus(packet)
             dataHandler.get().rememberDataPacket(packet, myNodeNum, false)
-            Logger.d { "Broadcast silent-node alert to LongFast channel" }
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            Logger.e(e) { "Failed to broadcast silent-node alert to channel" }
         }
     }
 
     private fun autoPlaceTriagePin(tracked: TrackedNode) {
         if (tracked.lastLatitude == 0.0 && tracked.lastLongitude == 0.0) {
-            Logger.d { "autoPlaceTriagePin: skipping node ${tracked.nodeNum} — no location" }
             return
         }
 
@@ -359,38 +333,13 @@ constructor(
 
         try {
             commandSender.sendData(packet)
-            Logger.i { "Auto-placed RED triage pin $pinId for silent node ${tracked.nodeNum}" }
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            Logger.e(e) { "Failed to broadcast auto-triage pin for node ${tracked.nodeNum}" }
         }
     }
 
     private fun autoRemoveTriagePin(nodeNum: Int) {
         scope.launch {
             triagePinRepository.deletePin("silent-$nodeNum")
-            Logger.i { "Auto-removed triage pin for recovered node $nodeNum" }
-        }
-    }
-
-    private fun computeDistanceString(tracked: TrackedNode): String {
-        
-        val myNode = nodeManager.myNodeNum?.let { nodeManager.nodeDBbyNodeNum[it] }
-        val (myLat, myLng) = if (myNode != null && (myNode.latitude != 0.0 || myNode.longitude != 0.0)) {
-            myNode.latitude to myNode.longitude
-        } else {
-            getDeviceLocation() ?: return "Unknown"
-        }
-
-        if (tracked.lastLatitude == 0.0 && tracked.lastLongitude == 0.0) return "Unknown"
-
-        val meters = latLongToMeter(
-            myLat, myLng,
-            tracked.lastLatitude, tracked.lastLongitude,
-        ).toInt()
-
-        return when {
-            meters < 1000 -> "${meters}m"
-            else -> "%.1fkm".format(meters / 1000.0)
         }
     }
 
@@ -444,7 +393,6 @@ constructor(
                 sendPing(nodeNum)
                 tracked.lastPingMs = now
                 tracked.missedPings++
-                Logger.d { "Ping sent to node $nodeNum (missed=${tracked.missedPings})" }
             }
         }
     }
@@ -465,7 +413,6 @@ constructor(
         try {
             commandSender.sendData(packet)
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            Logger.e(e) { "Failed to send heartbeat ping to node $nodeNum" }
         }
     }
 
@@ -485,9 +432,7 @@ constructor(
 
         try {
             commandSender.sendData(packet)
-            Logger.d { "Broadcast silence report for node $silentNodeNum (hop limit=$MAX_BROADCAST_HOPS)" }
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            Logger.e(e) { "Failed to broadcast silence report" }
         }
     }
 
@@ -516,7 +461,6 @@ constructor(
         if (!text.startsWith("HB|")) return false
 
         onPacketReceived(fromNodeNum)
-        Logger.d { "Firmware heartbeat from node $fromNodeNum" }
         return true
     }
 
@@ -534,9 +478,7 @@ constructor(
 
         try {
             commandSender.sendData(packet)
-            Logger.i { "Broadcast graceful exit for node $myNum" }
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-            Logger.e(e) { "Failed to broadcast graceful exit" }
         }
     }
 
@@ -551,7 +493,6 @@ constructor(
         if (exitingNodeNum == nodeManager.myNodeNum) return true
 
         gracefullyExitedNodes[exitingNodeNum] = timestamp
-        Logger.i { "Node $exitingNodeNum announced graceful exit" }
         return true
     }
 

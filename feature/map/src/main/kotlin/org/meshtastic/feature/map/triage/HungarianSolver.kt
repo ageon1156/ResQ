@@ -3,15 +3,6 @@ package org.meshtastic.feature.map.triage
 private const val INF = Double.MAX_VALUE / 2.0
 
 object HungarianSolver {
-    /**
-     * Solves the assignment problem for a rectangular cost matrix using the
-     * potential-based O(n³) Hungarian algorithm.
-     *
-     * @param cost  cost[i][j] = cost to assign worker i to job j.
-     *              rows = numWorkers, cols = numJobs.
-     * @return IntArray of length numWorkers where result[i] = column assigned to
-     *         worker i, or -1 if the worker is unassigned (only when numWorkers > numJobs).
-     */
     fun solve(cost: Array<DoubleArray>): IntArray {
         if (cost.isEmpty()) return IntArray(0)
         val numWorkers = cost.size

@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.IInterface
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.util.exceptionReporter
 import kotlinx.coroutines.delay
 import java.io.Closeable
@@ -52,14 +51,11 @@ open class ServiceClient<T : IInterface>(private val stubFactory: (IBinder) -> T
             isClosed = false
             if (!c.bindService(intent, connection, flags)) {
 
-                Logger.e { "Needed to use the second bind attempt hack" }
-                delay(500) 
+                delay(500)
                 if (!c.bindService(intent, connection, flags)) {
                     throw BindFailedException()
                 }
             }
-        } else {
-            Logger.w { "Ignoring rebind attempt for service" }
         }
     }
 
@@ -67,9 +63,7 @@ open class ServiceClient<T : IInterface>(private val stubFactory: (IBinder) -> T
         isClosed = true
         try {
             context?.unbindService(connection)
-        } catch (ex: IllegalArgumentException) {
-            
-            Logger.w { "Ignoring error in ServiceClient.close, probably harmless" }
+        } catch (_: IllegalArgumentException) {
         }
         serviceP = null
         context = null
@@ -88,9 +82,6 @@ open class ServiceClient<T : IInterface>(private val stubFactory: (IBinder) -> T
                     onConnected(s)
 
                     lock.withLock { condition.signalAll() }
-                } else {
-
-                    Logger.w { "A service connected while we were closing it, ignoring" }
                 }
             }
 

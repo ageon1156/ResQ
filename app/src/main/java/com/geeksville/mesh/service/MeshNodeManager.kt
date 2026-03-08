@@ -2,7 +2,6 @@
 package com.geeksville.mesh.service
 
 import androidx.annotation.VisibleForTesting
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.concurrent.handledLaunch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -174,7 +173,6 @@ constructor(
         defaultTime: Long = System.currentTimeMillis(),
     ) {
         if (myNodeNum == fromNum && p.latitudeI == 0 && p.longitudeI == 0) {
-            Logger.d { "Ignoring nop position update for the local node" }
         } else {
             updateNodeInfo(fromNum) { it.setPosition(p, (defaultTime / TIME_MS_TO_S).toInt()) }
         }

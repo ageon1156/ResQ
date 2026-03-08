@@ -1,7 +1,6 @@
 
 package com.geeksville.mesh.service
 
-import co.touchlab.kermit.Logger
 import com.meshtastic.core.strings.getString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +34,6 @@ constructor(
 
         if (packet.from == nodeManager.myNodeNum) {
             commandSender.lastNeighborInfo = ni
-            Logger.d { "Stored last neighbor info from connected radio" }
         }
 
         nodeManager.nodeDBbyNodeNum[packet.from]?.let { serviceBroadcasts.broadcastNodeChange(it.toNodeInfo()) }
@@ -56,7 +54,6 @@ constructor(
             if (start != null) {
                 val elapsedMs = System.currentTimeMillis() - start
                 val seconds = elapsedMs / MILLIS_PER_SECOND
-                Logger.i { "Neighbor info $requestId complete in $seconds s" }
                 String.format(Locale.US, "%s\n\nDuration: %.1f s", formatted, seconds)
             } else {
                 formatted

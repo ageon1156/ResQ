@@ -17,7 +17,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -27,7 +26,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import co.touchlab.kermit.Logger
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -67,7 +65,6 @@ fun AddContactFAB(
                     try {
                         uri.toSharedContact()
                     } catch (ex: MalformedURLException) {
-                        Logger.e { "URL was malformed: ${ex.message}" }
                         null
                     }
                 if (sharedContact != null) {
@@ -79,7 +76,6 @@ fun AddContactFAB(
     sharedContact?.let { SharedContactDialog(sharedContact = it, onDismiss = { onSharedContactRequested(null) }) }
 
     fun zxingScan() {
-        Logger.d { "Starting zxing QR code scanner" }
         val zxingScan = ScanOptions()
         zxingScan.setCameraId(CAMERA_ID)
         zxingScan.setPrompt("")
@@ -89,14 +85,6 @@ fun AddContactFAB(
     }
 
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
-
-    LaunchedEffect(cameraPermissionState.status) {
-        if (cameraPermissionState.status.isGranted) {
-            Logger.d { "Camera permission granted" }
-        } else {
-            Logger.d { "Camera permission denied" }
-        }
-    }
 
     FloatingActionButton(
         modifier = modifier,
@@ -163,7 +151,6 @@ val Uri.qrCode: Bitmap?
             val barcodeEncoder = BarcodeEncoder()
             barcodeEncoder.createBitmap(bitMatrix)
         } catch (ex: WriterException) {
-            Logger.e { "URL was too complex to render as barcode: ${ex.message}" }
             null
         }
 

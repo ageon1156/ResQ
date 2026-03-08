@@ -10,7 +10,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.repository.radio.MeshActivity
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -80,7 +79,7 @@ fun getInitials(fullName: String): String {
 
 private fun String.withoutEmojis(): String = filterNot { char -> char.isSurrogate() }
 
-@Suppress("LongParameterList", "LargeClass", "UnusedPrivateProperty")
+@Suppress("LongParameterList", "LargeClass")
 @HiltViewModel
 class UIViewModel
 @Inject
@@ -187,7 +186,6 @@ constructor(
             }
             .launchIn(viewModelScope)
 
-        Logger.d { "ViewModel created" }
     }
 
     private val _sharedContactRequested: MutableStateFlow<AdminProtos.SharedContact?> = MutableStateFlow(null)
@@ -196,8 +194,7 @@ constructor(
 
     fun setSharedContactRequested(url: Uri, onFailure: () -> Unit) {
         runCatching { _sharedContactRequested.value = url.toSharedContact() }
-            .onFailure { ex ->
-                Logger.e(ex) { "Shared contact error" }
+            .onFailure { _ ->
                 onFailure()
             }
     }
@@ -215,8 +212,7 @@ constructor(
 
     fun requestChannelUrl(url: Uri, onFailure: () -> Unit) =
         runCatching { _requestChannelSet.value = url.toChannelSet() }
-            .onFailure { ex ->
-                Logger.e(ex) { "Channel url error" }
+            .onFailure { _ ->
                 onFailure()
             }
 
@@ -224,11 +220,6 @@ constructor(
 
     fun clearRequestChannelUrl() {
         _requestChannelSet.value = null
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        Logger.d { "ViewModel cleared" }
     }
 
     val tracerouteResponse: LiveData<TracerouteResponse?>

@@ -169,6 +169,9 @@ private fun ChannelConfigScreen(
                         }
                     },
                     modifier = Modifier.padding(16.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp),
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                    contentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
                 ) {
                     Icon(Icons.TwoTone.Add, stringResource(Res.string.add))
                 }
@@ -191,10 +194,11 @@ private fun ChannelConfigScreen(
                         primaryChannel.channelNum
                     },
                 )
-                Text(
-                    text = stringResource(Res.string.press_and_drag),
-                    fontSize = 11.sp,
-                    modifier = Modifier.padding(start = 16.dp),
+                androidx.compose.material3.Text(
+                    text = stringResource(Res.string.press_and_drag).uppercase(),
+                    style = androidx.compose.material3.MaterialTheme.typography.labelSmall,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 16.dp, bottom = 4.dp),
                 )
 
                 ChannelLegend { showChannelLegendDialog = true }

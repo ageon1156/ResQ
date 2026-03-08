@@ -13,7 +13,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import com.google.protobuf.MessageLite
 import com.meshtastic.core.strings.getString
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -181,7 +180,6 @@ constructor(
             }
             .launchIn(viewModelScope)
 
-        Logger.d { "RadioConfigViewModel created" }
     }
 
     private val myNodeInfo: StateFlow<MyNodeEntity?>
@@ -207,7 +205,6 @@ constructor(
 
     override fun onCleared() {
         super.onCleared()
-        Logger.d { "RadioConfigViewModel cleared" }
     }
 
     private fun request(destNum: Int, requestAction: suspend (IMeshService, Int, Int) -> Unit, errorMessage: String) =
@@ -230,7 +227,6 @@ constructor(
                         }
                     }
                 } catch (ex: RemoteException) {
-                    Logger.e { "$errorMessage: ${ex.message}" }
                 }
             }
         }
@@ -240,7 +236,6 @@ constructor(
 
         val fixedUser =
             if (targetNode.user.id.isNotEmpty() && targetNode.user.id != user.id) {
-                Logger.w { "Fixing user ID mismatch in setOwner: form=${user.id} target=${targetNode.user.id}" }
                 user.toBuilder().setId(targetNode.user.id).build()
             } else {
                 user
@@ -434,7 +429,6 @@ constructor(
         try {
             meshService?.setFixedPosition(destNum, position)
         } catch (ex: RemoteException) {
-            Logger.e { "Set fixed position error: ${ex.message}" }
         }
     }
 
@@ -448,7 +442,6 @@ constructor(
                 onResult(protobuf)
             }
         } catch (ex: Exception) {
-            Logger.e { "Import DeviceProfile error: ${ex.message}" }
             sendError(ex.customMessage)
         }
     }
@@ -464,7 +457,6 @@ constructor(
             }
             setResponseStateSuccess()
         } catch (ex: Exception) {
-            Logger.e { "Can't write file error: ${ex.message}" }
             sendError(ex.customMessage)
         }
     }
@@ -499,8 +491,6 @@ constructor(
                 }
                 setResponseStateSuccess()
             } catch (ex: Exception) {
-                val errorMessage = "Can't write security keys JSON error: ${ex.message}"
-                Logger.e { errorMessage }
                 sendError(ex.customMessage)
             }
         }
@@ -526,7 +516,6 @@ constructor(
                 try {
                     setChannels(channelUrl)
                 } catch (ex: Exception) {
-                    Logger.e(ex) { "DeviceProfile channel import error" }
                     sendError(ex.customMessage)
                 }
             }
@@ -663,11 +652,9 @@ constructor(
         val route = radioConfigState.value.route
 
         val destNum = destNode.value?.num ?: return
-        val debugMsg = "requestId: ${data.requestId.toUInt()} to: ${destNum.toUInt()} received %s"
 
         if (data?.portnumValue == Portnums.PortNum.ROUTING_APP_VALUE) {
             val parsed = MeshProtos.Routing.parseFrom(data.payload)
-            Logger.d { debugMsg.format(parsed.errorReason.name) }
             if (parsed.errorReason != MeshProtos.Routing.Error.NONE) {
                 sendError(getStringResFrom(parsed.errorReasonValue))
             } else if (packet.from == destNum && route.isEmpty()) {
@@ -681,9 +668,7 @@ constructor(
         }
         if (data?.portnumValue == Portnums.PortNum.ADMIN_APP_VALUE) {
             val parsed = AdminProtos.AdminMessage.parseFrom(data.payload)
-            Logger.d { debugMsg.format(parsed.payloadVariantCase.name) }
             if (destNum != packet.from) {
-                Logger.w { "Unexpected sender: ${packet.from.toUInt()} instead of ${destNum.toUInt()}." }
                 return
             }
             when (parsed.payloadVariantCase) {
@@ -757,7 +742,7 @@ constructor(
                     incrementCompleted()
                 }
 
-                else -> Logger.d { "No custom processing needed for ${parsed.payloadVariantCase}" }
+                else -> {}
             }
 
             if (AdminRoute.entries.any { it.name == route }) {

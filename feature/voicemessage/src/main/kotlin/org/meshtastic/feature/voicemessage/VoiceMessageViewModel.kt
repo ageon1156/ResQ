@@ -2,7 +2,6 @@ package org.meshtastic.feature.voicemessage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -91,7 +90,6 @@ class VoiceMessageViewModel @Inject constructor(
     fun playMessage(message: VoiceMessage) {
         viewModelScope.launch {
             runCatching { audioPlayer.play(message.codec2Bytes) }
-                .onFailure { Logger.e(it) { "Playback failed" } }
         }
     }
 
@@ -111,8 +109,7 @@ class VoiceMessageViewModel @Inject constructor(
 
         val codec2Bytes = runCatching {
             codec2.encode(allPcm, Codec2Wrapper.DEFAULT_MODE)
-        }.getOrElse { ex ->
-            Logger.e(ex) { "Codec2 encode failed" }
+        }.getOrElse {
             _uiState.value = VoiceUiState.Error("Encoding failed")
             return@withContext
         }
@@ -139,7 +136,6 @@ class VoiceMessageViewModel @Inject constructor(
                 serviceRepository.meshService?.send(packet)
                 _uiState.value = VoiceUiState.Sending(index + 1, fragments.size)
             } catch (ex: Exception) {
-                Logger.e(ex) { "Voice fragment send failed at index $index" }
                 _uiState.value = VoiceUiState.Error("Send failed: ${ex.message}")
                 return@withContext
             }

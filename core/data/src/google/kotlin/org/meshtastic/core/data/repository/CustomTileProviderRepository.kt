@@ -2,7 +2,6 @@
 
 package org.meshtastic.core.data.repository
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -72,7 +71,6 @@ constructor(
             try {
                 customTileProvidersStateFlow.value = json.decodeFromString<List<CustomTileProviderConfig>>(jsonString)
             } catch (e: SerializationException) {
-                Logger.e(e) { "Error deserializing tile providers" }
                 customTileProvidersStateFlow.value = emptyList()
             }
         } else {
@@ -86,7 +84,6 @@ constructor(
                 val jsonString = json.encodeToString(providers)
                 mapTileProviderPrefs.customTileProviders = jsonString
             } catch (e: SerializationException) {
-                Logger.e(e) { "Error serializing tile providers" }
             }
         }
     }

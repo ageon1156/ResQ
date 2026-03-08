@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
@@ -42,7 +41,7 @@ fun <T> PacketResponseStateDialog(state: ResponseState<T>, onDismiss: () -> Unit
     }
     AlertDialog(
         onDismissRequest = {},
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.extraSmall,
         title = {
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 if (state is ResponseState.Loading) {
@@ -51,23 +50,42 @@ fun <T> PacketResponseStateDialog(state: ResponseState<T>, onDismiss: () -> Unit
                             targetValue = state.completed.toFloat() / state.total.toFloat(),
                             label = "progress",
                         )
-                    Text("%.0f%%".format(progress * 100))
-                    LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+                    Text(
+                        text = "%.0f%%".format(progress * 100),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    )
                     state.status?.let {
                         Text(
                             text = it,
                             modifier = Modifier.padding(top = 8.dp),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     if (state.completed >= state.total) onComplete()
                 }
                 if (state is ResponseState.Success) {
-                    Text(text = stringResource(Res.string.delivery_confirmed))
+                    Text(
+                        text = stringResource(Res.string.delivery_confirmed).uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
                 if (state is ResponseState.Error) {
-                    Text(text = stringResource(Res.string.error), minLines = 2)
-                    Text(text = state.error.asString())
+                    Text(
+                        text = stringResource(Res.string.error).uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        minLines = 2,
+                    )
+                    Text(text = state.error.asString(), style = MaterialTheme.typography.bodySmall)
                 }
             }
         },
@@ -84,8 +102,9 @@ fun <T> PacketResponseStateDialog(state: ResponseState<T>, onDismiss: () -> Unit
                         }
                     },
                     modifier = Modifier.padding(top = 16.dp),
+                    shape = MaterialTheme.shapes.extraSmall,
                 ) {
-                    Text(stringResource(Res.string.close))
+                    Text(stringResource(Res.string.close).uppercase(), style = MaterialTheme.typography.labelMedium)
                 }
             }
         },

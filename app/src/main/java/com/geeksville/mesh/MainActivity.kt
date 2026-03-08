@@ -28,7 +28,6 @@ import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.model.UIViewModel
 import com.geeksville.mesh.ui.MainScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -118,27 +117,21 @@ class MainActivity : AppCompatActivity() {
         when (appLinkAction) {
             Intent.ACTION_VIEW -> {
                 appLinkData?.let {
-                    Logger.d { "App link data: $it" }
                     if (it.path?.startsWith("/e/") == true || it.path?.startsWith("/E/") == true) {
-                        Logger.d { "App link data is a channel set" }
                         model.requestChannelUrl(
                             url = it,
                             onFailure = { lifecycleScope.launch { showToast(Res.string.channel_invalid) } },
                         )
                     } else if (it.path?.startsWith("/v/") == true || it.path?.startsWith("/V/") == true) {
-                        Logger.d { "App link data is a shared contact" }
                         model.setSharedContactRequested(
                             url = it,
                             onFailure = { lifecycleScope.launch { showToast(Res.string.contact_invalid) } },
                         )
-                    } else {
-                        Logger.d { "App link data is not a channel set" }
                     }
                 }
             }
 
             UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
-                Logger.d { "USB device attached" }
                 showSettingsPage()
             }
 
@@ -151,9 +144,8 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            else -> {
-                Logger.w { "Unexpected action $appLinkAction" }
-            }
+            else -> {}
+
         }
     }
 

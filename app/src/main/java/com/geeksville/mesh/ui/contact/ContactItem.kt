@@ -62,7 +62,7 @@ fun ContactItem(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .semantics { contentDescription = shortName },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(4.dp),
         colors = colors,
         border = if (isOutlined) CardDefaults.outlinedCardBorder() else null,
     ) {

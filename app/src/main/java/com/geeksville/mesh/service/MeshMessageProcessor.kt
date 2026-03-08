@@ -1,9 +1,6 @@
 
 package com.geeksville.mesh.service
 
-import android.util.Log
-import co.touchlab.kermit.Logger
-import com.geeksville.mesh.BuildConfig
 import com.geeksville.mesh.concurrent.handledLaunch
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
@@ -64,27 +61,18 @@ constructor(
     fun handleFromRadio(bytes: ByteArray, myNodeNum: Int?) {
         runCatching { MeshProtos.FromRadio.parseFrom(bytes) }
             .onSuccess { proto ->
-                if (proto.payloadVariantCase == PayloadVariantCase.PAYLOADVARIANT_NOT_SET) {
-                    Logger.w { "Received FromRadio with PAYLOADVARIANT_NOT_SET. rawBytes=${bytes.toHexString()}" }
-                }
                 processFromRadio(proto, myNodeNum)
             }
-            .onFailure { primaryException ->
+            .onFailure {
                 runCatching {
                     val logRecord = MeshProtos.LogRecord.parseFrom(bytes)
                     processFromRadio(fromRadio { this.logRecord = logRecord }, myNodeNum)
                 }
-                    .onFailure { _ ->
-                        Logger.e(primaryException) {
-                            "Failed to parse radio packet (len=${bytes.size} contents=${bytes.toHexString()}). " +
-                                "Not a valid FromRadio or LogRecord."
-                        }
-                    }
+                    .onFailure { }
             }
     }
 
     private fun processFromRadio(proto: MeshProtos.FromRadio, myNodeNum: Int?) {
-        
         logVariant(proto)
 
         if (proto.payloadVariantCase == PayloadVariantCase.PACKET) {
@@ -133,29 +121,9 @@ constructor(
             synchronized(earlyReceivedPackets) {
                 val queueSize = earlyReceivedPackets.size
                 if (queueSize >= maxEarlyPacketBuffer) {
-                    val dropped = earlyReceivedPackets.removeFirst()
-                    historyLog(Log.WARN) {
-                        val portLabel =
-                            if (dropped.hasDecoded()) {
-                                Portnums.PortNum.forNumber(dropped.decoded.portnumValue)?.name
-                                    ?: dropped.decoded.portnumValue.toString()
-                            } else {
-                                "unknown"
-                            }
-                        "dropEarlyPacket bufferFull size=$queueSize id=${dropped.id} port=$portLabel"
-                    }
+                    earlyReceivedPackets.removeFirst()
                 }
                 earlyReceivedPackets.addLast(preparedPacket)
-                val portLabel =
-                    if (preparedPacket.hasDecoded()) {
-                        Portnums.PortNum.forNumber(preparedPacket.decoded.portnumValue)?.name
-                            ?: preparedPacket.decoded.portnumValue.toString()
-                    } else {
-                        "unknown"
-                    }
-                historyLog {
-                    "queueEarlyPacket size=${earlyReceivedPackets.size} id=${preparedPacket.id} port=$portLabel"
-                }
             }
         }
     }
@@ -168,7 +136,6 @@ constructor(
                 earlyReceivedPackets.clear()
                 list
             }
-        historyLog { "replayEarlyPackets reason=$reason count=${packets.size}" }
         val myNodeNum = nodeManager.myNodeNum
         packets.forEach { processReceivedMeshPacket(it, myNodeNum) }
     }
@@ -223,24 +190,6 @@ constructor(
     }
 
     private fun insertMeshLog(log: MeshLog): Job = scope.handledLaunch { meshLogRepository.get().insert(log) }
-
-    private inline fun historyLog(
-        priority: Int = Log.INFO,
-        throwable: Throwable? = null,
-        crossinline message: () -> String,
-    ) {
-        if (!BuildConfig.DEBUG) return
-        val logger = Logger.withTag("HistoryReplay")
-        val msg = message()
-        when (priority) {
-            Log.VERBOSE -> logger.v(throwable) { msg }
-            Log.DEBUG -> logger.d(throwable) { msg }
-            Log.INFO -> logger.i(throwable) { msg }
-            Log.WARN -> logger.w(throwable) { msg }
-            Log.ERROR -> logger.e(throwable) { msg }
-            else -> logger.i(throwable) { msg }
-        }
-    }
 
     private fun ByteArray.toHexString(): String =
         this.joinToString(",") { byte -> String.format(Locale.US, "0x%02x", byte) }

@@ -53,9 +53,9 @@ fun NodeChip(modifier: Modifier = Modifier, node: Node, onClick: ((Node) -> Unit
     }
 
     if (onClick == null) {
-        Card(modifier = modifier, shape = MaterialTheme.shapes.small, colors = colors) { content() }
+        Card(modifier = modifier, shape = MaterialTheme.shapes.extraSmall, colors = colors) { content() }
     } else {
-        Card(modifier = modifier, shape = MaterialTheme.shapes.small, colors = colors, onClick = { onClick(node) }) {
+        Card(modifier = modifier, shape = MaterialTheme.shapes.extraSmall, colors = colors, onClick = { onClick(node) }) {
             content()
         }
     }

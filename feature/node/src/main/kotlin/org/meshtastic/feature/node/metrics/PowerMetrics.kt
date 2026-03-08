@@ -4,7 +4,6 @@ package org.meshtastic.feature.node.metrics
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,16 +12,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,8 +31,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -254,72 +246,6 @@ private fun PowerMetricsChart(
     Spacer(modifier = Modifier.height(16.dp))
 }
 
-@Composable
-private fun PowerMetricsCard(telemetry: Telemetry) {
-    val time = telemetry.time * MS_PER_SEC
-    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
-        Surface {
-            SelectionContainer {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(8.dp)) {
-                        
-                        Row {
-                            Text(
-                                text = DATE_TIME_FORMAT.format(time),
-                                style = TextStyle(fontWeight = FontWeight.Bold),
-                                fontSize = MaterialTheme.typography.labelLarge.fontSize,
-                            )
-                        }
-                        Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                            if (telemetry.powerMetrics.hasCh1Current() || telemetry.powerMetrics.hasCh1Voltage()) {
-                                PowerChannelColumn(
-                                    Res.string.channel_1,
-                                    telemetry.powerMetrics.ch1Voltage,
-                                    telemetry.powerMetrics.ch1Current,
-                                )
-                            }
-                            if (telemetry.powerMetrics.hasCh2Current() || telemetry.powerMetrics.hasCh2Voltage()) {
-                                PowerChannelColumn(
-                                    Res.string.channel_2,
-                                    telemetry.powerMetrics.ch2Voltage,
-                                    telemetry.powerMetrics.ch2Current,
-                                )
-                            }
-                            if (telemetry.powerMetrics.hasCh3Current() || telemetry.powerMetrics.hasCh3Voltage()) {
-                                PowerChannelColumn(
-                                    Res.string.channel_3,
-                                    telemetry.powerMetrics.ch3Voltage,
-                                    telemetry.powerMetrics.ch3Current,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PowerChannelColumn(titleRes: StringResource, voltage: Float, current: Float) {
-    Column {
-        Text(
-            text = stringResource(titleRes),
-            style = TextStyle(fontWeight = FontWeight.Bold),
-            fontSize = MaterialTheme.typography.labelLarge.fontSize,
-        )
-        Text(
-            text = "%.2fV".format(voltage),
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = MaterialTheme.typography.labelLarge.fontSize,
-        )
-        Text(
-            text = "%.1fmA".format(current),
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = MaterialTheme.typography.labelLarge.fontSize,
-        )
-    }
-}
 
 private fun retrieveVoltage(channelSelected: PowerChannel, telemetry: Telemetry): Float = when (channelSelected) {
     PowerChannel.ONE -> telemetry.powerMetrics.ch1Voltage

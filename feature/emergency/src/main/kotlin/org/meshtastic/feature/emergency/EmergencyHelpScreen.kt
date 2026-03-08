@@ -3,11 +3,13 @@
 package org.meshtastic.feature.emergency
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -24,18 +26,20 @@ import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,15 +55,6 @@ import org.meshtastic.core.strings.emergency_loading_error
 import org.meshtastic.feature.emergency.component.EmergencyTopicCard
 import org.meshtastic.feature.emergency.data.EmergencyGuideData
 
-private val EmergencyDarkScheme = darkColorScheme(
-    background = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E),
-    onBackground = Color.White,
-    onSurface = Color.White,
-    primary = Color(0xFF90CAF9),
-    onPrimary = Color.Black,
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EmergencyHelpScreen(
@@ -69,25 +64,34 @@ fun EmergencyHelpScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val disclaimerAccepted by viewModel.disclaimerAccepted.collectAsStateWithLifecycle()
 
-    MaterialTheme(colorScheme = EmergencyDarkScheme) {
-        Scaffold(
-            containerColor = Color(0xFF121212),
-            topBar = {
+    Scaffold(
+        topBar = {
+            Column {
                 TopAppBar(
+                    navigationIcon = {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(id = org.meshtastic.core.ui.R.drawable.ic_meshtastic),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(start = 16.dp).size(28.dp),
+                        )
+                    },
                     title = {
                         Text(
                             text = stringResource(Res.string.emergency_help),
                             fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
+                            style = MaterialTheme.typography.titleLarge.copy(letterSpacing = 1.sp),
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF121212),
-                        titleContentColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
                     ),
                 )
-            },
-        ) { innerPadding ->
+                HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+            }
+        },
+    ) { innerPadding ->
             when (val state = uiState) {
                 is EmergencyUiState.Loading -> {
                     Box(
@@ -96,7 +100,7 @@ fun EmergencyHelpScreen(
                             .padding(innerPadding),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(color = Color(0xFF90CAF9))
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     }
                 }
 
@@ -109,8 +113,8 @@ fun EmergencyHelpScreen(
                     ) {
                         Text(
                             text = stringResource(Res.string.emergency_loading_error),
-                            color = Color(0xFFE53935),
-                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
                         )
                     }
                 }
@@ -130,7 +134,6 @@ fun EmergencyHelpScreen(
                 }
             }
         }
-    }
 }
 
 @Composable
@@ -222,9 +225,9 @@ private fun EmergencyContent(
 @Composable
 private fun SectionHeader(title: String) {
     Text(
-        text = title,
-        color = Color(0xFF90CAF9),
-        fontSize = 14.sp,
+        text = title.uppercase(),
+        color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Bold,
         letterSpacing = 1.sp,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -281,10 +284,11 @@ private fun EmergencyContactsCard(
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Text(
-            text = section.category,
-            color = Color(0xFFE53935),
-            fontSize = 13.sp,
+            text = section.category.uppercase(),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
@@ -297,16 +301,16 @@ private fun EmergencyContactsCard(
             ) {
                 Text(
                     text = contact.service,
-                    color = Color(0xFFE0E0E0),
-                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.weight(1f)
                 )
 
                 if (contact.number != null) {
                     Text(
                         text = contact.number,
-                        color = Color(0xFF90CAF9),
-                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold
                     )
                 } else if (contact.numbers != null) {
@@ -316,8 +320,8 @@ private fun EmergencyContactsCard(
                         contact.numbers.forEach { number ->
                             Text(
                                 text = number,
-                                color = Color(0xFF90CAF9),
-                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold
                             )
                         }

@@ -4,7 +4,6 @@ package com.geeksville.mesh.repository.radio
 import android.app.Application
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.repository.bluetooth.BluetoothRepository
 import com.geeksville.mesh.repository.network.NetworkRepository
@@ -98,7 +97,6 @@ constructor(
     fun keepAlive(now: Long = System.currentTimeMillis()) {
         if (now - lastHeartbeatMillis > HEARTBEAT_INTERVAL_MILLIS) {
             if (radioIf is SerialInterface) {
-                Logger.i { "Sending ToRadio heartbeat" }
                 val heartbeat =
                     MeshProtos.ToRadio.newBuilder().setHeartbeat(MeshProtos.Heartbeat.getDefaultInstance()).build()
                 handleSendToRadio(heartbeat.toByteArray())
@@ -126,7 +124,6 @@ constructor(
     }
 
     private fun broadcastConnectionChanged(newState: ConnectionState) {
-        Logger.d { "Broadcasting connection state change to $newState" }
         processLifecycle.coroutineScope.launch(dispatchers.default) { _connectionState.emit(newState) }
     }
 
@@ -140,7 +137,6 @@ constructor(
             processLifecycle.coroutineScope.launch(dispatchers.io) { _receivedData.emit(p) }
             emitReceiveActivity()
         } catch (t: Throwable) {
-            Logger.e(t) { "RadioInterfaceService.handleFromRadio failed while emitting data" }
         }
     }
 
@@ -164,15 +160,10 @@ constructor(
 
     private fun startInterface() {
         if (radioIf !is NopInterface) {
-            Logger.w { "Can't start interface - $radioIf is already running" }
         } else {
             val address = getBondedDeviceAddress()
-            if (address == null) {
-                Logger.w { "No bonded mesh radio, can't start interface" }
-            } else {
-                Logger.i { "Starting radio ${address.anonymize}" }
+            if (address != null) {
                 isStarted = true
-
                 radioIf = interfaceFactory.createInterface(address)
                 startHeartbeat()
             }
@@ -194,7 +185,6 @@ constructor(
 
     private fun stopInterface() {
         val r = radioIf
-        Logger.i { "stopping interface $r" }
         isStarted = false
         radioIf = interfaceFactory.nopInterface
         r.close()
@@ -209,15 +199,11 @@ constructor(
 
     private fun setBondedDeviceAddress(address: String?): Boolean =
         if (getBondedDeviceAddress() == address && isStarted && _connectionState.value == ConnectionState.Connected) {
-            Logger.w { "Ignoring setBondedDevice ${address.anonymize}, because we are already using that device" }
             false
         } else {
-            
             analytics.track("mesh_bond")
 
             ignoreException { stopInterface() }
-
-            Logger.d { "Setting bonded device to ${address.anonymize}" }
 
             radioPrefs.devAddr = address
             _currentDeviceAddressFlow.value = address
@@ -248,18 +234,11 @@ constructor(
     val meshActivity: SharedFlow<MeshActivity> = _meshActivity.asSharedFlow()
 
     private fun emitSendActivity() {
-        
-        val emitted = _meshActivity.tryEmit(MeshActivity.Send)
-        if (!emitted) {
-            Logger.d { "MeshActivity.Send event was not emitted due to buffer overflow or no collectors" }
-        }
+        _meshActivity.tryEmit(MeshActivity.Send)
     }
 
     private fun emitReceiveActivity() {
-        val emitted = _meshActivity.tryEmit(MeshActivity.Receive)
-        if (!emitted) {
-            Logger.d { "MeshActivity.Receive event was not emitted due to buffer overflow or no collectors" }
-        }
+        _meshActivity.tryEmit(MeshActivity.Receive)
     }
 }
 

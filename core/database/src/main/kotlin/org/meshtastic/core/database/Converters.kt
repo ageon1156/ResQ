@@ -2,7 +2,6 @@
 package org.meshtastic.core.database
 
 import androidx.room.TypeConverter
-import co.touchlab.kermit.Logger
 import com.google.protobuf.ByteString
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.serialization.json.Json
@@ -28,7 +27,6 @@ class Converters {
     fun bytesToFromRadio(bytes: ByteArray): MeshProtos.FromRadio = try {
         MeshProtos.FromRadio.parseFrom(bytes)
     } catch (ex: InvalidProtocolBufferException) {
-        Logger.e(ex) { "bytesToFromRadio TypeConverter error" }
         MeshProtos.FromRadio.getDefaultInstance()
     }
 
@@ -38,7 +36,6 @@ class Converters {
     fun bytesToUser(bytes: ByteArray): MeshProtos.User = try {
         MeshProtos.User.parseFrom(bytes)
     } catch (ex: InvalidProtocolBufferException) {
-        Logger.e(ex) { "bytesToUser TypeConverter error" }
         MeshProtos.User.getDefaultInstance()
     }
 
@@ -48,7 +45,6 @@ class Converters {
     fun bytesToPosition(bytes: ByteArray): MeshProtos.Position = try {
         MeshProtos.Position.parseFrom(bytes)
     } catch (ex: InvalidProtocolBufferException) {
-        Logger.e(ex) { "bytesToPosition TypeConverter error" }
         MeshProtos.Position.getDefaultInstance()
     }
 
@@ -58,8 +54,7 @@ class Converters {
     fun bytesToTelemetry(bytes: ByteArray): TelemetryProtos.Telemetry = try {
         TelemetryProtos.Telemetry.parseFrom(bytes)
     } catch (ex: InvalidProtocolBufferException) {
-        Logger.e(ex) { "bytesToTelemetry TypeConverter error" }
-        TelemetryProtos.Telemetry.newBuilder().build() 
+        TelemetryProtos.Telemetry.newBuilder().build()
     }
 
     @TypeConverter fun telemetryToBytes(value: TelemetryProtos.Telemetry): ByteArray? = value.toByteArray()
@@ -68,7 +63,6 @@ class Converters {
     fun bytesToPaxcounter(bytes: ByteArray): PaxcountProtos.Paxcount = try {
         PaxcountProtos.Paxcount.parseFrom(bytes)
     } catch (ex: InvalidProtocolBufferException) {
-        Logger.e(ex) { "bytesToPaxcounter TypeConverter error" }
         PaxcountProtos.Paxcount.getDefaultInstance()
     }
 
@@ -78,7 +72,6 @@ class Converters {
     fun bytesToMetadata(bytes: ByteArray): MeshProtos.DeviceMetadata = try {
         MeshProtos.DeviceMetadata.parseFrom(bytes)
     } catch (ex: InvalidProtocolBufferException) {
-        Logger.e(ex) { "bytesToMetadata TypeConverter error" }
         MeshProtos.DeviceMetadata.getDefaultInstance()
     }
 

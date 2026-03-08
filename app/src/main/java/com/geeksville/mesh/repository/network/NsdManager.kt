@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Build
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.asExecutor
@@ -39,22 +38,18 @@ private fun NsdManager.discoverServices(
             }
 
             override fun onDiscoveryStarted(serviceType: String) {
-                Logger.d { "NSD Service discovery started" }
             }
 
             override fun onDiscoveryStopped(serviceType: String) {
-                Logger.d { "NSD Service discovery stopped" }
                 close()
             }
 
             override fun onServiceFound(serviceInfo: NsdServiceInfo) {
-                Logger.d { "NSD Service found: $serviceInfo" }
                 serviceList += serviceInfo
                 trySend(serviceList)
             }
 
             override fun onServiceLost(serviceInfo: NsdServiceInfo) {
-                Logger.d { "NSD Service lost: $serviceInfo" }
                 serviceList.removeAll { it.serviceName == serviceInfo.serviceName }
                 trySend(serviceList)
             }
@@ -91,8 +86,7 @@ private suspend fun NsdManager.resolveService(serviceInfo: NsdServiceInfo): NsdS
                                 try {
                                     unregisterServiceInfoCallback(this)
                                 } catch (e: IllegalArgumentException) {
-                                    Logger.w(e) { "Already unregistered" }
-                                }
+                                                                    }
                             }
                         }
                     }
@@ -103,8 +97,7 @@ private suspend fun NsdManager.resolveService(serviceInfo: NsdServiceInfo): NsdS
                             try {
                                 unregisterServiceInfoCallback(this)
                             } catch (e: IllegalArgumentException) {
-                                Logger.w(e) { "Already unregistered" }
-                            }
+                                                            }
                         }
                     }
 
@@ -117,8 +110,7 @@ private suspend fun NsdManager.resolveService(serviceInfo: NsdServiceInfo): NsdS
                 try {
                     unregisterServiceInfoCallback(callback)
                 } catch (e: IllegalArgumentException) {
-                    Logger.w(e) { "Already unregistered" }
-                }
+                                    }
             }
         } else {
             val listener =

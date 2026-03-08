@@ -4,7 +4,6 @@ package com.geeksville.mesh.service
 import android.annotation.SuppressLint
 import android.app.Application
 import androidx.core.location.LocationCompat
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -61,7 +60,6 @@ constructor(
 
     fun stop() {
         if (locationFlow?.isActive == true) {
-            Logger.i { "Stopping location requests" }
             locationFlow?.cancel()
             locationFlow = null
         }

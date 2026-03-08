@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.RemoteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -63,8 +62,7 @@ constructor(
         get() = _requestChannelSet
 
     fun requestChannelUrl(url: Uri, onError: () -> Unit) = runCatching { _requestChannelSet.value = url.toChannelSet() }
-        .onFailure { ex ->
-            Logger.e(ex) { "Channel url error" }
+        .onFailure { _ ->
             onError()
         }
 
@@ -83,16 +81,14 @@ constructor(
     fun setChannel(channel: ChannelProtos.Channel) {
         try {
             serviceRepository.meshService?.setChannel(channel.toByteArray())
-        } catch (ex: RemoteException) {
-            Logger.e(ex) { "Set channel error" }
+        } catch (_: RemoteException) {
         }
     }
 
     fun setConfig(config: Config) {
         try {
             serviceRepository.meshService?.setConfig(config.toByteArray())
-        } catch (ex: RemoteException) {
-            Logger.e(ex) { "Set config error" }
+        } catch (_: RemoteException) {
         }
     }
 

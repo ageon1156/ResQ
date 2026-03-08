@@ -2,7 +2,6 @@
 
 package com.geeksville.mesh.repository.radio
 
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.repository.bluetooth.BluetoothRepository
 import org.meshtastic.core.model.util.anonymize
 import javax.inject.Inject
@@ -16,12 +15,7 @@ constructor(
     override fun createInterface(rest: String): NordicBleInterface = factory.create(rest)
 
     override fun addressValid(rest: String): Boolean {
-        return if (!bluetoothRepository.isBonded(rest)) {
-            Logger.w { "Ignoring stale bond to ${rest.anonymize}" }
-            false
-        } else {
-            true
-        }
+        return bluetoothRepository.isBonded(rest)
     }
 }
 

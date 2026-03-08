@@ -7,7 +7,6 @@ import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.worker.MeshLogCleanupWorker
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -74,7 +73,6 @@ interface AppEntryPoint {
 fun logAssert(executeReliableWrite: Boolean) {
     if (!executeReliableWrite) {
         val ex = AssertionError("Assertion failed")
-        Logger.e(ex) { "logAssert" }
         throw ex
     }
 }

@@ -233,7 +233,6 @@ fun NodeListScreen(
                             thisNode = ourNode,
                             thatNode = node,
                             distanceUnits = state.distanceUnits,
-                            tempInFahrenheit = state.tempInFahrenheit,
                             onClick = { navigateToNodeDetails(node.num) },
                             onLongClick = longClick,
                             connectionState = connectionState,

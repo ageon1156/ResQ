@@ -1,7 +1,6 @@
 
 package com.geeksville.mesh.service
 
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.meshtastic.core.strings.getString
 import kotlinx.coroutines.CoroutineScope
@@ -70,7 +69,6 @@ constructor(
             if (start != null) {
                 val elapsedMs = System.currentTimeMillis() - start
                 val seconds = elapsedMs / MILLISECONDS_IN_SECOND
-                Logger.i { "Traceroute $requestId complete in $seconds s" }
                 val durationText = getString(Res.string.traceroute_duration, "%.1f".format(Locale.US, seconds))
                 "$full\n\n$durationText"
             } else {

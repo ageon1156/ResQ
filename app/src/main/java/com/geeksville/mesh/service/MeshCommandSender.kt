@@ -3,7 +3,6 @@ package com.geeksville.mesh.service
 
 import android.os.RemoteException
 import androidx.annotation.VisibleForTesting
-import co.touchlab.kermit.Logger
 import com.google.protobuf.ByteString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -134,7 +133,6 @@ constructor(
             try {
                 sendNow(p)
             } catch (@Suppress("TooGenericExceptionCaught") ex: Exception) {
-                Logger.e(ex) { "Error sending message, so enqueueing" }
                 enqueueForSending(p)
             }
         } else {
@@ -180,7 +178,6 @@ constructor(
                 sendNow(p)
                 sentPackets.add(p)
             } catch (@Suppress("TooGenericExceptionCaught") ex: Exception) {
-                Logger.e(ex) { "Error sending queued message:" }
             }
         }
         offlineSentPackets.removeAll(sentPackets)
@@ -200,8 +197,6 @@ constructor(
     fun sendPosition(pos: MeshProtos.Position, destNum: Int? = null, wantResponse: Boolean = false) {
         val myNum = nodeManager?.myNodeNum ?: return
         val idNum = destNum ?: myNum
-        Logger.d { "Sending our position/time to=$idNum ${Position(pos)}" }
-
         if (!localConfig.value.position.fixedPosition) {
             nodeManager.handleReceivedPosition(myNum, myNum, pos)
         }
@@ -311,7 +306,6 @@ constructor(
                 lastNeighborInfo
                     ?: run {
                         val oneHour = 1.hours.inWholeMinutes.toInt()
-                        Logger.d { "No stored neighbor info from connected radio, sending dummy data" }
                         MeshProtos.NeighborInfo.newBuilder()
                             .setNodeId(myNum)
                             .setLastSentById(myNum)

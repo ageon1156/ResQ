@@ -2,7 +2,6 @@
 package org.meshtastic.feature.node.detail
 
 import android.os.RemoteException
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,15 +28,13 @@ constructor(
 
     fun removeNode(nodeNum: Int) {
         scope?.launch(Dispatchers.IO) {
-            Logger.i { "Removing node '$nodeNum'" }
             try {
                 val packetId = serviceRepository.meshService?.packetId ?: return@launch
                 serviceRepository.meshService?.removeByNodenum(packetId, nodeNum)
                 nodeRepository.deleteNode(nodeNum)
             } catch (ex: RemoteException) {
-                Logger.e { "Remove node error: ${ex.message}" }
             }
-        } ?: Logger.w { "removeNode: scope not initialised" }
+        }
     }
 
     fun ignoreNode(node: Node) {
@@ -45,9 +42,8 @@ constructor(
             try {
                 serviceRepository.onServiceAction(ServiceAction.Ignore(node))
             } catch (ex: RemoteException) {
-                Logger.e(ex) { "Ignore node error" }
             }
-        } ?: Logger.w { "ignoreNode: scope not initialised" }
+        }
     }
 
     fun muteNode(node: Node) {
@@ -55,9 +51,8 @@ constructor(
             try {
                 serviceRepository.onServiceAction(ServiceAction.Mute(node))
             } catch (ex: RemoteException) {
-                Logger.e(ex) { "Mute node error" }
             }
-        } ?: Logger.w { "muteNode: scope not initialised" }
+        }
     }
 
     fun favoriteNode(node: Node) {
@@ -65,9 +60,8 @@ constructor(
             try {
                 serviceRepository.onServiceAction(ServiceAction.Favorite(node))
             } catch (ex: RemoteException) {
-                Logger.e(ex) { "Favorite node error" }
             }
-        } ?: Logger.w { "favoriteNode: scope not initialised" }
+        }
     }
 
     fun setNodeNotes(nodeNum: Int, notes: String) {
@@ -75,11 +69,9 @@ constructor(
             try {
                 nodeRepository.setNodeNotes(nodeNum, notes)
             } catch (ex: java.io.IOException) {
-                Logger.e { "Set node notes IO error: ${ex.message}" }
             } catch (ex: java.sql.SQLException) {
-                Logger.e { "Set node notes SQL error: ${ex.message}" }
             }
-        } ?: Logger.w { "setNodeNotes: scope not initialised" }
+        }
     }
 
     fun setOwner(node: Node, longName: String, shortName: String) {
@@ -93,9 +85,8 @@ constructor(
                     .build()
                 service.setRemoteOwner(packetId, node.num, updatedUser.toByteArray())
             } catch (ex: RemoteException) {
-                Logger.e { "Set owner error: ${ex.message}" }
             }
-        } ?: Logger.w { "setOwner: scope not initialised" }
+        }
     }
 
     fun setDeviceConfig(
@@ -117,9 +108,8 @@ constructor(
                     .build()
                 service.setRemoteConfig(packetId, node.num, cfg.toByteArray())
             } catch (ex: RemoteException) {
-                Logger.e { "Set device config error: ${ex.message}" }
             }
-        } ?: Logger.w { "setDeviceConfig: scope not initialised" }
+        }
     }
 }
 

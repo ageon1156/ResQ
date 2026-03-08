@@ -2,19 +2,27 @@
 
 package com.geeksville.mesh.ui.connections.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.Usb
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import com.geeksville.mesh.ui.connections.DeviceType
 import org.jetbrains.compose.resources.StringResource
@@ -32,16 +40,60 @@ fun ConnectionsSegmentedBar(
     modifier: Modifier = Modifier,
     onClickDeviceType: (DeviceType) -> Unit,
 ) {
-    SingleChoiceSegmentedButtonRow(modifier = modifier) {
+    Row(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surface)
+            .height(40.dp),
+        verticalAlignment = Alignment.Bottom
+    ) {
         Item.entries.forEachIndexed { index, item ->
             val text = stringResource(item.textRes)
-            SegmentedButton(
-                shape = SegmentedButtonDefaults.itemShape(index, Item.entries.size),
-                onClick = { onClickDeviceType(item.deviceType) },
-                selected = item.deviceType == selectedDeviceType,
-                icon = { Icon(imageVector = item.imageVector, contentDescription = text) },
-                label = { Text(text = text, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            )
+            val selected = item.deviceType == selectedDeviceType
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(40.dp)
+                    .clickable { onClickDeviceType(item.deviceType) },
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = item.imageVector,
+                        contentDescription = text,
+                        modifier = Modifier.height(16.dp),
+                        tint = if (selected) MaterialTheme.colorScheme.primary
+                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    )
+                    Text(
+                        text = text.uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (selected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    )
+                }
+                if (selected) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(MaterialTheme.colorScheme.primary)
+                    )
+                }
+            }
+            if (index < Item.entries.size - 1) {
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(24.dp)
+                        .align(Alignment.CenterVertically)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+            }
         }
     }
 }

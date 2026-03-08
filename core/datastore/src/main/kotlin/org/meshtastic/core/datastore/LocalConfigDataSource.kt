@@ -3,7 +3,6 @@
 package org.meshtastic.core.datastore
 
 import androidx.datastore.core.DataStore
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import org.meshtastic.proto.ConfigProtos.Config
@@ -16,9 +15,7 @@ import javax.inject.Singleton
 class LocalConfigDataSource @Inject constructor(private val localConfigStore: DataStore<LocalConfig>) {
     val localConfigFlow: Flow<LocalConfig> =
         localConfigStore.data.catch { exception ->
-            
             if (exception is IOException) {
-                Logger.e { "Error reading LocalConfig settings: ${exception.message}" }
                 emit(LocalConfig.getDefaultInstance())
             } else {
                 throw exception
@@ -35,8 +32,6 @@ class LocalConfigDataSource @Inject constructor(private val localConfigStore: Da
             val localField = it.descriptorForType.findFieldByName(field.name)
             if (localField != null) {
                 builder.setField(localField, value)
-            } else {
-                Logger.e { "Error writing LocalConfig settings: ${config.payloadVariantCase}" }
             }
         }
         builder.build()

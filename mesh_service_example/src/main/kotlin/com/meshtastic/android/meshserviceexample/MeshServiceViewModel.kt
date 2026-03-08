@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.Parcelable
 import android.os.RemoteException
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,8 +18,6 @@ import org.meshtastic.core.service.IMeshService
 import org.meshtastic.proto.Portnums
 import org.meshtastic.proto.TelemetryProtos
 import kotlin.random.Random
-
-private const val TAG = "MeshServiceViewModel"
 
 @Suppress("TooManyFunctions")
 class MeshServiceViewModel : ViewModel() {
@@ -68,7 +65,6 @@ class MeshServiceViewModel : ViewModel() {
             try {
                 _myId.value = it.myId
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to get MyId", e)
             }
         }
     }
@@ -78,7 +74,6 @@ class MeshServiceViewModel : ViewModel() {
             try {
                 _connectionState.value = it.connectionState() ?: "UNKNOWN"
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to get connection state", e)
             }
         }
     }
@@ -93,18 +88,16 @@ class MeshServiceViewModel : ViewModel() {
                         dataType = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE,
                         from = DataPacket.ID_LOCAL,
                         time = System.currentTimeMillis(),
-                        id = service.packetId, 
+                        id = service.packetId,
                         status = MessageStatus.UNKNOWN,
                         hopLimit = 3,
                         channel = 0,
                         wantAck = true,
                     )
                 service.send(packet)
-                Log.d(TAG, "Message sent successfully, assigned ID: ${packet.id}")
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to send message", e)
             }
-        } ?: Log.w(TAG, "MeshService is not bound, cannot send message")
+        }
     }
 
     fun requestMyNodeInfo() {
@@ -112,7 +105,6 @@ class MeshServiceViewModel : ViewModel() {
             try {
                 _myNodeInfo.value = it.myNodeInfo
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to get MyNodeInfo", e)
             }
         }
     }
@@ -122,7 +114,6 @@ class MeshServiceViewModel : ViewModel() {
             try {
                 _nodes.value = it.nodes ?: emptyList()
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to get nodes", e)
             }
         }
     }
@@ -131,7 +122,6 @@ class MeshServiceViewModel : ViewModel() {
         try {
             meshService?.startProvideLocation()
         } catch (e: RemoteException) {
-            Log.e(TAG, "Failed to start providing location", e)
         }
     }
 
@@ -139,7 +129,6 @@ class MeshServiceViewModel : ViewModel() {
         try {
             meshService?.stopProvideLocation()
         } catch (e: RemoteException) {
-            Log.e(TAG, "Failed to stop providing location", e)
         }
     }
 
@@ -147,9 +136,7 @@ class MeshServiceViewModel : ViewModel() {
         meshService?.let {
             try {
                 it.requestTraceroute(Random.nextInt(), nodeNum)
-                Log.i(TAG, "Traceroute requested for node $nodeNum")
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to request traceroute", e)
             }
         }
     }
@@ -158,9 +145,7 @@ class MeshServiceViewModel : ViewModel() {
         meshService?.let {
             try {
                 it.requestTelemetry(Random.nextInt(), nodeNum, TelemetryProtos.Telemetry.DEVICE_METRICS_FIELD_NUMBER)
-                Log.i(TAG, "Telemetry requested for node $nodeNum")
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to request telemetry", e)
             }
         }
     }
@@ -169,9 +154,7 @@ class MeshServiceViewModel : ViewModel() {
         meshService?.let {
             try {
                 it.requestNeighborInfo(Random.nextInt(), nodeNum)
-                Log.i(TAG, "Neighbor info requested for node $nodeNum")
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to request neighbor info", e)
             }
         }
     }
@@ -180,9 +163,7 @@ class MeshServiceViewModel : ViewModel() {
         meshService?.let {
             try {
                 it.requestPosition(nodeNum, Position(0.0, 0.0, 0))
-                Log.i(TAG, "Position requested for node $nodeNum")
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to request position", e)
             }
         }
     }
@@ -191,9 +172,7 @@ class MeshServiceViewModel : ViewModel() {
         meshService?.let {
             try {
                 it.requestUserInfo(nodeNum)
-                Log.i(TAG, "User info requested for node $nodeNum")
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to request user info", e)
             }
         }
     }
@@ -202,9 +181,7 @@ class MeshServiceViewModel : ViewModel() {
         meshService?.let {
             try {
                 it.getDeviceConnectionStatus(Random.nextInt(), nodeNum)
-                Log.i(TAG, "Device connection status requested for node $nodeNum")
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to request device connection status", e)
             }
         }
     }
@@ -213,16 +190,13 @@ class MeshServiceViewModel : ViewModel() {
         meshService?.let {
             try {
                 it.requestReboot(Random.nextInt(), 0)
-                Log.w(TAG, "Local reboot requested!")
             } catch (e: RemoteException) {
-                Log.e(TAG, "Failed to request reboot", e)
             }
         }
     }
 
     fun handleIncomingIntent(intent: Intent) {
         val action = intent.action ?: return
-        Log.d(TAG, "Received broadcast: $action")
 
         when (action) {
             "com.geeksville.mesh.NODE_CHANGE" -> handleNodeChange(intent)
@@ -241,7 +215,6 @@ class MeshServiceViewModel : ViewModel() {
     private fun handleNodeChange(intent: Intent) {
         val nodeInfo = intent.getParcelableCompat("com.geeksville.mesh.NodeInfo", NodeInfo::class.java)
         nodeInfo?.let { ni ->
-            Log.d(TAG, "Node updated: ${ni.num}")
             _nodes.value =
                 _nodes.value.toMutableList().apply {
                     val index = indexOfFirst { it.num == ni.num }
@@ -251,9 +224,6 @@ class MeshServiceViewModel : ViewModel() {
     }
 
     private fun handleMessageStatus(intent: Intent) {
-        val id = intent.getIntExtra("com.geeksville.mesh.PacketId", 0)
-        val status = intent.getParcelableCompat("com.geeksville.mesh.Status", MessageStatus::class.java)
-        Log.d(TAG, "Message Status for ID $id: $status")
     }
 
     private fun handleReceivedPacket(action: String, intent: Intent) {
@@ -274,4 +244,3 @@ class MeshServiceViewModel : ViewModel() {
             getParcelableExtra(key)
         }
 }
-

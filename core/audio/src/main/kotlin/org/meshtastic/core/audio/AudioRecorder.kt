@@ -3,7 +3,6 @@ package org.meshtastic.core.audio
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import co.touchlab.kermit.Logger
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,7 +33,6 @@ class AudioRecorder @Inject constructor() {
 
         val record = audioRecord ?: return
         if (record.state != AudioRecord.STATE_INITIALIZED) {
-            Logger.e { "AudioRecord failed to initialize" }
             return
         }
 

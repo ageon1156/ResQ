@@ -40,25 +40,20 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SelectAll
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.SpeakerNotes
-import androidx.compose.material.icons.filled.SpeakerNotesOff
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -68,6 +63,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -105,7 +101,6 @@ import org.meshtastic.core.service.RetryEvent
 import org.meshtastic.core.strings.Res
 import org.meshtastic.core.strings.alert_bell_text
 import org.meshtastic.core.strings.cancel
-import org.meshtastic.core.strings.channels
 import org.meshtastic.core.strings.cancel_reply
 import org.meshtastic.core.strings.clear_selection
 import org.meshtastic.core.strings.copy
@@ -114,10 +109,6 @@ import org.meshtastic.core.strings.delete_messages
 import org.meshtastic.core.strings.delete_messages_title
 import org.meshtastic.core.strings.message_input_label
 import org.meshtastic.core.strings.navigate_back
-import org.meshtastic.core.strings.overflow_menu
-import org.meshtastic.core.strings.quick_chat
-import org.meshtastic.core.strings.quick_chat_hide
-import org.meshtastic.core.strings.quick_chat_show
 import org.meshtastic.core.strings.reply
 import org.meshtastic.core.strings.replying_to
 import org.meshtastic.core.strings.scroll_to_bottom
@@ -148,8 +139,6 @@ fun MessageScreen(
     message: String,
     viewModel: MessageViewModel = hiltViewModel(),
     navigateToNodeDetails: (Int) -> Unit,
-    navigateToQuickChatOptions: () -> Unit,
-    navigateToChannelSettings: () -> Unit = {},
     onNavigateBack: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -357,10 +346,6 @@ fun MessageScreen(
                     onNavigateBack = { onEvent(MessageScreenEvent.NavigateBack) },
                     channels = channels,
                     channelIndexParam = channelIndex,
-                    showQuickChat = showQuickChat,
-                    onToggleQuickChat = viewModel::toggleShowQuickChat,
-                    onNavigateToQuickChatOptions = navigateToQuickChatOptions,
-                    onNavigateToChannelSettings = navigateToChannelSettings,
                 )
             }
         },
@@ -449,7 +434,7 @@ fun MessageScreen(
                 )
                 val isConnected = connectionState.isConnected()
                 Surface(
-                    shape = CircleShape,
+                    shape = MaterialTheme.shapes.extraSmall,
                     color = if (pttRecording) MaterialTheme.colorScheme.error
                             else MaterialTheme.colorScheme.primaryContainer,
                     modifier = Modifier
@@ -489,17 +474,12 @@ fun MessageScreen(
 private fun BoxScope.ScrollToBottomFab(coroutineScope: CoroutineScope, listState: LazyListState) {
     FloatingActionButton(
         modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-        onClick = {
-            coroutineScope.launch {
-                
-                listState.animateScrollToItem(0)
-            }
-        },
+        onClick = { coroutineScope.launch { listState.animateScrollToItem(0) } },
+        shape = MaterialTheme.shapes.extraSmall,
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
     ) {
-        Icon(
-            imageVector = Icons.Default.ArrowDownward,
-            contentDescription = stringResource(Res.string.scroll_to_bottom),
-        )
+        Icon(imageVector = Icons.Default.ArrowDownward, contentDescription = stringResource(Res.string.scroll_to_bottom))
     }
 }
 
@@ -514,8 +494,8 @@ private fun ReplySnippet(originalMessage: Message?, onClearReply: () -> Unit, ou
             Row(
                 modifier =
                 Modifier.fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -605,11 +585,35 @@ private fun DeleteMessageDialog(count: Int, onConfirm: () -> Unit, onDismiss: ()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(16.dp),
-        title = { Text(stringResource(Res.string.delete_messages_title)) },
-        text = { Text(text = deleteMessagesString) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(Res.string.delete)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
+        shape = MaterialTheme.shapes.extraSmall,
+        title = {
+            Text(
+                text = stringResource(Res.string.delete_messages_title).uppercase(),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            )
+        },
+        text = { Text(text = deleteMessagesString, style = MaterialTheme.typography.bodySmall) },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                shape = MaterialTheme.shapes.extraSmall,
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                ),
+            ) { Text(stringResource(Res.string.delete).uppercase(), style = MaterialTheme.typography.labelMedium) }
+        },
+        dismissButton = {
+            Button(
+                onClick = onDismiss,
+                shape = MaterialTheme.shapes.extraSmall,
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            ) { Text(stringResource(Res.string.cancel).uppercase(), style = MaterialTheme.typography.labelMedium) }
+        },
     )
 }
 
@@ -625,28 +629,42 @@ internal sealed class MessageMenuAction {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ActionModeTopBar(selectedCount: Int, onAction: (MessageMenuAction) -> Unit) = TopAppBar(
-    title = { Text(text = selectedCount.toString()) },
-    navigationIcon = {
-        IconButton(onClick = { onAction(MessageMenuAction.Dismiss) }) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.clear_selection),
-            )
-        }
-    },
-    actions = {
-        IconButton(onClick = { onAction(MessageMenuAction.ClipboardCopy) }) {
-            Icon(imageVector = Icons.Default.ContentCopy, contentDescription = stringResource(Res.string.copy))
-        }
-        IconButton(onClick = { onAction(MessageMenuAction.Delete) }) {
-            Icon(imageVector = Icons.Default.Delete, contentDescription = stringResource(Res.string.delete))
-        }
-        IconButton(onClick = { onAction(MessageMenuAction.SelectAll) }) {
-            Icon(imageVector = Icons.Default.SelectAll, contentDescription = stringResource(Res.string.select_all))
-        }
-    },
-)
+private fun ActionModeTopBar(selectedCount: Int, onAction: (MessageMenuAction) -> Unit) {
+    Column {
+        TopAppBar(
+            title = {
+                Text(
+                    text = selectedCount.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = { onAction(MessageMenuAction.Dismiss) }) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.clear_selection))
+                }
+            },
+            actions = {
+                IconButton(onClick = { onAction(MessageMenuAction.ClipboardCopy) }) {
+                    Icon(imageVector = Icons.Default.ContentCopy, contentDescription = stringResource(Res.string.copy))
+                }
+                IconButton(onClick = { onAction(MessageMenuAction.Delete) }) {
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = stringResource(Res.string.delete))
+                }
+                IconButton(onClick = { onAction(MessageMenuAction.SelectAll) }) {
+                    Icon(imageVector = Icons.Default.SelectAll, contentDescription = stringResource(Res.string.select_all))
+                }
+            },
+            colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+            ),
+        )
+        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -657,133 +675,54 @@ private fun MessageTopBar(
     onNavigateBack: () -> Unit,
     channels: AppOnlyProtos.ChannelSet?,
     channelIndexParam: Int?,
-    showQuickChat: Boolean,
-    onToggleQuickChat: () -> Unit,
-    onNavigateToQuickChatOptions: () -> Unit = {},
-    onNavigateToChannelSettings: () -> Unit = {},
-) = TopAppBar(
-    title = {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Spacer(modifier = Modifier.width(10.dp))
-
-            if (channels != null && channelIndexParam != null) {
-                SecurityIcon(channels, channelIndexParam)
-            }
-        }
-    },
-    navigationIcon = {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.navigate_back),
-            )
-        }
-    },
-    actions = {
-        MessageTopBarActions(
-            showQuickChat,
-            onToggleQuickChat,
-            onNavigateToQuickChatOptions,
-            channelIndex,
-            mismatchKey,
-            onNavigateToChannelSettings,
+) {
+    Column {
+        TopAppBar(
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        letterSpacing = androidx.compose.ui.unit.TextUnit(1f, androidx.compose.ui.unit.TextUnitType.Sp),
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    if (channels != null && channelIndexParam != null) {
+                        SecurityIcon(channels, channelIndexParam)
+                    }
+                }
+            },
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(Res.string.navigate_back))
+                }
+            },
+            actions = {
+                MessageTopBarActions(channelIndex, mismatchKey)
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+            ),
         )
-    },
-)
+        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+    }
+}
 
 @Composable
 private fun MessageTopBarActions(
-    showQuickChat: Boolean,
-    onToggleQuickChat: () -> Unit,
-    onNavigateToQuickChatOptions: () -> Unit,
     channelIndex: Int?,
     mismatchKey: Boolean,
-    onNavigateToChannelSettings: () -> Unit = {},
 ) {
     if (channelIndex == DataPacket.PKC_CHANNEL_INDEX) {
         NodeKeyStatusIcon(hasPKC = true, mismatchKey = mismatchKey)
     }
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { expanded = true }, enabled = true) {
-            Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(Res.string.overflow_menu))
-        }
-        OverFlowMenu(
-            expanded = expanded,
-            onDismiss = { expanded = false },
-            showQuickChat = showQuickChat,
-            onToggleQuickChat = onToggleQuickChat,
-            onNavigateToQuickChatOptions = onNavigateToQuickChatOptions,
-            onNavigateToChannelSettings = onNavigateToChannelSettings,
-        )
-    }
 }
 
-@Composable
-private fun OverFlowMenu(
-    expanded: Boolean,
-    onDismiss: () -> Unit,
-    showQuickChat: Boolean,
-    onToggleQuickChat: () -> Unit,
-    onNavigateToQuickChatOptions: () -> Unit,
-    onNavigateToChannelSettings: () -> Unit = {},
-) {
-    if (expanded) {
-        DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-            val quickChatToggleTitle =
-                if (showQuickChat) {
-                    stringResource(Res.string.quick_chat_hide)
-                } else {
-                    stringResource(Res.string.quick_chat_show)
-                }
-            DropdownMenuItem(
-                text = { Text(quickChatToggleTitle) },
-                onClick = {
-                    onDismiss()
-                    onToggleQuickChat()
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector =
-                        if (showQuickChat) {
-                            Icons.Default.SpeakerNotesOff
-                        } else {
-                            Icons.Default.SpeakerNotes
-                        },
-                        contentDescription = quickChatToggleTitle,
-                    )
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.quick_chat)) },
-                onClick = {
-                    onDismiss()
-                    onNavigateToQuickChatOptions()
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.ChatBubbleOutline,
-                        contentDescription = stringResource(Res.string.quick_chat),
-                    )
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(Res.string.channels)) },
-                onClick = {
-                    onDismiss()
-                    onNavigateToChannelSettings()
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = stringResource(Res.string.channels),
-                    )
-                },
-            )
-        }
-    }
-}
 
 @Composable
 private fun QuickChatRow(
@@ -808,7 +747,7 @@ private fun QuickChatRow(
 
     LazyRow(modifier = modifier.padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         items(allActions, key = { it.uuid }) { action ->
-            Button(onClick = { onClick(action) }, enabled = enabled) { Text(text = action.name) }
+            Button(onClick = { onClick(action) }, enabled = enabled, shape = MaterialTheme.shapes.extraSmall) { Text(text = action.name) }
         }
     }
 }
@@ -845,7 +784,8 @@ private fun MessagePrioritySelector(
             FilterChip(
                 selected = isSelected,
                 onClick = { onPrioritySelected(value) },
-                label = { Text(label, style = MaterialTheme.typography.labelSmall) },
+                shape = MaterialTheme.shapes.extraSmall,
+                label = { Text(label.uppercase(), style = MaterialTheme.typography.labelSmall) },
                 leadingIcon = if (isCritical && isSelected) {
                     {
                         Icon(
@@ -898,7 +838,7 @@ private fun MessageInput(
         lineLimits = TextFieldLineLimits.MultiLine(1, MAX_LINES),
         label = { Text(stringResource(Res.string.message_input_label)) },
         enabled = isEnabled,
-        shape = RoundedCornerShape(ROUNDED_CORNER_PERCENT.toFloat()),
+        shape = MaterialTheme.shapes.extraSmall,
         isError = isOverLimit,
         placeholder = { Text(stringResource(Res.string.type_a_message)) },
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),

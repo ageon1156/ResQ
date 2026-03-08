@@ -1,7 +1,6 @@
 
 package com.geeksville.mesh.service
 
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.repository.network.MQTTRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,14 +42,12 @@ constructor(
 
     fun stop() {
         if (mqttMessageFlow?.isActive == true) {
-            Logger.i { "Stopping MqttClientProxy" }
             mqttMessageFlow?.cancel()
             mqttMessageFlow = null
         }
     }
 
     fun handleMqttProxyMessage(message: MeshProtos.MqttClientProxyMessage) {
-        Logger.d { "[mqttClientProxyMessage] ${message.topic}" }
         with(message) {
             when (payloadVariantCase) {
                 MeshProtos.MqttClientProxyMessage.PayloadVariantCase.TEXT -> {

@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import co.touchlab.kermit.Logger
 import com.mikepenz.markdown.m3.Markdown
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -57,7 +56,6 @@ fun FirmwareReleaseSheetContent(firmwareRelease: FirmwareRelease, modifier: Modi
                         context.startActivity(intent)
                     } catch (e: ActivityNotFoundException) {
                         scope.launch { context.showToast(Res.string.error_no_app_to_handle_link) }
-                        Logger.e(e) { "Failed to handle release page URL" }
                     }
                 },
                 modifier = Modifier.weight(1f),
@@ -73,7 +71,6 @@ fun FirmwareReleaseSheetContent(firmwareRelease: FirmwareRelease, modifier: Modi
                         context.startActivity(intent)
                     } catch (e: ActivityNotFoundException) {
                         scope.launch { context.showToast(Res.string.error_no_app_to_handle_link) }
-                        Logger.e(e) { "Failed to handle release zip URL" }
                     }
                 },
                 modifier = Modifier.weight(1f),

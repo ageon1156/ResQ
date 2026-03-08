@@ -3,7 +3,6 @@ package org.meshtastic.feature.map.triage
 import android.os.RemoteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,8 +37,6 @@ class TriageMapViewModel @Inject constructor(
     private val serviceRepository: ServiceRepository,
     private val nodeRepository: NodeRepository,
 ) : ViewModel() {
-
-    private val tag = "TriageMapViewModel"
 
     val ourNodeId: StateFlow<String?> = nodeRepository.myId
 
@@ -122,7 +119,6 @@ class TriageMapViewModel @Inject constructor(
             try {
                 serviceRepository.meshService?.requestPosition(nodeNum, Position(0.0, 0.0, 0))
             } catch (ex: RemoteException) {
-                Logger.e(tag) { "Failed to request position from ${rescuer.nodeId}: ${ex.message}" }
             }
         }
     }
@@ -265,7 +261,6 @@ class TriageMapViewModel @Inject constructor(
         try {
             serviceRepository.meshService?.send(p)
         } catch (ex: RemoteException) {
-            Logger.e(tag) { "Failed to send triage packet: ${ex.message}" }
         }
     }
 }

@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import co.touchlab.kermit.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -199,8 +198,7 @@ constructor(
     private fun favoriteNode(node: Node) = viewModelScope.launch {
         try {
             serviceRepository.onServiceAction(ServiceAction.Favorite(node))
-        } catch (ex: RemoteException) {
-            Logger.e(ex) { "Favorite node error" }
+        } catch (_: RemoteException) {
         }
     }
 
@@ -212,8 +210,7 @@ constructor(
                 manuallyVerified = node.manuallyVerified
             }
             serviceRepository.onServiceAction(ServiceAction.SendContact(contact = contact))
-        } catch (ex: RemoteException) {
-            Logger.e(ex) { "Send shared contact error" }
+        } catch (_: RemoteException) {
         }
     }
 
@@ -235,7 +232,6 @@ constructor(
         val message = voiceMessageRepository.getRecent(sessionId) ?: return
         viewModelScope.launch {
             runCatching { audioPlayer.play(message.codec2Bytes) }
-                .onFailure { Logger.e(it) { "Voice replay failed" } }
         }
     }
 
@@ -246,7 +242,7 @@ constructor(
         for (chunk in recordedPcm) { chunk.copyInto(allPcm, offset); offset += chunk.size }
         recordedPcm.clear()
         val codec2Bytes = runCatching { codec2.encode(allPcm, Codec2Wrapper.DEFAULT_MODE) }
-            .getOrElse { Logger.e(it) { "PTT encode failed" }; return@withContext }
+            .getOrElse { return@withContext }
         val sessionId = UUID.randomUUID().toString().replace("-", "").take(16)
             .chunked(2).map { it.toInt(16).toByte() }.toByteArray()
         val timestamp = (System.currentTimeMillis() / 1000L).toInt()
@@ -293,7 +289,6 @@ constructor(
         try {
             serviceRepository.meshService?.send(p)
         } catch (ex: RemoteException) {
-            Logger.e { "Send DataPacket error: ${ex.message}" }
         }
     }
 

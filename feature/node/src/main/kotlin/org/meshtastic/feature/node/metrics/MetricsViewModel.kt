@@ -7,7 +7,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import co.touchlab.kermit.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -330,16 +329,12 @@ constructor(
                             }
                     }
 
-                    Logger.d { "MetricsViewModel created" }
-                } else {
-                    Logger.d { "MetricsViewModel: destNum is null, skipping metrics flows initialization." }
                 }
             }
     }
 
     override fun onCleared() {
         super.onCleared()
-        Logger.d { "MetricsViewModel cleared" }
     }
 
     fun setTimeFrame(timeFrame: TimeFrame) {
@@ -380,7 +375,6 @@ constructor(
                     }
                 }
             } catch (ex: FileNotFoundException) {
-                Logger.e(ex) { "Can't write file error" }
             }
         }
 }

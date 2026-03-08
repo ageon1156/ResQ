@@ -1,7 +1,6 @@
 
 package com.geeksville.mesh.repository.radio
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -13,8 +12,6 @@ abstract class StreamInterface(protected val service: RadioInterfaceService) : I
         private const val MAX_TO_FROM_RADIO_SIZE = 512
     }
 
-    private val debugLineBuf = kotlin.text.StringBuilder()
-
     private val writeMutex = Mutex()
 
     private var ptr = 0
@@ -24,7 +21,6 @@ abstract class StreamInterface(protected val service: RadioInterfaceService) : I
     private var packetLen = 0
 
     override fun close() {
-        Logger.d { "Closing stream for good" }
         onDeviceDisconnect(true)
     }
 
@@ -63,17 +59,6 @@ abstract class StreamInterface(protected val service: RadioInterfaceService) : I
         }
     }
 
-    private fun debugOut(b: Byte) {
-        when (val c = b.toInt().toChar()) {
-            '\r' -> {} 
-            '\n' -> {
-                Logger.d { "DeviceLog: $debugLineBuf" }
-                debugLineBuf.clear()
-            }
-            else -> debugLineBuf.append(c)
-        }
-    }
-
     private val rxPacket = ByteArray(MAX_TO_FROM_RADIO_SIZE)
 
     protected fun readChar(c: Byte) {
@@ -81,7 +66,6 @@ abstract class StreamInterface(protected val service: RadioInterfaceService) : I
         var nextPtr = ptr + 1
 
         fun lostSync() {
-            Logger.e { "Lost protocol sync" }
             nextPtr = 0
         }
 
@@ -93,10 +77,9 @@ abstract class StreamInterface(protected val service: RadioInterfaceService) : I
         }
 
         when (ptr) {
-            0 -> 
+            0 ->
                 if (c != START1) {
-                    debugOut(c)
-                    nextPtr = 0 
+                    nextPtr = 0
                 }
             1 -> 
                 if (c != START2) {

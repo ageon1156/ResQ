@@ -34,13 +34,12 @@ import org.meshtastic.core.strings.soil_moisture
 import org.meshtastic.core.strings.soil_temperature
 import org.meshtastic.core.strings.temperature
 import org.meshtastic.core.strings.uv_lux
+import org.meshtastic.feature.node.metrics.CommonCharts.CHART_WEIGHT
+import org.meshtastic.feature.node.metrics.CommonCharts.Y_AXIS_WEIGHT
 import org.meshtastic.feature.node.metrics.GraphUtil.createPath
 import org.meshtastic.feature.node.metrics.GraphUtil.drawPathWithGradient
 import org.meshtastic.feature.node.model.TimeFrame
 import org.meshtastic.proto.TelemetryProtos.Telemetry
-
-private const val CHART_WEIGHT = 1f
-private const val Y_AXIS_WEIGHT = 0.1f
 
 @Suppress("MagicNumber")
 private val LEGEND_DATA_1 =

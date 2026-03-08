@@ -6,7 +6,6 @@ import android.icu.text.SimpleDateFormat
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -280,7 +279,6 @@ constructor(
                     }
                 }
             } catch (ex: FileNotFoundException) {
-                Logger.e { "Can't write file error: ${ex.message}" }
             }
         }
     }

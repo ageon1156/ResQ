@@ -8,8 +8,6 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.ServiceCompat
-import co.touchlab.kermit.Logger
-import com.geeksville.mesh.BuildConfig
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.model.NO_DEVICE_SELECTED
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
@@ -22,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
+import com.geeksville.mesh.BuildConfig
 import org.meshtastic.core.common.hasLocationPermission
 import org.meshtastic.core.data.repository.RadioConfigRepository
 import org.meshtastic.core.model.DataPacket
@@ -97,7 +96,6 @@ class MeshService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        Logger.i { "Creating mesh service" }
         serviceNotifications.initChannels()
 
         packetHandler.start(serviceScope)
@@ -140,11 +138,9 @@ class MeshService : Service() {
                 },
             )
         } catch (ex: Exception) {
-            Logger.e(ex) { "Error starting foreground service" }
             return START_NOT_STICKY
         }
         return if (!wantForeground) {
-            Logger.i { "Stopping mesh service because no device is selected" }
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             stopSelf()
             START_NOT_STICKY
@@ -153,15 +149,9 @@ class MeshService : Service() {
         }
     }
 
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        super.onTaskRemoved(rootIntent)
-        Logger.i { "Mesh service: onTaskRemoved" }
-    }
-
     override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onDestroy() {
-        Logger.i { "Destroying mesh service" }
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         serviceRepository.cancelPendingRetries()
         serviceJob.cancel()
@@ -171,7 +161,6 @@ class MeshService : Service() {
     private val binder =
         object : IMeshService.Stub() {
             override fun setDeviceAddress(deviceAddr: String?) = toRemoteExceptions {
-                Logger.d { "Passing through device change to radio service: ${deviceAddr?.take(8)}..." }
                 router.actionHandler.handleUpdateLastAddress(deviceAddr)
                 radioInterfaceService.setDeviceAddress(deviceAddr)
             }

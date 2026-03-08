@@ -175,7 +175,7 @@ internal fun MessageItem(
             .copy(containerColor = containerColor, contentColor = contentColorFor(containerColor))
     val messageShape =
         getMessageBubbleShape(
-            cornerRadius = 16.dp,
+            cornerRadius = 0.dp,
             isSender = message.fromLocal,
             hasSamePrev = hasSamePrev,
             hasSameNext = hasSameNext,
@@ -253,19 +253,6 @@ internal fun MessageItem(
                 )
 
                 Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
-                    if (!message.fromLocal) {
-                        if (message.hopsAway == 0) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Snr(message.snr)
-                                Rssi(message.rssi)
-                            }
-                        } else {
-                            Text(
-                                text = stringResource(Res.string.hops_away_template, message.hopsAway),
-                                style = MaterialTheme.typography.labelSmall,
-                            )
-                        }
-                    }
                     if (containsBel) {
                         Text(text = "\uD83D\uDD14", modifier = Modifier.padding(end = 4.dp))
                     }

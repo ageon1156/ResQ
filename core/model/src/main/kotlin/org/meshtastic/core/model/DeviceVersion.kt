@@ -2,8 +2,6 @@
 
 package org.meshtastic.core.model
 
-import co.touchlab.kermit.Logger
-
 data class DeviceVersion(val asString: String) : Comparable<DeviceVersion> {
 
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
@@ -12,7 +10,6 @@ data class DeviceVersion(val asString: String) : Comparable<DeviceVersion> {
             try {
                 verStringToInt(asString)
             } catch (e: Exception) {
-                Logger.w { "Exception while parsing version '$asString', assuming version 0" }
                 0
             }
 

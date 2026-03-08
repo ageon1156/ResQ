@@ -1,7 +1,6 @@
 
 package com.geeksville.mesh.service
 
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import dagger.Lazy
@@ -18,8 +17,6 @@ import org.meshtastic.core.data.repository.PacketRepository
 import org.meshtastic.core.database.entity.MeshLog
 import org.meshtastic.core.model.DataPacket
 import org.meshtastic.core.model.MessageStatus
-import org.meshtastic.core.model.util.toOneLineString
-import org.meshtastic.core.model.util.toPIIString
 import org.meshtastic.core.service.ConnectionState
 import org.meshtastic.proto.MeshProtos
 import org.meshtastic.proto.MeshProtos.MeshPacket
@@ -59,7 +56,6 @@ constructor(
 
     fun sendToRadio(p: ToRadio.Builder) {
         val built = p.build()
-        Logger.d { "Sending to radio ${built.toPIIString()}" }
         val b = built.toByteArray()
 
         radioInterfaceService.sendToRadio(b)
@@ -87,7 +83,6 @@ constructor(
 
     fun stopPacketQueue() {
         if (queueJob?.isActive == true) {
-            Logger.i { "Stopping packet queueJob" }
             queueJob?.cancel()
             queueJob = null
             queuedPackets.clear()
@@ -97,7 +92,6 @@ constructor(
     }
 
     fun handleQueueStatus(queueStatus: MeshProtos.QueueStatus) {
-        Logger.d { "[queueStatus] ${queueStatus.toOneLineString()}" }
         val (success, isFull, requestId) = with(queueStatus) { Triple(res == 0, free == 0, meshPacketId) }
         if (success && isFull) return 
         if (requestId != 0) {
@@ -117,20 +111,13 @@ constructor(
         if (queueJob?.isActive == true) return
         queueJob =
             scope.handledLaunch {
-                Logger.d { "packet queueJob started" }
                 while (connectionStateHolder.connectionState.value == ConnectionState.Connected) {
-                    
                     val packet = queuedPackets.poll() ?: break
                     try {
-                        
                         val response = sendPacket(packet)
-                        Logger.d { "queueJob packet id=${packet.id.toUInt()} waiting" }
-                        val success = withTimeout(TIMEOUT_MS) { response.await() }
-                        Logger.d { "queueJob packet id=${packet.id.toUInt()} success $success" }
+                        withTimeout(TIMEOUT_MS) { response.await() }
                     } catch (e: TimeoutCancellationException) {
-                        Logger.d { "queueJob packet id=${packet.id.toUInt()} timeout" }
                     } catch (e: Exception) {
-                        Logger.d { "queueJob packet id=${packet.id.toUInt()} failed" }
                     } finally {
                         queueResponse.remove(packet.id)
                     }
@@ -169,7 +156,6 @@ constructor(
             }
             sendToRadio(ToRadio.newBuilder().apply { this.packet = packet })
         } catch (ex: Exception) {
-            Logger.e(ex) { "sendToRadio error: ${ex.message}" }
             deferred.complete(false)
         }
         return deferred

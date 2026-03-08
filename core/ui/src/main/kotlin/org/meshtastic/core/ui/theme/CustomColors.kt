@@ -1,5 +1,6 @@
 
 
+
 package org.meshtastic.core.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -7,91 +8,90 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-val MeshtasticGreen = Color(0xFF1D9BF0) 
-val MeshtasticAlt = Color(0xFF020817) 
-val HyperlinkBlue = Color(0xFF38BDF8) 
-val AnnotationColor = Color(0xFF039BE5)
+val MeshtasticGreen = Color(0xFFE8830A)
+val MeshtasticAlt = Color(0xFF0D0F0C)
+val HyperlinkBlue = Color(0xFF4E9BC0)
+val AnnotationColor = Color(0xFFD4720A)
 
 object TracerouteColors {
 
-    val OutgoingRoute = Color(0xCCE86A00) 
-    val ReturnRoute = Color(0xCC0081C7) 
+    val OutgoingRoute = Color(0xCCE8830A)
+    val ReturnRoute = Color(0xCC4E7FA0)
 }
 
 object IAQColors {
-    val IAQExcellent = Color(0xFF00E400)
-    val IAQGood = Color(0xFF92D050)
-    val IAQLightlyPolluted = Color(0xFFFFFF00)
-    val IAQModeratelyPolluted = Color(0xFFFF7300)
-    val IAQHeavilyPolluted = Color(0xFFFF0000)
-    val IAQSeverelyPolluted = Color(0xFF99004C)
-    val IAQExtremelyPolluted = Color(0xFF663300)
-    val IAQDangerouslyPolluted = Color(0xFF663300)
+    val IAQExcellent = Color(0xFF2DB53E)
+    val IAQGood = Color(0xFF78A840)
+    val IAQLightlyPolluted = Color(0xFFD4A020)
+    val IAQModeratelyPolluted = Color(0xFFD47010)
+    val IAQHeavilyPolluted = Color(0xFFCC3319)
+    val IAQSeverelyPolluted = Color(0xFF8A1A30)
+    val IAQExtremelyPolluted = Color(0xFF4A1020)
+    val IAQDangerouslyPolluted = Color(0xFF2A0810)
 }
 
 object GraphColors {
-    val InfantryBlue = Color(red = 75, green = 119, blue = 190)
-    val LightGreen = Color(0xFF4BF0BE)
-    val Purple = Color(0xFF9C27B0)
-    val Pink = Color(red = 255, green = 102, blue = 204)
-    val Orange = Color(0xFFFF8800)
+    val InfantryBlue = Color(0xFF4E7FA0)
+    val LightGreen = Color(0xFF8FA864)
+    val Purple = Color(0xFF7A5080)
+    val Pink = Color(0xFFB06070)
+    val Orange = Color(0xFFE8830A)
 
-    val Green = Color.Green
-    val Red = Color.Red
-    val Blue = Color.Blue
-    val Yellow = Color.Yellow
-    val Magenta = Color.Magenta
-    val Cyan = Color.Cyan
+    val Green = Color(0xFF2DB53E)
+    val Red = Color(0xFFCC3319)
+    val Blue = Color(0xFF4E7FA0)
+    val Yellow = Color(0xFFD4A020)
+    val Magenta = Color(0xFFB06070)
+    val Cyan = Color(0xFF4E9BC0)
 }
 
 object StatusColors {
     val ColorScheme.StatusGreen: Color
         @Composable
-        get() = 
+        get() =
             if (isSystemInDarkTheme()) {
-                Color(0xFF28A03B) 
+                Color(0xFF2DB53E)
             } else {
-                Color(0xFF30C047)
+                Color(0xFF3DD454)
             }
 
     val ColorScheme.StatusYellow: Color
         @Composable
         get() =
             if (isSystemInDarkTheme()) {
-                Color(0xFFFFC107)
+                Color(0xFFD4A020)
             } else {
-                Color(0xFFFFD54F)
+                Color(0xFFE8B830)
             }
 
     val ColorScheme.StatusOrange: Color
         @Composable
         get() =
             if (isSystemInDarkTheme()) {
-                Color(0xFFE07000)
+                Color(0xFFE8830A)
             } else {
-                Color(0xFFFF8800)
+                Color(0xFFD4720A)
             }
 
     val ColorScheme.StatusRed: Color
         @Composable
-        get() = 
+        get() =
             if (isSystemInDarkTheme()) {
-                Color(0xFFB00020)
+                Color(0xFFCC3319)
             } else {
-                Color(0xFFF44336)
+                Color(0xFFBF2810)
             }
 
     val ColorScheme.StatusBlue: Color
         @Composable
-        get() = 
+        get() =
             if (isSystemInDarkTheme()) {
-                Color(0xFF2196F3)
+                Color(0xFF4E7FA0)
             } else {
-                Color(0xFF42A5F5)
+                Color(0xFF3A6A8A)
             }
 }
 
 object MessageItemColors {
-    val Red = Color(0x4DFF0000)
+    val Red = Color(0x4DCC3319)
 }
-

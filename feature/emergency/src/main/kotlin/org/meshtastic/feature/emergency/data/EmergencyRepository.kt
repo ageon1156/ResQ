@@ -2,7 +2,6 @@
 
 package org.meshtastic.feature.emergency.data
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.withContext
 import org.meshtastic.core.di.CoroutineDispatchers
 import javax.inject.Inject
@@ -20,8 +19,7 @@ class EmergencyRepository @Inject constructor(
         cachedData?.let { return@withContext Result.success(it) }
         runCatching {
             jsonDataSource.loadEmergencyGuideData().also { cachedData = it }
-        }.onFailure { e ->
-            Logger.e(e) { "Failed to load emergency guide data" }
+        }.onFailure {
         }
     }
 

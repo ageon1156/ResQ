@@ -1,6 +1,9 @@
 package org.meshtastic.feature.map.component
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -10,20 +13,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import org.meshtastic.proto.MeshProtos.Waypoint
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -34,33 +34,56 @@ import org.meshtastic.core.model.triage.TriagePin
 import org.meshtastic.feature.map.MapMode
 import org.meshtastic.feature.map.triage.SilentNodeRecord
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapModeTabRow(
     activeMode: MapMode,
     onModeSelected: (MapMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    SingleChoiceSegmentedButtonRow(modifier = modifier) {
+    Row(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.surface)
+            .height(40.dp),
+        verticalAlignment = Alignment.Bottom
+    ) {
         MapMode.entries.forEachIndexed { index, mode ->
-            SegmentedButton(
-                shape = SegmentedButtonDefaults.itemShape(
-                    index = index,
-                    count = MapMode.entries.size,
-                ),
-                onClick = { onModeSelected(mode) },
-                selected = activeMode == mode,
-                label = {
-                    Text(
-                        text = when (mode) {
-                            MapMode.CustomMap -> "Custom Map"
-                            MapMode.TriageMap -> "Triage Map"
-                        },
-                        fontSize = 13.sp,
-                        fontWeight = if (activeMode == mode) FontWeight.SemiBold else FontWeight.Normal,
+            val selected = activeMode == mode
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(40.dp)
+                    .clickable { onModeSelected(mode) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = when (mode) {
+                        MapMode.CustomMap -> "CUSTOM MAP"
+                        MapMode.TriageMap -> "TRIAGE MAP"
+                    },
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (selected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+                if (selected) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(MaterialTheme.colorScheme.primary)
                     )
-                },
-            )
+                }
+            }
+            if (index < MapMode.entries.size - 1) {
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(24.dp)
+                        .align(Alignment.CenterVertically)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+            }
         }
     }
 }
@@ -72,26 +95,27 @@ fun TriageLevelPickerDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
+        shape = MaterialTheme.shapes.extraSmall,
         title = {
-            Text(text = "Add Casualty", fontWeight = FontWeight.Bold)
+            Text(text = "ADD CASUALTY", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = "Select triage level:",
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(4.dp))
                 TriageLevelButton(TriageLevel.RED,    Color(0xFFD32F2F)) { onLevelSelected(TriageLevel.RED) }
-                TriageLevelButton(TriageLevel.YELLOW, Color(0xFFF9A825)) { onLevelSelected(TriageLevel.YELLOW) }
-                TriageLevelButton(TriageLevel.GREEN,  Color(0xFF2E7D32)) { onLevelSelected(TriageLevel.GREEN) }
-                TriageLevelButton(TriageLevel.BLACK,  Color(0xFF212121)) { onLevelSelected(TriageLevel.BLACK) }
+                TriageLevelButton(TriageLevel.YELLOW, Color(0xFFB8860B)) { onLevelSelected(TriageLevel.YELLOW) }
+                TriageLevelButton(TriageLevel.GREEN,  Color(0xFF2E6B2E)) { onLevelSelected(TriageLevel.GREEN) }
+                TriageLevelButton(TriageLevel.BLACK,  Color(0xFF1A1A1A)) { onLevelSelected(TriageLevel.BLACK) }
             }
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = onDismissRequest) { Text("Cancel") }
+            TextButton(onClick = onDismissRequest) { Text("CANCEL", style = MaterialTheme.typography.labelMedium) }
         },
     )
 }
@@ -105,28 +129,30 @@ fun TriagePinInfoDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialTheme.shapes.extraSmall,
         title = {
             Text(
-                text = "${pin.triageLevel.symbol} ${pin.triageLevel.displayLabel}",
+                text = "${pin.triageLevel.symbol} ${pin.triageLevel.displayLabel.uppercase()}",
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Victims: ${pin.victimCount}", fontSize = 14.sp)
-                Text("Added by: ${pin.createdBy}", fontSize = 13.sp)
+                Text("VICTIMS: ${pin.victimCount}", style = MaterialTheme.typography.labelLarge)
+                Text("ADDED BY: ${pin.createdBy}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 pin.claimedBy?.let {
                     Text(
-                        text = "Claimed by: $it",
-                        fontSize = 13.sp,
+                        text = "CLAIMED BY: $it",
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
                 if (pin.isSilentNodeConversion) {
                     Text(
-                        text = "Source: silent-node detection",
-                        fontSize = 12.sp,
+                        text = "SRC: silent-node detection",
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -135,18 +161,20 @@ fun TriagePinInfoDialog(
         confirmButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (pin.claimedBy == null) {
-                    Button(onClick = onClaim) { Text("Claim") }
+                    Button(
+                        onClick = onClaim,
+                        shape = MaterialTheme.shapes.extraSmall,
+                    ) { Text("CLAIM", style = MaterialTheme.typography.labelMedium) }
                 }
                 OutlinedButton(
                     onClick = onDelete,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
-                    ),
-                ) { Text("Delete") }
+                    shape = MaterialTheme.shapes.extraSmall,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) { Text("DELETE", style = MaterialTheme.typography.labelMedium) }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
+            TextButton(onClick = onDismiss) { Text("CLOSE", style = MaterialTheme.typography.labelMedium) }
         },
     )
 }
@@ -161,7 +189,8 @@ fun ClearWaypointsDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Clear all waypoints?", fontWeight = FontWeight.Bold) },
+        shape = MaterialTheme.shapes.extraSmall,
+        title = { Text(text = "CLEAR ALL WAYPOINTS", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold) },
         text = {
             Text(
                 text = if (showDeleteForEveryone) {
@@ -169,7 +198,7 @@ fun ClearWaypointsDialog(
                 } else {
                     "Remove all waypoints from your local map view."
                 },
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodySmall,
             )
         },
         confirmButton = {
@@ -178,13 +207,17 @@ fun ClearWaypointsDialog(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.Center,
             ) {
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = onDismiss) { Text("CANCEL", style = MaterialTheme.typography.labelMedium) }
                 Button(
                     onClick = onDeleteForMe,
+                    shape = MaterialTheme.shapes.extraSmall,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                ) { Text("Delete for me") }
+                ) { Text("DELETE FOR ME", style = MaterialTheme.typography.labelMedium) }
                 if (showDeleteForEveryone) {
-                    Button(onClick = onDeleteForEveryone) { Text("Delete for everyone") }
+                    Button(
+                        onClick = onDeleteForEveryone,
+                        shape = MaterialTheme.shapes.extraSmall,
+                    ) { Text("DELETE FOR ALL", style = MaterialTheme.typography.labelMedium) }
                 }
             }
         },
@@ -199,23 +232,23 @@ fun ClearTriagePinsDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Clear All Triage Pins", fontWeight = FontWeight.Bold) },
+        shape = MaterialTheme.shapes.extraSmall,
+        title = { Text(text = "CLEAR ALL TRIAGE PINS", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold) },
         text = {
             Text(
                 text = "Remove all triage pins from the map? This only clears your local view.",
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodySmall,
             )
         },
         confirmButton = {
             Button(
                 onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                ),
-            ) { Text("Clear All") }
+                shape = MaterialTheme.shapes.extraSmall,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            ) { Text("CLEAR ALL", style = MaterialTheme.typography.labelMedium) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text("CANCEL", style = MaterialTheme.typography.labelMedium) }
         },
     )
 }
@@ -228,24 +261,28 @@ fun SilentNodeTriageDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialTheme.shapes.extraSmall,
         title = {
-            Text(text = "⚠ ${record.node.user.longName}", fontWeight = FontWeight.Bold)
+            Text(text = "⚠ ${record.node.user.longName.uppercase()}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(text = record.displayLabel, fontSize = 14.sp)
+                Text(text = record.displayLabel, style = MaterialTheme.typography.labelLarge)
                 Text(
                     text = "No recent packets received from this node.",
-                    fontSize = 13.sp,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
         confirmButton = {
-            Button(onClick = onConvert) { Text("Add Triage Pin") }
+            Button(
+                onClick = onConvert,
+                shape = MaterialTheme.shapes.extraSmall,
+            ) { Text("ADD TRIAGE PIN", style = MaterialTheme.typography.labelMedium) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Dismiss") }
+            TextButton(onClick = onDismiss) { Text("DISMISS", style = MaterialTheme.typography.labelMedium) }
         },
     )
 }
@@ -263,35 +300,43 @@ fun WaypointInfoDialog(
     val emoji = if (waypoint.icon == 0) "\uD83D\uDCCD" else String(Character.toChars(waypoint.icon))
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = MaterialTheme.shapes.extraSmall,
         title = {
             Text(
-                text = "$emoji ${waypoint.name}",
+                text = "$emoji ${waypoint.name.uppercase()}",
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (waypoint.description.isNotEmpty()) {
-                    Text(waypoint.description, fontSize = 14.sp)
+                    Text(waypoint.description, style = MaterialTheme.typography.bodySmall)
                 }
-                Text("Added by: $createdBy", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = "ADDED BY: $createdBy",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         },
         confirmButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (canEdit) {
-                    Button(onClick = onEdit) { Text("Edit") }
+                    Button(
+                        onClick = onEdit,
+                        shape = MaterialTheme.shapes.extraSmall,
+                    ) { Text("EDIT", style = MaterialTheme.typography.labelMedium) }
                 }
                 OutlinedButton(
                     onClick = onDelete,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
-                    ),
-                ) { Text("Delete") }
+                    shape = MaterialTheme.shapes.extraSmall,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) { Text("DELETE", style = MaterialTheme.typography.labelMedium) }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
+            TextButton(onClick = onDismiss) { Text("CLOSE", style = MaterialTheme.typography.labelMedium) }
         },
     )
 }
@@ -306,15 +351,14 @@ private fun TriageLevelButton(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = color),
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.extraSmall,
     ) {
-        Row {
-            Text(text = level.symbol, fontSize = 18.sp, modifier = Modifier.padding(end = 8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = level.symbol, fontSize = 18.sp, modifier = Modifier.padding(end = 10.dp))
             Text(
-                text = level.displayLabel,
+                text = level.displayLabel.uppercase(),
                 color = Color.White,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.labelLarge,
             )
         }
     }

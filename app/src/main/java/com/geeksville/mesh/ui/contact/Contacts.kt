@@ -22,16 +22,20 @@ import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -212,6 +216,9 @@ fun ContactsScreen(
                     alignment = Alignment.BottomEnd,
                 ),
                 onClick = onNavigateToShare,
+                shape = MaterialTheme.shapes.extraSmall,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
                 Icon(Icons.Default.Settings, contentDescription = stringResource(Res.string.channels))
             }
@@ -297,8 +304,15 @@ private fun MuteNotificationsDialog(
         var selectedOptionIndex by remember { mutableStateOf(2) } 
 
         AlertDialog(
-            onDismissRequest = onDismiss, 
-            title = { Text(text = stringResource(Res.string.mute_notifications)) },
+            onDismissRequest = onDismiss,
+            shape = MaterialTheme.shapes.extraSmall,
+            title = {
+                Text(
+                    text = stringResource(Res.string.mute_notifications).uppercase(),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                )
+            },
             text = {
                 Column {
                     
@@ -352,17 +366,23 @@ private fun MuteNotificationsDialog(
                     onClick = {
                         val selectedMuteDuration = muteOptions[selectedOptionIndex].second
                         onConfirm(selectedMuteDuration)
-                        onDismiss() 
+                        onDismiss()
                     },
+                    shape = MaterialTheme.shapes.extraSmall,
                 ) {
-                    Text(stringResource(Res.string.okay))
+                    Text(stringResource(Res.string.okay).uppercase(), style = MaterialTheme.typography.labelMedium)
                 }
             },
             dismissButton = {
                 Button(
-                    onClick = onDismiss, 
+                    onClick = onDismiss,
+                    shape = MaterialTheme.shapes.extraSmall,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
                 ) {
-                    Text(stringResource(Res.string.cancel))
+                    Text(stringResource(Res.string.cancel).uppercase(), style = MaterialTheme.typography.labelMedium)
                 }
             },
         )
@@ -386,21 +406,36 @@ private fun DeleteConfirmationDialog(
 
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = {
-                
-            },
-            text = { Text(text = deleteMessage) },
+            shape = MaterialTheme.shapes.extraSmall,
+            title = {},
+            text = { Text(text = deleteMessage, style = MaterialTheme.typography.bodySmall) },
             confirmButton = {
                 Button(
                     onClick = {
                         onConfirm()
-                        onDismiss() 
+                        onDismiss()
                     },
+                    shape = MaterialTheme.shapes.extraSmall,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
                 ) {
-                    Text(stringResource(Res.string.delete))
+                    Text(stringResource(Res.string.delete).uppercase(), style = MaterialTheme.typography.labelMedium)
                 }
             },
-            dismissButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
+            dismissButton = {
+                Button(
+                    onClick = onDismiss,
+                    shape = MaterialTheme.shapes.extraSmall,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
+                ) {
+                    Text(stringResource(Res.string.cancel).uppercase(), style = MaterialTheme.typography.labelMedium)
+                }
+            },
             properties =
             DialogProperties(
                 dismissOnClickOutside = true, 
@@ -420,38 +455,44 @@ private fun SelectionToolbar(
     onSelectAll: () -> Unit,
     isAllMuted: Boolean,
 ) {
-    TopAppBar(
-        title = { Text(text = "$selectedCount") },
-        navigationIcon = {
-            IconButton(onClick = onCloseSelection) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close_selection))
-            }
-        },
-        actions = {
-            IconButton(onClick = onMuteSelected) {
-                Icon(
-                    imageVector =
-                    if (isAllMuted) {
-                        Icons.AutoMirrored.TwoTone.VolumeUp
-                    } else {
-                        Icons.AutoMirrored.TwoTone.VolumeMute
-                    },
-                    contentDescription =
-                    if (isAllMuted) {
-                        "Unmute selected"
-                    } else {
-                        "Mute selected"
-                    },
+    Column {
+        TopAppBar(
+            title = {
+                Text(
+                    text = "$selectedCount",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    letterSpacing = androidx.compose.ui.unit.TextUnit(1f, androidx.compose.ui.unit.TextUnitType.Sp),
                 )
-            }
-            IconButton(onClick = onDeleteSelected) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.delete_selection))
-            }
-            IconButton(onClick = onSelectAll) {
-                Icon(Icons.Default.SelectAll, contentDescription = stringResource(Res.string.select_all))
-            }
-        },
-    )
+            },
+            navigationIcon = {
+                IconButton(onClick = onCloseSelection) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close_selection))
+                }
+            },
+            actions = {
+                IconButton(onClick = onMuteSelected) {
+                    Icon(
+                        imageVector = if (isAllMuted) Icons.AutoMirrored.TwoTone.VolumeUp else Icons.AutoMirrored.TwoTone.VolumeMute,
+                        contentDescription = if (isAllMuted) "Unmute selected" else "Mute selected",
+                    )
+                }
+                IconButton(onClick = onDeleteSelected) {
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(Res.string.delete_selection))
+                }
+                IconButton(onClick = onSelectAll) {
+                    Icon(Icons.Default.SelectAll, contentDescription = stringResource(Res.string.select_all))
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.primary,
+                navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+            ),
+        )
+        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+    }
 }
 
 @Composable

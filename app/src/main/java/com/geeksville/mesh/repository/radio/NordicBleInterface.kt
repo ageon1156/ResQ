@@ -2,7 +2,6 @@
 package com.geeksville.mesh.repository.radio
 
 import android.annotation.SuppressLint
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.repository.radio.BleConstants.BTM_FROMNUM_CHARACTER
 import com.geeksville.mesh.repository.radio.BleConstants.BTM_FROMRADIO_CHARACTER
 import com.geeksville.mesh.repository.radio.BleConstants.BTM_LOGRADIO_CHARACTER
@@ -52,12 +51,10 @@ constructor(
 ) : IRadioInterface {
 
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
-        Logger.e(throwable) { "[$address] Uncaught exception in connectionScope" }
         serviceScope.launch {
             try {
                 peripheral?.disconnect()
-            } catch (e: Exception) {
-                Logger.e(e) { "[$address] Failed to disconnect in exception handler" }
+            } catch (_: Exception) {
             }
         }
         service.onDisconnect(BleError.from(throwable))
@@ -85,13 +82,9 @@ constructor(
 
     private fun fromRadioPacketFlow(): Flow<ByteArray> = channelFlow {
         while (isActive) {
-            
             val packet =
                 fromRadioCharacteristic?.read()?.takeIf { it.isNotEmpty() }
-                    ?: run {
-                        Logger.d { "[$address] fromRadio queue drain complete (read empty/null)" }
-                        break
-                    }
+                    ?: break
             send(packet)
         }
     }
@@ -99,32 +92,17 @@ constructor(
     private fun dispatchPacket(packet: ByteArray) {
         packetsReceived++
         bytesReceived += packet.size
-        Logger.d {
-            "[$address] Dispatching packet to service.handleFromRadio() - " +
-                "Packet #$packetsReceived, ${packet.size} bytes (Total: $bytesReceived bytes)"
-        }
         try {
             service.handleFromRadio(p = packet)
-        } catch (t: Throwable) {
-            Logger.e(t) { "[$address] Failed to execute service.handleFromRadio()" }
+        } catch (_: Throwable) {
         }
     }
 
     private suspend fun drainPacketQueueAndDispatch() {
         drainMutex.withLock {
-            var drainedCount = 0
             fromRadioPacketFlow()
-                .onEach { packet ->
-                    drainedCount++
-                    Logger.d { "[$address] Read packet from queue (${packet.size} bytes)" }
-                    dispatchPacket(packet)
-                }
-                .catch { ex -> Logger.w(ex) { "[$address] Exception while draining packet queue" } }
-                .onCompletion {
-                    if (drainedCount > 0) {
-                        Logger.d { "[$address] Drained $drainedCount packets from packet queue" }
-                    }
-                }
+                .onEach { packet -> dispatchPacket(packet) }
+                .catch { }
                 .collect()
         }
     }
@@ -137,19 +115,13 @@ constructor(
         connectionScope.launch {
             try {
                 connectionStartTime = System.currentTimeMillis()
-                Logger.i { "[$address] BLE connection attempt started at $connectionStartTime" }
-
                 peripheral = retryCall { findAndConnectPeripheral() }
                 peripheral?.let {
-                    val connectionTime = System.currentTimeMillis() - connectionStartTime
-                    Logger.i { "[$address] BLE peripheral connected in ${connectionTime}ms" }
                     onConnected()
                     observePeripheralChanges()
                     discoverServicesAndSetupCharacteristics(it)
                 }
             } catch (e: Exception) {
-                val failureTime = System.currentTimeMillis() - connectionStartTime
-                Logger.e(e) { "[$address] Failed to connect to peripheral after ${failureTime}ms" }
                 service.onDisconnect(BleError.from(e))
             }
         }
@@ -168,49 +140,28 @@ constructor(
     private suspend fun onConnected() {
         try {
             peripheral?.let { p ->
-                val rssi = retryCall { p.readRssi() }
-                Logger.d { "[$address] Connection established. RSSI: $rssi dBm" }
-
-                val phyInUse = retryCall { p.readPhy() }
-                Logger.d { "[$address] PHY in use: $phyInUse" }
+                retryCall { p.readRssi() }
+                retryCall { p.readPhy() }
             }
         } catch (e: Exception) {
-            Logger.w(e) { "[$address] Failed to read initial connection properties" }
         }
     }
 
     private fun observePeripheralChanges() {
         peripheral?.let { p ->
-            p.phy.onEach { phy -> Logger.i { "[$address] BLE PHY changed to $phy" } }.launchIn(connectionScope)
+            p.phy.launchIn(connectionScope)
 
-            p.connectionParameters
-                .onEach { params -> Logger.i { "[$address] BLE connection parameters changed to $params" } }
-                .launchIn(connectionScope)
+            p.connectionParameters.launchIn(connectionScope)
 
             p.state
                 .onEach { state ->
-                    Logger.i { "[$address] BLE connection state changed to $state" }
                     if (state is ConnectionState.Disconnected) {
-                        val uptime =
-                            if (connectionStartTime > 0) {
-                                System.currentTimeMillis() - connectionStartTime
-                            } else {
-                                0
-                            }
-                        Logger.w {
-                            "[$address] BLE disconnected - Reason: ${state.reason}, " +
-                                "Uptime: ${uptime}ms, " +
-                                "Packets RX: $packetsReceived ($bytesReceived bytes), " +
-                                "Packets TX: $packetsSent ($bytesSent bytes)"
-                        }
                         service.onDisconnect(BleError.Disconnected(reason = state.reason))
                     }
                 }
                 .launchIn(connectionScope)
         }
-        centralManager.state
-            .onEach { state -> Logger.i { "[$address] CentralManager state changed to $state" } }
-            .launchIn(connectionScope)
+        centralManager.state.launchIn(connectionScope)
     }
 
     @Suppress("TooGenericExceptionCaught")
@@ -237,35 +188,19 @@ constructor(
                                 it != null
                             }
                         ) {
-                            Logger.d {
-                                "[$address] Found toRadio: ${toRadioCharacteristic?.uuid}, ${toRadioCharacteristic?.instanceId}"
-                            }
-                            Logger.d {
-                                "[$address] Found fromNum: ${fromNumCharacteristic?.uuid}, ${fromNumCharacteristic?.instanceId}"
-                            }
-                            Logger.d {
-                                "[$address] Found fromRadio: ${fromRadioCharacteristic?.uuid}, ${fromRadioCharacteristic?.instanceId}"
-                            }
-                            Logger.d {
-                                "[$address] Found logRadio: ${logRadioCharacteristic?.uuid}, ${logRadioCharacteristic?.instanceId}"
-                            }
                             setupNotifications()
                             service.onConnect()
                         } else {
-                            Logger.w { "[$address] Discovery failed: missing required characteristics" }
                             service.onDisconnect(BleError.DiscoveryFailed("One or more characteristics not found"))
                         }
                     } else {
-                        Logger.w { "[$address] Discovery failed: Meshtastic service not found" }
                         service.onDisconnect(BleError.DiscoveryFailed("Meshtastic service not found"))
                     }
                 }
                 .catch { e ->
-                    Logger.e(e) { "[$address] Service discovery failed" }
                     try {
                         peripheral.disconnect()
                     } catch (e2: Exception) {
-                        Logger.e(e2) { "[$address] Failed to disconnect in discovery catch" }
                     }
                     service.onDisconnect(BleError.from(e))
                 }
@@ -276,29 +211,13 @@ constructor(
     @OptIn(ExperimentalUuidApi::class)
     private suspend fun setupNotifications() {
         retryCall { fromNumCharacteristic?.subscribe() }
-            ?.onStart { Logger.d { "[$address] Subscribing to fromNumCharacteristic" } }
-            ?.onEach { notifyBytes ->
-                Logger.d { "[$address] FromNum Notification (${notifyBytes.size} bytes), draining queue" }
-                connectionScope.launch { drainPacketQueueAndDispatch() }
-            }
-            ?.catch { e ->
-                Logger.e(e) { "[$address] Error subscribing to fromNumCharacteristic" }
-                service.onDisconnect(BleError.from(e))
-            }
-            ?.onCompletion { cause -> Logger.d { "[$address] fromNum sub flow completed, cause=$cause" } }
+            ?.onEach { connectionScope.launch { drainPacketQueueAndDispatch() } }
+            ?.catch { e -> service.onDisconnect(BleError.from(e)) }
             ?.launchIn(scope = connectionScope)
 
         retryCall { logRadioCharacteristic?.subscribe() }
-            ?.onStart { Logger.d { "[$address] Subscribing to logRadioCharacteristic" } }
-            ?.onEach { notifyBytes ->
-                Logger.d { "[$address] LogRadio Notification (${notifyBytes.size} bytes), dispatching packet" }
-                dispatchPacket(notifyBytes)
-            }
-            ?.catch { e ->
-                Logger.e(e) { "[$address] Error subscribing to logRadioCharacteristic" }
-                service.onDisconnect(BleError.from(e))
-            }
-            ?.onCompletion { cause -> Logger.d { "[$address] logRadio sub flow completed, cause=$cause" } }
+            ?.onEach { notifyBytes -> dispatchPacket(notifyBytes) }
+            ?.catch { e -> service.onDisconnect(BleError.from(e)) }
             ?.launchIn(scope = connectionScope)
     }
 
@@ -312,12 +231,7 @@ constructor(
             } catch (e: Exception) {
                 currentAttempt++
                 if (currentAttempt >= RETRY_COUNT) {
-                    Logger.e(e) { "[$address] BLE operation failed after $RETRY_COUNT attempts, giving up" }
                     throw e
-                }
-                Logger.w(e) {
-                    "[$address] BLE operation failed (attempt $currentAttempt/$RETRY_COUNT), " +
-                        "retrying in ${RETRY_DELAY_MS}ms..."
                 }
                 delay(RETRY_DELAY_MS)
             }
@@ -327,7 +241,6 @@ constructor(
     override fun handleSendToRadio(p: ByteArray) {
         toRadioCharacteristic?.let { characteristic ->
             if (peripheral == null) {
-                Logger.w { "[$address] BLE peripheral is null, cannot send packet" }
                 return@let
             }
             connectionScope.launch {
@@ -342,43 +255,22 @@ constructor(
                         retryCall {
                             packetsSent++
                             bytesSent += p.size
-                            Logger.d {
-                                "[$address] Writing packet #$packetsSent to toRadioCharacteristic with $writeType - " +
-                                    "${p.size} bytes (Total TX: $bytesSent bytes)"
-                            }
                             characteristic.write(p, writeType = writeType)
                         }
                         drainPacketQueueAndDispatch()
                     } catch (e: Exception) {
-                        Logger.e(e) {
-                            "[$address] Failed to write packet to toRadioCharacteristic after " +
-                                "$packetsSent successful writes"
-                        }
                         service.onDisconnect(BleError.from(e))
                     }
                 }
             }
-        } ?: Logger.w { "[$address] toRadio characteristic unavailable, can't send data" }
+        }
     }
 
     override fun keepAlive() {
-        Logger.d { "[$address] BLE keepAlive" }
     }
 
     override fun close() {
         runBlocking {
-            val uptime =
-                if (connectionStartTime > 0) {
-                    System.currentTimeMillis() - connectionStartTime
-                } else {
-                    0
-                }
-            Logger.i {
-                "[$address] BLE close() called - " +
-                    "Uptime: ${uptime}ms, " +
-                    "Packets RX: $packetsReceived ($bytesReceived bytes), " +
-                    "Packets TX: $packetsSent ($bytesSent bytes)"
-            }
             connectionScope.cancel()
             peripheral?.disconnect()
             service.onDisconnect(true)

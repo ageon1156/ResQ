@@ -34,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -93,7 +92,7 @@ enum class IaqDisplayMode {
     Gradient,
 }
 
-@Suppress("LongMethod", "UnusedPrivateProperty")
+@Suppress("LongMethod")
 @Composable
 fun IndoorAirQuality(iaq: Int?, displayMode: IaqDisplayMode = IaqDisplayMode.Pill) {
     if (iaq == null || iaq == Int.MIN_VALUE) {
@@ -101,7 +100,6 @@ fun IndoorAirQuality(iaq: Int?, displayMode: IaqDisplayMode = IaqDisplayMode.Pil
     }
     var isLegendOpen by remember { mutableStateOf(false) }
     val iaqEnum = if (iaq != null) getIaq(iaq) else null
-    val gradient = Brush.linearGradient(colors = Iaq.entries.map { it.color })
 
     if (iaqEnum != null) {
         Column {

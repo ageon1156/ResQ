@@ -18,8 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -194,7 +193,7 @@ fun OrganicEditWaypointDialog(
                                 Text(
                                     text = String(Character.toChars(emoji)),
                                     modifier = Modifier
-                                        .clip(CircleShape)
+                                        .clip(MaterialTheme.shapes.extraSmall)
                                         .background(MaterialTheme.colorScheme.primaryContainer)
                                         .padding(6.dp),
                                     fontSize = 24.sp,
@@ -299,11 +298,11 @@ fun OrganicEditWaypointDialog(
                         Text(stringResource(Res.string.cancel))
                     }
                     if (waypoint.id != 0) {
-                        Button(modifier = modifier.weight(1f), onClick = { onDeleteClicked(waypointInput) }, enabled = waypointInput.name.isNotEmpty(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer), shape = RoundedCornerShape(12.dp)) {
+                        Button(modifier = modifier.weight(1f), onClick = { onDeleteClicked(waypointInput) }, enabled = waypointInput.name.isNotEmpty(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer, contentColor = MaterialTheme.colorScheme.onErrorContainer), shape = MaterialTheme.shapes.extraSmall) {
                             Text(stringResource(Res.string.delete))
                         }
                     }
-                    Button(modifier = modifier.weight(1f), onClick = { onSendClicked(waypointInput) }, enabled = true, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) {
+                    Button(modifier = modifier.weight(1f), onClick = { onSendClicked(waypointInput) }, enabled = true, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = MaterialTheme.shapes.extraSmall) {
                         Text(stringResource(Res.string.send))
                     }
                 }
@@ -319,7 +318,7 @@ fun OrganicEditWaypointDialog(
 
 @Composable
 private fun OrganicToggleRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.extraSmall).background(MaterialTheme.colorScheme.surfaceContainerLowest).padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(imageVector = icon, contentDescription = label, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(12.dp))
         Text(text = label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
@@ -330,7 +329,7 @@ private fun OrganicToggleRow(icon: androidx.compose.ui.graphics.vector.ImageVect
 @Composable
 private fun OrganicDateTimeButton(label: String, value: String, onClick: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Button(onClick = onClick, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) { Text(label) }
+        Button(onClick = onClick, shape = MaterialTheme.shapes.extraSmall, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)) { Text(label) }
         if (value.isNotEmpty()) {
             Text(modifier = Modifier.padding(top = 4.dp), text = value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }

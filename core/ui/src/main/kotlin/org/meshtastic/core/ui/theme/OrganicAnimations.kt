@@ -1,5 +1,6 @@
 
 
+
 package org.meshtastic.core.ui.theme
 
 import androidx.compose.animation.core.CubicBezierEasing
@@ -8,33 +9,33 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 
-const val ORGANIC_DURATION_SHORT = 350
-const val ORGANIC_DURATION_MEDIUM = 450
-const val ORGANIC_DURATION_LONG = 650
-const val ORGANIC_DURATION_EXTRA_LONG = 850
+const val ORGANIC_DURATION_SHORT = 120
+const val ORGANIC_DURATION_MEDIUM = 200
+const val ORGANIC_DURATION_LONG = 280
+const val ORGANIC_DURATION_EXTRA_LONG = 380
 
-const val ORGANIC_STAGGER_DELAY = 80
-const val ORGANIC_STAGGER_DELAY_SHORT = 50
+const val ORGANIC_STAGGER_DELAY = 20
+const val ORGANIC_STAGGER_DELAY_SHORT = 10
 
-val OrganicEasing: Easing = CubicBezierEasing(0.4f, 0.0f, 0.2f, 1.0f)
+val OrganicEasing: Easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
 
-val OrganicEmphasizedEasing: Easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
+val OrganicEmphasizedEasing: Easing = CubicBezierEasing(0.0f, 0.0f, 0.0f, 1.0f)
 
-val OrganicGentleEasing: Easing = CubicBezierEasing(0.3f, 0.0f, 0.3f, 1.0f)
+val OrganicGentleEasing: Easing = CubicBezierEasing(0.0f, 0.0f, 0.2f, 1.0f)
 
 fun <T> organicSpring() = spring<T>(
-    dampingRatio = Spring.DampingRatioLowBouncy,
-    stiffness = Spring.StiffnessLow
+    dampingRatio = Spring.DampingRatioNoBouncy,
+    stiffness = Spring.StiffnessMediumLow
 )
 
 fun <T> organicGentleSpring() = spring<T>(
-    dampingRatio = Spring.DampingRatioMediumBouncy,
-    stiffness = Spring.StiffnessVeryLow
+    dampingRatio = Spring.DampingRatioNoBouncy,
+    stiffness = Spring.StiffnessLow
 )
 
 fun <T> organicEmphasizedSpring() = spring<T>(
-    dampingRatio = Spring.DampingRatioLowBouncy,
-    stiffness = Spring.StiffnessMediumLow
+    dampingRatio = Spring.DampingRatioNoBouncy,
+    stiffness = Spring.StiffnessMedium
 )
 
 fun <T> organicTween() = tween<T>(

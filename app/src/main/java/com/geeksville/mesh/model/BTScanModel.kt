@@ -9,7 +9,6 @@ import android.os.RemoteException
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.repository.bluetooth.BluetoothRepository
 import com.geeksville.mesh.repository.network.NetworkRepository
 import com.geeksville.mesh.repository.network.NetworkRepository.Companion.toAddressString
@@ -165,13 +164,11 @@ constructor(
             if (updates.isNotEmpty()) _bleNameCache.update { it + updates }
         }.launchIn(viewModelScope)
 
-        Logger.d { "BTScanModel created" }
     }
 
     override fun onCleared() {
         super.onCleared()
         bluetoothRepository.stopScan()
-        Logger.d { "BTScanModel cleared" }
     }
 
     fun setErrorText(text: String) {
@@ -179,7 +176,6 @@ constructor(
     }
 
     fun stopScan() {
-        Logger.d { "stopping scan" }
         bluetoothRepository.stopScan()
     }
 
@@ -188,7 +184,6 @@ constructor(
     }
 
     fun startScan() {
-        Logger.d { "starting ble scan" }
         bluetoothRepository.startScan()
     }
 
@@ -196,23 +191,18 @@ constructor(
         try {
             serviceRepository.meshService?.let { service -> MeshService.changeDeviceAddress(context, service, address) }
         } catch (ex: RemoteException) {
-            Logger.e(ex) { "changeDeviceSelection failed, probably it is shutting down" }
         }
     }
 
     private fun requestBonding(entry: DeviceListEntry.Ble) {
-        Logger.i { "Starting bonding for ${entry.peripheral.address.anonymize}" }
         viewModelScope.launch {
             @Suppress("TooGenericExceptionCaught")
             try {
                 bluetoothRepository.bond(entry.peripheral)
-                Logger.i { "Bonding complete for ${entry.peripheral.address.anonymize}, selecting device..." }
                 changeDeviceAddress(entry.fullAddress)
             } catch (ex: SecurityException) {
-                Logger.e(ex) { "Bonding failed for ${entry.peripheral.address.anonymize} Permissions not granted" }
                 serviceRepository.setErrorMessage("Bonding failed: ${ex.message} Permissions not granted")
             } catch (ex: Exception) {
-                Logger.e(ex) { "Bonding failed for ${entry.peripheral.address.anonymize}" }
                 serviceRepository.setErrorMessage("Bonding failed: ${ex.message}")
             }
         }
@@ -223,10 +213,7 @@ constructor(
             .requestPermission(it.driver.device)
             .onEach { granted ->
                 if (granted) {
-                    Logger.i { "User approved USB access" }
                     changeDeviceAddress(it.fullAddress)
-                } else {
-                    Logger.e { "USB permission denied for device ${it.address}" }
                 }
             }
             .launchIn(viewModelScope)

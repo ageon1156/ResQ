@@ -2,7 +2,6 @@
 
 package org.meshtastic.core.data.repository
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.meshtastic.core.data.datasource.FirmwareReleaseJsonDataSource
@@ -39,7 +38,6 @@ constructor(
 
         val cachedRelease = localDataSource.getLatestRelease(releaseType)
         cachedRelease?.let {
-            Logger.d { "Emitting cached firmware for $releaseType (isStale=${it.isStale()})" }
             emit(it.asExternalModel())
         }
 
@@ -50,14 +48,12 @@ constructor(
         updateCacheFromSources()
 
         val finalRelease = localDataSource.getLatestRelease(releaseType)
-        Logger.d { "Emitting final firmware for $releaseType from cache." }
         emit(finalRelease?.asExternalModel())
     }
 
     private suspend fun updateCacheFromSources() {
         val remoteFetchSuccess =
             runCatching {
-                Logger.d { "Fetching fresh firmware releases from remote API." }
                 val networkReleases = remoteDataSource.getFirmwareReleases()
 
                 localDataSource.insertFirmwareReleases(networkReleases.releases.stable, FirmwareReleaseType.STABLE)
@@ -66,13 +62,11 @@ constructor(
                 .isSuccess
 
         if (!remoteFetchSuccess) {
-            Logger.w { "Remote fetch failed, attempting to cache from bundled JSON." }
             runCatching {
                 val jsonReleases = jsonDataSource.loadFirmwareReleaseFromJsonAsset()
                 localDataSource.insertFirmwareReleases(jsonReleases.releases.stable, FirmwareReleaseType.STABLE)
                 localDataSource.insertFirmwareReleases(jsonReleases.releases.alpha, FirmwareReleaseType.ALPHA)
             }
-                .onFailure { Logger.w { "Failed to cache from JSON: ${it.message}" } }
         }
     }
 

@@ -1,25 +1,26 @@
 
-
 package org.meshtastic.core.ui.component
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import org.meshtastic.core.ui.theme.organicSpring
-import org.meshtastic.core.ui.theme.organicTweenShort
+import org.meshtastic.core.ui.theme.LeafShape
 
 @Composable
 fun OrganicNavigationBar(
@@ -28,63 +29,49 @@ fun OrganicNavigationBar(
     onDestinationSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 3.dp,
-        shadowElevation = 8.dp,
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.Transparent)
+            .padding(horizontal = 16.dp, vertical = 0.dp)
+            .padding(top = 4.dp, bottom = 10.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)  
-                .padding(horizontal = 8.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+                .height(52.dp)
+                .clip(LeafShape)
+                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), LeafShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         ) {
             destinations.forEachIndexed { index, destination ->
-                OrganicNavigationItem(
-                    destination = destination,
-                    selected = selectedIndex == index,
-                    onClick = { onDestinationSelected(index) },
-                    modifier = Modifier.weight(1f)
-                )
+                val selected = selectedIndex == index
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable { onDestinationSelected(index) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (selected) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(LeafShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                        )
+                    }
+                    Icon(
+                        imageVector = destination.icon,
+                        contentDescription = destination.label,
+                        tint = if (selected) MaterialTheme.colorScheme.onPrimary
+                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
         }
     }
-}
-
-@Composable
-private fun OrganicNavigationItem(
-    destination: NavigationDestination,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val iconColor by animateColorAsState(
-        targetValue = if (selected) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.onSurfaceVariant
-        },
-        animationSpec = organicTweenShort(),
-        label = "nav_icon_color"
-    )
-
-    val scale by animateFloatAsState(
-        targetValue = if (selected) 1.15f else 1.0f,
-        animationSpec = organicSpring(),
-        label = "nav_icon_scale"
-    )
-
-    OrganicTabItem(
-        icon = destination.icon,
-        label = destination.label,
-        selected = selected,
-        onClick = onClick,
-        modifier = modifier
-    )
 }
 
 data class NavigationDestination(
@@ -92,4 +79,3 @@ data class NavigationDestination(
     val icon: ImageVector,
     val badge: (@Composable () -> Unit)? = null
 )
-

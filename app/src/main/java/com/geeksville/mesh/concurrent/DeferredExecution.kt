@@ -2,8 +2,6 @@
 
 package com.geeksville.mesh.concurrent
 
-import co.touchlab.kermit.Logger
-
 class DeferredExecution {
     private val queue = mutableListOf<() -> Unit>()
 
@@ -12,7 +10,6 @@ class DeferredExecution {
     }
 
     fun run() {
-        Logger.d { "Running deferred execution numjobs=${queue.size}" }
         queue.forEach { it() }
         queue.clear()
     }

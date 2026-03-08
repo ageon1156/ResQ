@@ -16,7 +16,6 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.core.net.toUri
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.meshtastic.core.database.model.Node
@@ -66,7 +65,6 @@ fun LinkedCoordinatesItem(node: Node, displayUnits: DisplayUnits = DisplayUnits.
                     coroutineScope.launch { context.showToast("No application available to open this location!") }
                 }
             } catch (ex: ActivityNotFoundException) {
-                Logger.d { "Failed to open geo intent: $ex" }
             }
         },
         onLongClick = {

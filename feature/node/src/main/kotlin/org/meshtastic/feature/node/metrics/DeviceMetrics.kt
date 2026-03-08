@@ -4,7 +4,6 @@ package org.meshtastic.feature.node.metrics
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,16 +12,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,9 +31,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,12 +40,9 @@ import org.meshtastic.core.strings.air_util_definition
 import org.meshtastic.core.strings.air_utilization
 import org.meshtastic.core.strings.battery
 import org.meshtastic.core.strings.ch_util_definition
-import org.meshtastic.core.strings.channel_air_util
 import org.meshtastic.core.strings.channel_utilization
-import org.meshtastic.core.ui.component.MaterialBatteryInfo
 import org.meshtastic.core.ui.component.OptionLabel
 import org.meshtastic.core.ui.component.SlidingSelector
-import org.meshtastic.core.ui.theme.AppTheme
 import org.meshtastic.core.ui.theme.GraphColors.Cyan
 import org.meshtastic.core.ui.theme.GraphColors.Green
 import org.meshtastic.core.ui.theme.GraphColors.Magenta
@@ -67,7 +55,6 @@ import org.meshtastic.feature.node.metrics.CommonCharts.Y_AXIS_WEIGHT
 import org.meshtastic.feature.node.metrics.GraphUtil.createPath
 import org.meshtastic.feature.node.metrics.GraphUtil.plotPoint
 import org.meshtastic.feature.node.model.TimeFrame
-import org.meshtastic.proto.TelemetryProtos
 import org.meshtastic.proto.TelemetryProtos.Telemetry
 
 private enum class Device(val color: Color) {
@@ -259,119 +246,4 @@ private fun DeviceMetricsChartPreview() {
     }
 }
 
-@Composable
-private fun DeviceMetricsCard(telemetry: Telemetry) {
-    val deviceMetrics = telemetry.deviceMetrics
-    val time = telemetry.time * MS_PER_SEC
-    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
-        Surface {
-            SelectionContainer {
-                Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-                    
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(
-                            text = DATE_TIME_FORMAT.format(time),
-                            style = TextStyle(fontWeight = FontWeight.Bold),
-                            fontSize = MaterialTheme.typography.labelLarge.fontSize,
-                        )
-
-                        MaterialBatteryInfo(level = deviceMetrics.batteryLevel, voltage = deviceMetrics.voltage)
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        val text =
-                            stringResource(Res.string.channel_air_util)
-                                .format(deviceMetrics.channelUtilization, deviceMetrics.airUtilTx)
-                        Text(
-                            text = text,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = MaterialTheme.typography.labelLarge.fontSize,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Suppress("detekt:MagicNumber") 
-@PreviewLightDark
-@Composable
-private fun DeviceMetricsCardPreview() {
-    val now = (System.currentTimeMillis() / 1000).toInt()
-    val telemetry =
-        Telemetry.newBuilder()
-            .setTime(now)
-            .setDeviceMetrics(
-                TelemetryProtos.DeviceMetrics.newBuilder()
-                    .setBatteryLevel(75)
-                    .setVoltage(3.65f)
-                    .setChannelUtilization(22.5f)
-                    .setAirUtilTx(12.0f)
-                    .setUptimeSeconds(7200),
-            )
-            .build()
-    AppTheme { OrganicDeviceMetricsCard(telemetry = telemetry) }
-}
-
-@Suppress("detekt:MagicNumber") 
-@PreviewLightDark
-@Composable
-private fun DeviceMetricsScreenPreview() {
-    val now = (System.currentTimeMillis() / 1000).toInt()
-    val telemetries =
-        List(24) { i ->
-            Telemetry.newBuilder()
-                .setTime(now - (23 - i) * 60 * 60) 
-                .setDeviceMetrics(
-                    TelemetryProtos.DeviceMetrics.newBuilder()
-                        .setBatteryLevel(85 - i * 2) 
-                        .setVoltage(3.8f - i * 0.01f) 
-                        .setChannelUtilization(15f + i * 1.5f) 
-                        .setAirUtilTx(8f + i * 0.8f) 
-                        .setUptimeSeconds(3600 + i * 3600), 
-                )
-                .build()
-        }
-
-    AppTheme {
-        Surface {
-            Column {
-                var displayInfoDialog by remember { mutableStateOf(false) }
-
-                if (displayInfoDialog) {
-                    LegendInfoDialog(
-                        pairedRes =
-                        listOf(
-                            Pair(Res.string.channel_utilization, Res.string.ch_util_definition),
-                            Pair(Res.string.air_utilization, Res.string.air_util_definition),
-                        ),
-                        onDismiss = { displayInfoDialog = false },
-                    )
-                }
-
-                DeviceMetricsChart(
-                    modifier = Modifier.fillMaxWidth().fillMaxHeight(fraction = 0.33f),
-                    telemetries.reversed(),
-                    TimeFrame.TWENTY_FOUR_HOURS,
-                    promptInfoDialog = { displayInfoDialog = true },
-                )
-
-                SlidingSelector(
-                    TimeFrame.entries.toList(),
-                    TimeFrame.TWENTY_FOUR_HOURS,
-                    onOptionSelected = {  },
-                ) {
-                    OptionLabel(stringResource(it.strRes))
-                }
-
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(telemetries) { telemetry -> DeviceMetricsCard(telemetry) }
-                }
-            }
-        }
-    }
-}
 

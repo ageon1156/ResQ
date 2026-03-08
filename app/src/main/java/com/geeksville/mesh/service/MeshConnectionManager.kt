@@ -2,7 +2,6 @@
 package com.geeksville.mesh.service
 
 import android.app.Notification
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.meshtastic.core.strings.getString
@@ -103,8 +102,6 @@ constructor(
 
     private fun onConnectionChanged(c: ConnectionState) {
         if (connectionStateHolder.connectionState.value == c && c !is ConnectionState.Connected) return
-        Logger.d { "onConnectionChanged: ${connectionStateHolder.connectionState.value} -> $c" }
-
         sleepTimeout?.cancel()
         sleepTimeout = null
 
@@ -120,7 +117,6 @@ constructor(
     private fun handleConnected() {
         connectionStateHolder.setState(ConnectionState.Connecting)
         serviceBroadcasts.broadcastConnection()
-        Logger.d { "Starting connect" }
         connectTimeMsec = System.currentTimeMillis()
         scope.handledLaunch { nodeRepository.clearMyNodeInfo() }
         startConfigOnly()
@@ -147,12 +143,9 @@ constructor(
                 try {
                     val localConfig = radioConfigRepository.localConfigFlow.first()
                     val timeout = (localConfig.power?.lsSecs ?: 0) + DEVICE_SLEEP_TIMEOUT_SECONDS
-                    Logger.d { "Waiting for sleeping device, timeout=$timeout secs" }
                     delay(timeout.seconds)
-                    Logger.w { "Device timeout out, setting disconnected" }
                     onConnectionChanged(ConnectionState.Disconnected)
                 } catch (_: CancellationException) {
-                    Logger.d { "device sleep timeout cancelled" }
                 }
             }
 

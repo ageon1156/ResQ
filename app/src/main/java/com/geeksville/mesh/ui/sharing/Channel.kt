@@ -72,7 +72,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import co.touchlab.kermit.Logger
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -188,7 +187,6 @@ fun ChannelScreen(
         }
 
     fun zxingScan() {
-        Logger.d { "Starting zxing QR code scanner" }
         val zxingScan = ScanOptions()
         zxingScan.setCameraId(0)
         zxingScan.setPrompt("")
@@ -199,21 +197,11 @@ fun ChannelScreen(
 
     val cameraPermissionState = rememberPermissionState(Manifest.permission.CAMERA)
 
-    LaunchedEffect(cameraPermissionState.status) {
-        if (cameraPermissionState.status.isGranted) {
-
-        }
-    }
-
     fun installSettings(newChannelSet: ChannelSet) {
-        
         try {
             viewModel.setChannels(newChannelSet)
-            
-        } catch (ex: RemoteException) {
-            Logger.e(ex) { "ignoring channel problem" }
-
-            channelSet = channels 
+        } catch (_: RemoteException) {
+            channelSet = channels
 
             scope.launch { context.showToast(Res.string.cant_change_no_radio) }
         }
@@ -238,7 +226,6 @@ fun ChannelScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        Logger.d { "Switching back to default channel" }
                         installSettings(
                             Channel.default.settings,
                             Channel.default.loraConfig.copy {

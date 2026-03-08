@@ -13,16 +13,23 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.recalculateWindowInsets
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -38,19 +45,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.NavigationRailItemDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
-import androidx.compose.material3.rememberTooltipState
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,6 +58,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -77,7 +75,6 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.BuildConfig
 import com.geeksville.mesh.model.BTScanModel
 import com.geeksville.mesh.model.UIViewModel
@@ -338,7 +335,6 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
             onDismiss = { uIViewModel.clearNeighborInfoResponse() },
         )
     }
-    val navSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfo())
     val currentDestination = navController.currentBackStackEntryAsState().value?.destination
     val topLevelDestination = TopLevelDestination.fromNavDestination(currentDestination)
 
@@ -372,166 +368,156 @@ fun MainScreen(uIViewModel: UIViewModel = hiltViewModel(), scanModel: BTScanMode
         }
     }
 
-    val navSelColor = colorScheme.primary
-    val navUnselColor = colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-    val navIndicatorColor = colorScheme.primary.copy(alpha = 0.12f)
-    val minimalItemColors = NavigationSuiteDefaults.itemColors(
-        navigationBarItemColors = NavigationBarItemDefaults.colors(selectedIconColor = navSelColor, selectedTextColor = navSelColor, indicatorColor = navIndicatorColor, unselectedIconColor = navUnselColor, unselectedTextColor = navUnselColor),
-        navigationRailItemColors = NavigationRailItemDefaults.colors(selectedIconColor = navSelColor, selectedTextColor = navSelColor, indicatorColor = navIndicatorColor, unselectedIconColor = navUnselColor, unselectedTextColor = navUnselColor),
-    )
+    val navUnselColor = colorScheme.onSurface.copy(alpha = 0.4f)
 
-    NavigationSuiteScaffold(
+    Scaffold(
         modifier = Modifier.fillMaxSize(),
-        navigationSuiteItems = {
-            TopLevelDestination.entries.forEach { destination ->
-                val isSelected = destination == topLevelDestination
-                val isConnectionsRoute = destination == TopLevelDestination.Connections
-                item(
-                    colors = minimalItemColors,
-                    icon = {
-                        TooltipBox(
-                            positionProvider =
-                            TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                            tooltip = {
-                                PlainTooltip {
-                                    Text(
-                                        if (isConnectionsRoute) {
-                                            when (connectionState) {
-                                                ConnectionState.Connected -> stringResource(Res.string.connected)
-                                                ConnectionState.Connecting -> stringResource(Res.string.connecting)
-                                                ConnectionState.DeviceSleep ->
-                                                    stringResource(Res.string.device_sleeping)
-                                                ConnectionState.Disconnected -> stringResource(Res.string.disconnected)
-                                            }
-                                        } else {
-                                            stringResource(destination.label)
-                                        },
-                                    )
-                                }
-                            },
-                            state = rememberTooltipState(),
-                        ) {
+        containerColor = colorScheme.surface,
+        bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .height(80.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(colorScheme.surfaceContainerHigh)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .background(colorScheme.primary.copy(alpha = 0.6f))
+                    )
+                }
+                Row(modifier = Modifier.fillMaxWidth().height(80.dp)) {
+                    TopLevelDestination.entries.forEach { destination ->
+                        val isSelected = destination == topLevelDestination
+                        val isConnectionsRoute = destination == TopLevelDestination.Connections
+                        val iconTint = if (isSelected) colorScheme.onPrimary else navUnselColor
+
+                        val iconContent: @Composable () -> Unit = {
                             if (isConnectionsRoute) {
                                 Box(
-                                    modifier =
-                                    Modifier.drawWithCache {
+                                    modifier = Modifier.drawWithCache {
                                         val glowRadius = size.minDimension
-                                        val glowBrush =
-                                            Brush.radialGradient(
-                                                colors =
-                                                listOf(
-                                                    currentGlowColor.copy(alpha = 0.8f),
-                                                    currentGlowColor.copy(alpha = 0.4f),
-                                                    Color.Transparent,
-                                                ),
-                                                center =
-                                                androidx.compose.ui.geometry.Offset(
-                                                    size.width / 2,
-                                                    size.height / 2,
-                                                ),
-                                                radius = glowRadius,
-                                            )
+                                        val glowBrush = Brush.radialGradient(
+                                            colors = listOf(
+                                                currentGlowColor.copy(alpha = 0.8f),
+                                                currentGlowColor.copy(alpha = 0.4f),
+                                                Color.Transparent,
+                                            ),
+                                            center = androidx.compose.ui.geometry.Offset(size.width / 2, size.height / 2),
+                                            radius = glowRadius,
+                                        )
                                         onDrawWithContent {
                                             drawContent()
                                             val alpha = animatedGlowAlpha.value
                                             if (alpha > 0f) {
-                                                drawCircle(
-                                                    brush = glowBrush,
-                                                    radius = glowRadius,
-                                                    alpha = alpha,
-                                                    blendMode = BlendMode.Screen,
-                                                )
+                                                drawCircle(brush = glowBrush, radius = glowRadius, alpha = alpha, blendMode = BlendMode.Screen)
                                             }
                                         }
-                                    },
+                                    }
                                 ) {
-                                    ConnectionsNavIcon(
-                                        connectionState = connectionState,
-                                        deviceType = DeviceType.fromAddress(selectedDevice),
-                                    )
+                                    ConnectionsNavIcon(connectionState = connectionState, deviceType = DeviceType.fromAddress(selectedDevice))
+                                }
+                            } else if (destination == TopLevelDestination.Conversations) {
+                                var lastNonZeroCount by remember { mutableIntStateOf(unreadMessageCount) }
+                                if (unreadMessageCount > 0) lastNonZeroCount = unreadMessageCount
+                                BadgedBox(badge = {
+                                    if (unreadMessageCount > 0) {
+                                        Badge { Text(lastNonZeroCount.toString()) }
+                                    }
+                                }) {
+                                    Icon(imageVector = destination.icon, contentDescription = stringResource(destination.label), tint = iconTint, modifier = Modifier.size(22.dp))
                                 }
                             } else {
-                                BadgedBox(
-                                    badge = {
-                                        if (destination == TopLevelDestination.Conversations) {
-                                            
-                                            var lastNonZeroCount by remember { mutableIntStateOf(unreadMessageCount) }
-                                            if (unreadMessageCount > 0) {
-                                                lastNonZeroCount = unreadMessageCount
-                                            }
-                                            AnimatedVisibility(
-                                                visible = unreadMessageCount > 0,
-                                                enter = scaleIn() + fadeIn(),
-                                                exit = scaleOut() + fadeOut(),
-                                            ) {
-                                                Badge { Text(lastNonZeroCount.toString()) }
-                                            }
-                                        }
-                                    },
-                                ) {
-                                    Icon(
-                                        imageVector = destination.icon,
-                                        contentDescription = stringResource(destination.label),
-                                    )
-                                }
+                                Icon(imageVector = destination.icon, contentDescription = stringResource(destination.label), tint = iconTint, modifier = Modifier.size(22.dp))
                             }
                         }
-                    },
-                    selected = isSelected,
-                    label = {
-                        Text(
-                            text = stringResource(destination.label),
-                            modifier =
-                            if (navSuiteType == NavigationSuiteType.ShortNavigationBarCompact) {
-                                Modifier.width(1.dp)
-                                    .height(1.dp) 
-                            } else {
-                                Modifier
-                            },
-                        )
-                    },
-                    onClick = {
-                        val isRepress = destination == topLevelDestination
-                        if (isRepress) {
-                            when (destination) {
-                                TopLevelDestination.Nodes -> {
-                                    val onNodesList = currentDestination?.hasRoute(NodesRoutes.Nodes::class) == true
-                                    if (!onNodesList) {
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clickable {
+                                    val isRepress = destination == topLevelDestination
+                                    if (isRepress) {
+                                        when (destination) {
+                                            TopLevelDestination.Nodes -> {
+                                                val onNodesList = currentDestination?.hasRoute(NodesRoutes.Nodes::class) == true
+                                                if (!onNodesList) {
+                                                    navController.navigate(destination.route) {
+                                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                        launchSingleTop = true
+                                                    }
+                                                }
+                                                uIViewModel.emitScrollToTopEvent(ScrollToTopEvent.NodesTabPressed)
+                                            }
+                                            TopLevelDestination.Conversations -> {
+                                                val onConversationsList = currentDestination?.hasRoute(ContactsRoutes.Contacts::class) == true
+                                                if (!onConversationsList) {
+                                                    navController.navigate(destination.route) {
+                                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                        launchSingleTop = true
+                                                    }
+                                                }
+                                                uIViewModel.emitScrollToTopEvent(ScrollToTopEvent.ConversationsTabPressed)
+                                            }
+                                            else -> Unit
+                                        }
+                                    } else {
                                         navController.navigate(destination.route) {
                                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                             launchSingleTop = true
                                         }
                                     }
-                                    uIViewModel.emitScrollToTopEvent(ScrollToTopEvent.NodesTabPressed)
                                 }
-                                TopLevelDestination.Conversations -> {
-                                    val onConversationsList =
-                                        currentDestination?.hasRoute(ContactsRoutes.Contacts::class) == true
-                                    if (!onConversationsList) {
-                                        navController.navigate(destination.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                            launchSingleTop = true
-                                        }
-                                    }
-                                    uIViewModel.emitScrollToTopEvent(ScrollToTopEvent.ConversationsTabPressed)
+                        ) {
+                            if (isSelected) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .align(Alignment.TopCenter)
+                                        .clip(CircleShape)
+                                        .background(colorScheme.surface)
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .align(Alignment.TopCenter)
+                                        .offset(y = 4.dp)
+                                        .clip(CircleShape)
+                                        .background(colorScheme.primary),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    iconContent()
                                 }
-                                else -> Unit
-                            }
-                        } else {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp)
+                                        .align(Alignment.BottomCenter),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    iconContent()
+                                }
                             }
                         }
-                    },
-                )
+                    }
+                }
             }
-        },
-    ) {
+        }
+    ) { paddingValues ->
         NavHost(
             navController = navController,
             startDestination = NodesRoutes.NodesGraph,
-            modifier = Modifier.fillMaxSize().recalculateWindowInsets().safeDrawingPadding().imePadding(),
+            modifier = Modifier.fillMaxSize().padding(paddingValues).recalculateWindowInsets().imePadding(),
         ) {
             contactsGraph(navController, uIViewModel.scrollToTopEventFlow)
             nodesGraph(navController, uIViewModel.scrollToTopEventFlow)
@@ -560,14 +546,11 @@ private fun VersionChecks(viewModel: UIViewModel) {
     LaunchedEffect(connectionState, firmwareEdition) {
         if (connectionState == ConnectionState.Connected) {
             firmwareEdition?.let { edition ->
-                Logger.d { "FirmwareEdition: ${edition.name}" }
                 when (edition) {
                     MeshProtos.FirmwareEdition.VANILLA -> {
-                        
                     }
 
                     else -> {
-                        
                     }
                 }
             }
@@ -576,21 +559,10 @@ private fun VersionChecks(viewModel: UIViewModel) {
 
     LaunchedEffect(connectionState, myNodeInfo) {
         if (connectionState == ConnectionState.Connected) {
-            Logger.i {
-                "[FW_CHECK] Connection state: $connectionState, " +
-                    "myNodeInfo: ${if (myNodeInfo != null) "present" else "null"}, " +
-                    "firmwareVersion: ${myFirmwareVersion ?: "null"}"
-            }
-
             myNodeInfo?.let { info ->
                 val isOld = info.minAppVersion > BuildConfig.VERSION_CODE && BuildConfig.DEBUG.not()
-                Logger.d {
-                    "[FW_CHECK] App version check - minAppVersion: ${info.minAppVersion}, " +
-                        "currentVersion: ${BuildConfig.VERSION_CODE}, isOld: $isOld"
-                }
 
                 if (isOld) {
-                    Logger.w { "[FW_CHECK] App too old - showing update prompt" }
                     viewModel.showAlert(
                         getString(Res.string.app_too_old),
                         getString(Res.string.must_update),
@@ -603,18 +575,8 @@ private fun VersionChecks(viewModel: UIViewModel) {
                 } else {
                     myFirmwareVersion?.let { fwVersion ->
                         val curVer = DeviceVersion(fwVersion)
-                        Logger.i {
-                            "[FW_CHECK] Firmware version comparison - " +
-                                "device: $curVer (raw: $fwVersion), " +
-                                "absoluteMin: ${MeshService.absoluteMinDeviceVersion}, " +
-                                "min: ${MeshService.minDeviceVersion}"
-                        }
 
                         if (curVer < MeshService.absoluteMinDeviceVersion) {
-                            Logger.w {
-                                "[FW_CHECK] Firmware too old - " +
-                                    "device: $curVer < absoluteMin: ${MeshService.absoluteMinDeviceVersion}"
-                            }
                             val title = getString(Res.string.firmware_too_old)
                             val message = getString(Res.string.firmware_old)
                             viewModel.showAlert(
@@ -627,21 +589,13 @@ private fun VersionChecks(viewModel: UIViewModel) {
                                 },
                             )
                         } else if (curVer < MeshService.minDeviceVersion) {
-                            Logger.w {
-                                "[FW_CHECK] Firmware should update - " +
-                                    "device: $curVer < min: ${MeshService.minDeviceVersion}"
-                            }
                             val title = getString(Res.string.should_update_firmware)
                             val message = getString(Res.string.should_update, latestStableFirmwareRelease.asString)
                             viewModel.showAlert(title = title, message = message, dismissable = false, onConfirm = {})
-                        } else {
-                            Logger.i { "[FW_CHECK] Firmware version OK - device: $curVer meets requirements" }
                         }
-                    } ?: run { Logger.w { "[FW_CHECK] Firmware version is null despite myNodeInfo being present" } }
+                    }
                 }
-            } ?: run { Logger.d { "[FW_CHECK] myNodeInfo is null, skipping firmware check" } }
-        } else {
-            Logger.d { "[FW_CHECK] Not connected (state: $connectionState), skipping firmware check" }
+            }
         }
     }
 }

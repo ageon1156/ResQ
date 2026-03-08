@@ -7,7 +7,6 @@ import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.repository.radio.BleConstants.BLE_NAME_PATTERN
 import com.geeksville.mesh.repository.radio.BleConstants.BTM_SERVICE_UUID
 import com.geeksville.mesh.util.registerReceiverCompat
@@ -93,7 +92,6 @@ constructor(
                     .onStart { _isScanning.value = true }
                     .onCompletion { _isScanning.value = false }
                     .catch { ex ->
-                        Logger.w(ex) { "Bluetooth scan failed" }
                         _isScanning.value = false
                     }
                     .collect { peripheral ->
@@ -137,7 +135,6 @@ constructor(
             )
 
         _state.emit(newState)
-        Logger.d { "Detected our bluetooth access=$newState" }
     }
 
     @SuppressLint("MissingPermission")

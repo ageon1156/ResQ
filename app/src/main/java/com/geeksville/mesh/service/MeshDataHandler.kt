@@ -1,9 +1,6 @@
 
 package com.geeksville.mesh.service
 
-import android.util.Log
-import co.touchlab.kermit.Logger
-import com.geeksville.mesh.BuildConfig
 import org.meshtastic.core.audio.AudioPlayer
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.repository.radio.InterfaceId
@@ -196,10 +193,7 @@ constructor(
     }
 
     private fun handleAudioPacket(packet: MeshPacket, myNodeNum: Int) {
-        val fragment = packet.decoded.payload.toByteArray().decodeVoiceFragment() ?: run {
-            Logger.w { "handleAudioPacket: malformed voice fragment from ${packet.from}" }
-            return
-        }
+        val fragment = packet.decoded.payload.toByteArray().decodeVoiceFragment() ?: return
         scope.handledLaunch {
             val assembled = voiceMessageRepository.addFragment(fragment, packet.from)
             if (assembled != null) {
@@ -237,13 +231,10 @@ constructor(
         if (silentNodeDetector.tryParseSilenceReport(text, packet.from)) return
         if (silentNodeDetector.tryParseGracefulExit(text, packet.from)) return
 
-        Logger.d { "handlePrivateApp: possible triage packet from ${packet.from}, len=${packet.decoded.payload.size()}" }
         scope.handledLaunch {
             val decoded = packet.decoded.payload.toByteArray().decodeTriagePacket()
-            Logger.d { "handlePrivateApp: decoded=${decoded?.javaClass?.simpleName ?: "null"}" }
             when (decoded) {
                 is ManualTriagePinPacket -> {
-                    Logger.i { "Received triage pin ${decoded.pinId} level=${decoded.triageLevel} from=${decoded.createdBy}" }
                     triagePinRepository.upsertPin(
                         TriagePin(
                             pinId       = decoded.pinId,
@@ -257,14 +248,12 @@ constructor(
                     )
                 }
                 is ClaimPinPacket -> {
-                    Logger.i { "Received claim for pin ${decoded.pinId} by ${decoded.rescuerId}" }
                     triagePinRepository.claimPin(decoded.pinId, decoded.rescuerId)
                 }
                 is AssignmentPacket -> {
-                    Logger.i { "Received assignment: rescuer=${decoded.rescuerId} pin=${decoded.pinId}" }
                     triagePinRepository.incomingAssignments.emit(decoded)
                 }
-                else -> Logger.d { "handlePrivateApp: not a triage packet (text prefix=${text.take(20)})" }
+                else -> {}
             }
         }
     }
@@ -282,7 +271,6 @@ constructor(
     @Suppress("LongMethod")
     private fun handleStoreForwardPlusPlus(packet: MeshPacket) {
         val sfpp = MeshProtos.StoreForwardPlusPlus.parseFrom(packet.decoded.payload)
-        Logger.d { "Received StoreForwardPlusPlus packet: $sfpp" }
 
         when (sfpp.sfppMessageType) {
             MeshProtos.StoreForwardPlusPlus.SFPP_message_type.LINK_PROVIDE,
@@ -309,10 +297,6 @@ constructor(
                         else -> null
                     } ?: return
 
-                Logger.d {
-                    "SFPP updateStatus: packetId=${sfpp.encapsulatedId} from=${sfpp.encapsulatedFrom} " +
-                        "to=${sfpp.encapsulatedTo} myNodeNum=${nodeManager.myNodeNum} status=$status"
-                }
                 scope.handledLaunch {
                     packetRepository
                         .get()
@@ -342,11 +326,9 @@ constructor(
             }
 
             MeshProtos.StoreForwardPlusPlus.SFPP_message_type.CHAIN_QUERY -> {
-                Logger.i { "SF++: Node ${packet.from} is querying chain status" }
             }
 
             MeshProtos.StoreForwardPlusPlus.SFPP_message_type.LINK_REQUEST -> {
-                Logger.i { "SF++: Node ${packet.from} is requesting links" }
             }
 
             else -> {}
@@ -515,15 +497,6 @@ constructor(
                     (reaction.userId == DataPacket.ID_LOCAL || reaction.userId == nodeManager.getMyId()) &&
                     reaction.retryCount < MAX_RETRY_ATTEMPTS &&
                     reaction.to != null
-            @Suppress("MaxLineLength")
-            Logger.d {
-                val retryInfo =
-                    "packetId=${p?.packetId ?: reaction?.packetId} dataId=${p?.data?.id} retry=${p?.data?.retryCount ?: reaction?.retryCount}"
-                val statusInfo = "status=${p?.data?.status ?: reaction?.status}"
-                "[ackNak] req=$requestId routeErr=$routingError isAck=$isAck " +
-                    "maxRetransmit=$isMaxRetransmit shouldRetry=$shouldRetry reaction=$shouldRetryReaction $retryInfo $statusInfo"
-            }
-
             if (shouldRetry) {
                 val newRetryCount = p.data.retryCount + 1
 
@@ -535,11 +508,7 @@ constructor(
                         maxAttempts = MAX_RETRY_ATTEMPTS + 1, 
                     )
 
-                Logger.w { "[ackNak] requesting retry for req=$requestId retry=$newRetryCount" }
-                Log.d("MeshDataHandler", "[ackNak] Emitting retry event for req=$requestId retry=$newRetryCount")
-
                 val shouldProceed = serviceRepository.requestRetry(retryEvent, RETRY_DELAY_MS)
-                Log.d("MeshDataHandler", "[ackNak] Retry response for req=$requestId: shouldProceed=$shouldProceed")
 
                 if (shouldProceed) {
                     val newId = commandSender.generatePacketId()
@@ -554,11 +523,8 @@ constructor(
                         p.copy(packetId = newId, data = updatedData, routingError = MeshProtos.Routing.Error.NONE_VALUE)
                     packetRepository.get().update(updatedPacket)
 
-                    Logger.w { "[ackNak] retrying req=$requestId newId=$newId retry=$newRetryCount" }
                     commandSender.sendData(updatedData)
                 } else {
-                    
-                    Logger.w { "[ackNak] retry cancelled by user for req=$requestId" }
                     p.data.status = MessageStatus.ERROR
                     packetRepository.get().update(p)
                 }
@@ -575,8 +541,6 @@ constructor(
                         attemptNumber = newRetryCount,
                         maxAttempts = MAX_RETRY_ATTEMPTS + 1, 
                     )
-
-                Logger.w { "[ackNak] requesting retry for reaction req=$requestId retry=$newRetryCount" }
 
                 val shouldProceed = serviceRepository.requestRetry(retryEvent, RETRY_DELAY_MS)
 
@@ -606,11 +570,8 @@ constructor(
                         )
                     packetRepository.get().updateReaction(updatedReaction)
 
-                    Logger.w { "[ackNak] retrying reaction req=$requestId newId=$newId retry=$newRetryCount" }
                     commandSender.sendData(reactionPacket)
                 } else {
-                    
-                    Logger.w { "[ackNak] retry cancelled by user for reaction req=$requestId" }
                     val errorReaction = reaction.copy(status = MessageStatus.ERROR, routingError = routingError)
                     packetRepository.get().updateReaction(errorReaction)
                 }
@@ -652,12 +613,7 @@ constructor(
         s: StoreAndForwardProtos.StoreAndForward,
         myNodeNum: Int,
     ) {
-        Logger.d { "StoreAndForward: ${s.variantCase} ${s.rr} from ${dataPacket.from}" }
         val transport = currentTransport()
-        val isHistory = s.variantCase == StoreAndForwardProtos.StoreAndForward.VariantCase.HISTORY
-        val lastRequest = if (isHistory) s.history.lastRequest else 0
-        val baseContext = "transport=$transport from=${dataPacket.from}"
-        historyLog { "rxStoreForward $baseContext variant=${s.variantCase} rr=${s.rr} lastRequest=$lastRequest" }
         when (s.variantCase) {
             StoreAndForwardProtos.StoreAndForward.VariantCase.STATS -> {
                 val text = s.stats.toString()
@@ -670,10 +626,6 @@ constructor(
             }
             StoreAndForwardProtos.StoreAndForward.VariantCase.HISTORY -> {
                 val h = s.history
-                @Suppress("MaxLineLength")
-                historyLog(Log.DEBUG) {
-                    "routerHistory $baseContext messages=${h.historyMessages} window=${h.window} lastReq=${h.lastRequest}"
-                }
                 val text =
                     "Total messages: ${h.historyMessages}\n" +
                         "History window: ${h.window.milliseconds.inWholeMinutes} min\n" +
@@ -687,16 +639,10 @@ constructor(
                 historyManager.updateStoreForwardLastRequest("router_history", h.lastRequest, transport)
             }
             StoreAndForwardProtos.StoreAndForward.VariantCase.HEARTBEAT -> {
-                val hb = s.heartbeat
-                historyLog { "rxHeartbeat $baseContext period=${hb.period} secondary=${hb.secondary}" }
             }
             StoreAndForwardProtos.StoreAndForward.VariantCase.TEXT -> {
                 if (s.rr == StoreAndForwardProtos.StoreAndForward.RequestResponse.ROUTER_TEXT_BROADCAST) {
                     dataPacket.to = DataPacket.ID_BROADCAST
-                }
-                @Suppress("MaxLineLength")
-                historyLog(Log.DEBUG) {
-                    "rxText $baseContext id=${dataPacket.id} ts=${dataPacket.time} to=${dataPacket.to} decision=remember"
                 }
                 val u =
                     dataPacket.copy(bytes = s.text.toByteArray(), dataType = Portnums.PortNum.TEXT_MESSAGE_APP_VALUE)
@@ -734,11 +680,6 @@ constructor(
                 
                 val existingPackets = findPacketsWithIdAndContact(dataPacket.id, contactKey)
                 if (existingPackets.isNotEmpty()) {
-                    Logger.d {
-                        "Skipping duplicate packet: packetId=${dataPacket.id} from=${dataPacket.from} " +
-                            "to=${dataPacket.to} contactKey=$contactKey" +
-                            " (already have ${existingPackets.size} packet(s))"
-                    }
                     return@handledLaunch
                 }
 
@@ -830,10 +771,6 @@ constructor(
 
         val existingReactions = packetRepository.get().findReactionsWithId(packet.id)
         if (existingReactions.isNotEmpty()) {
-            Logger.d {
-                "Skipping duplicate reaction: packetId=${packet.id} replyId=${packet.decoded.replyId} " +
-                    "from=$fromId emoji=$emoji (already have ${existingReactions.size} reaction(s))"
-            }
             return@handledLaunch
         }
 
@@ -871,24 +808,6 @@ constructor(
         InterfaceId.SERIAL.id -> "Serial"
         InterfaceId.NOP.id -> "NOP"
         else -> "Unknown"
-    }
-
-    private inline fun historyLog(
-        priority: Int = Log.INFO,
-        throwable: Throwable? = null,
-        crossinline message: () -> String,
-    ) {
-        if (!BuildConfig.DEBUG) return
-        val logger = Logger.withTag("HistoryReplay")
-        val msg = message()
-        when (priority) {
-            Log.VERBOSE -> logger.v(throwable) { msg }
-            Log.DEBUG -> logger.d(throwable) { msg }
-            Log.INFO -> logger.i(throwable) { msg }
-            Log.WARN -> logger.w(throwable) { msg }
-            Log.ERROR -> logger.e(throwable) { msg }
-            else -> logger.i(throwable) { msg }
-        }
     }
 
     companion object {

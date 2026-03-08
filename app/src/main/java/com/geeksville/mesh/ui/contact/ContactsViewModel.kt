@@ -100,7 +100,7 @@ constructor(
             shortName = if (toBroadcast) "${data.channel}" else shortName,
             longName = longName,
             lastMessageTime = getShortDate(data.time),
-            lastMessageText = if (fromLocal) data.text else "$shortName: ${data.text}",
+            lastMessageText = if (fromLocal) data.text?.substringBefore('\u0000') else "$shortName: ${data.text?.substringBefore('\u0000')}",
             unreadCount = packetRepository.getUnreadCount(contact_key),
             messageCount = packetRepository.getMessageCount(contact_key),
             isMuted = settings[contact_key]?.isMuted == true,

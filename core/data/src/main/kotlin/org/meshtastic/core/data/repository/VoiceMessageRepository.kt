@@ -1,6 +1,5 @@
 package org.meshtastic.core.data.repository
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -47,7 +46,6 @@ class VoiceMessageRepository @Inject constructor() {
         }
 
         if (fragment.fragmentIndex >= session.fragments.size) {
-            Logger.w { "VoiceMessage: fragment index ${fragment.fragmentIndex} out of bounds (total=${fragment.totalFragments})" }
             return null
         }
 
@@ -63,8 +61,6 @@ class VoiceMessageRepository @Inject constructor() {
             .fold(ByteArray(0)) { acc, bytes -> acc + bytes }
 
         val durationSeconds = codec2Bytes.size / BYTES_PER_SECOND_450BPS
-
-        Logger.i { "VoiceMessage assembled: sessionId=$key, ${codec2Bytes.size} bytes, ${durationSeconds}s" }
 
         val message = VoiceMessage(
             sessionId = key,
@@ -82,7 +78,6 @@ class VoiceMessageRepository @Inject constructor() {
         val cutoff = System.currentTimeMillis() - FRAGMENT_TIMEOUT_MS
         val stale = pending.entries.filter { it.value.receivedAt < cutoff }.map { it.key }
         stale.forEach {
-            Logger.d { "VoiceMessage: pruning stale session $it" }
             pending.remove(it)
         }
     }

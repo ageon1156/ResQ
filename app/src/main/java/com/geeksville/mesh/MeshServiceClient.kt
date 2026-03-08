@@ -7,7 +7,6 @@ import androidx.appcompat.app.AppCompatActivity.BIND_AUTO_CREATE
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.android.BindFailedException
 import com.geeksville.mesh.android.ServiceClient
 import com.geeksville.mesh.concurrent.SequentialJob
@@ -33,14 +32,12 @@ constructor(
     private val lifecycleOwner: LifecycleOwner = context as LifecycleOwner
 
     init {
-        Logger.d { "Adding self as LifecycleObserver for $lifecycleOwner" }
         lifecycleOwner.lifecycle.addObserver(this)
     }
 
     override fun onConnected(service: IMeshService) {
         serviceSetupJob.launch(lifecycleOwner.lifecycleScope) {
             serviceRepository.setMeshService(service)
-            Logger.d { "connected to mesh service, connectionState=${serviceRepository.connectionState.value}" }
         }
     }
 
@@ -51,32 +48,26 @@ constructor(
 
     override fun onStart(owner: LifecycleOwner) {
         super.onStart(owner)
-        Logger.d { "Lifecycle: ON_START" }
 
         owner.lifecycleScope.launch {
             try {
                 bindMeshService()
-            } catch (ex: BindFailedException) {
-                Logger.e { "Bind of MeshService failed: ${ex.message}" }
+            } catch (_: BindFailedException) {
             }
         }
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
         super.onDestroy(owner)
-        Logger.d { "Lifecycle: ON_DESTROY" }
 
         owner.lifecycle.removeObserver(this)
-        Logger.d { "Removed self as LifecycleObserver to $lifecycleOwner" }
     }
 
     @Suppress("TooGenericExceptionCaught")
     private suspend fun bindMeshService() {
-        Logger.d { "Binding to mesh service!" }
         try {
             MeshService.startService(context)
-        } catch (ex: Exception) {
-            Logger.e { "Failed to start service from activity - but ignoring because bind will work: ${ex.message}" }
+        } catch (_: Exception) {
         }
 
         connect(context, MeshService.createIntent(context), BIND_AUTO_CREATE + BIND_ABOVE_CLIENT)

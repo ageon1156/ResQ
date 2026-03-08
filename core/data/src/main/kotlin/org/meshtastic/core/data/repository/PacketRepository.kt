@@ -164,14 +164,9 @@ constructor(
             }
 
         packets.forEach { packet ->
-            
+
             val fromMatches =
                 packet.data.from == fromId || (isFromLocalNode && packet.data.from == DataPacket.ID_LOCAL)
-            co.touchlab.kermit.Logger.d {
-                "SFPP match check: packetFrom=${packet.data.from} fromId=$fromId " +
-                    "isFromLocal=$isFromLocalNode fromMatches=$fromMatches " +
-                    "packetTo=${packet.data.to} toId=$toId toMatches=${packet.data.to == toId}"
-            }
             if (fromMatches && packet.data.to == toId) {
                 
                 if (packet.data.status == MessageStatus.SFPP_CONFIRMED && status == MessageStatus.SFPP_ROUTING) {
@@ -185,16 +180,10 @@ constructor(
 
         reactions.forEach { reaction ->
             val reactionFrom = reaction.userId
-            
+
             val fromMatches = reactionFrom == fromId || (isFromLocalNode && reactionFrom == DataPacket.ID_LOCAL)
 
             val toMatches = reaction.to == toId
-
-            co.touchlab.kermit.Logger.d {
-                "SFPP reaction match check: reactionFrom=$reactionFrom fromId=$fromId " +
-                    "isFromLocal=$isFromLocalNode fromMatches=$fromMatches " +
-                    "reactionTo=${reaction.to} toId=$toId toMatches=$toMatches"
-            }
 
             if (fromMatches && (reaction.to == null || toMatches)) {
                 if (reaction.status == MessageStatus.SFPP_CONFIRMED && status == MessageStatus.SFPP_ROUTING) {

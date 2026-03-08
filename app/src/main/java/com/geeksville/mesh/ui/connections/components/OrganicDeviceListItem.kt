@@ -2,11 +2,8 @@
 package com.geeksville.mesh.ui.connections.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,31 +11,26 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.BluetoothSearching
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BluetoothConnected
 import androidx.compose.material.icons.rounded.Usb
 import androidx.compose.material.icons.rounded.Wifi
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -50,7 +42,6 @@ import org.meshtastic.core.strings.bluetooth
 import org.meshtastic.core.strings.network
 import org.meshtastic.core.strings.serial
 import org.meshtastic.core.ui.theme.LeafShape
-import org.meshtastic.core.ui.theme.organicSpring
 
 @Composable
 fun OrganicDeviceListItem(
@@ -81,110 +72,106 @@ fun OrganicDeviceListItem(
         is DeviceListEntry.Tcp -> MaterialTheme.colorScheme.tertiary
     }
 
-    val isSelected = connectionState.isConnected()
-    val scale by animateFloatAsState(
-        targetValue = if (isSelected) 0.98f else 1f,
-        animationSpec = organicSpring(),
-        label = "device_scale"
-    )
+    val isConnected = connectionState.isConnected()
+    val isConnecting = connectionState.isConnecting()
 
-    val containerColor = if (isSelected) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-    } else {
-        MaterialTheme.colorScheme.surfaceContainerLow
+    val accentColor = when {
+        isConnected -> MaterialTheme.colorScheme.primary
+        isConnecting -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.outlineVariant
     }
 
-    Card(
+    Box(
         modifier = modifier
-            .scale(scale)
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .combinedClickable(
-                onClick = onSelect,
-                onLongClick = onDelete
-            ),
-        shape = LeafShape,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .combinedClickable(onClick = onSelect, onLongClick = onDelete)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = MaterialTheme.shapes.extraSmall
         ) {
-            
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(iconColor.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                
-                if (connectionState.isConnecting()) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(40.dp),
-                        color = iconColor,
-                        strokeWidth = 3.dp
-                    )
-                }
-
-                Icon(
-                    imageVector = icon,
-                    contentDescription = contentDescription,
-                    tint = iconColor,
-                    modifier = Modifier.size(32.dp)
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(72.dp)
+                        .background(accentColor)
                 )
-            }
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(LeafShape)
+                            .background(iconColor.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isConnecting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(36.dp),
+                                color = iconColor,
+                                strokeWidth = 2.dp
+                            )
+                        }
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = contentDescription,
+                            tint = iconColor,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
 
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = device.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
-                )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(
+                            text = device.name,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1
+                        )
+                        AnimatedVisibility(visible = isConnecting, enter = fadeIn(), exit = fadeOut()) {
+                            Text(
+                                text = "CONNECTING...",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = iconColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        AnimatedVisibility(visible = isConnected, enter = fadeIn(), exit = fadeOut()) {
+                            Text(
+                                text = "CONNECTED",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
 
-                device.address?.let { address ->
-                    Text(
-                        text = address,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 1
-                    )
+                    if (isConnected) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(MaterialTheme.shapes.extraSmall)
+                                .background(MaterialTheme.colorScheme.primary)
+                        )
+                    }
                 }
-
-                if (connectionState.isConnecting()) {
-                    Text(
-                        text = "Connecting...",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = iconColor
-                    )
-                } else if (connectionState.isConnected()) {
-                    Text(
-                        text = "Connected",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
-            if (isSelected) {
-                RadioButton(
-                    selected = true,
-                    onClick = null
-                )
             }
         }
+        HorizontalDivider(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
     }
 }
-

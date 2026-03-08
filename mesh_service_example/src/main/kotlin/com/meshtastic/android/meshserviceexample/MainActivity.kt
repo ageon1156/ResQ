@@ -10,15 +10,12 @@ import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import org.meshtastic.core.service.IMeshService
 import org.meshtastic.core.ui.theme.AppTheme
-
-private const val TAG: String = "MeshServiceExample"
 
 class MainActivity : ComponentActivity() {
 
@@ -31,7 +28,6 @@ class MainActivity : ComponentActivity() {
         object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
                 meshService = IMeshService.Stub.asInterface(service)
-                Log.i(TAG, "Connected to MeshService")
                 isMeshServiceBound = true
                 viewModel.onServiceConnected(meshService)
             }
@@ -84,15 +80,10 @@ class MainActivity : ComponentActivity() {
 
     private fun bindMeshService() {
         try {
-            Log.i(TAG, "Attempting to bind to Mesh Service...")
             val intent = Intent("com.geeksville.mesh.Service")
             intent.setClassName("com.geeksville.mesh", "com.geeksville.mesh.service.MeshService")
-            val success = bindService(intent, serviceConnection, BIND_AUTO_CREATE)
-            if (!success) {
-                Log.e(TAG, "bindService returned false")
-            }
+            bindService(intent, serviceConnection, BIND_AUTO_CREATE)
         } catch (e: SecurityException) {
-            Log.e(TAG, "SecurityException while binding", e)
         }
     }
 
@@ -101,11 +92,9 @@ class MainActivity : ComponentActivity() {
             try {
                 unbindService(serviceConnection)
             } catch (e: IllegalArgumentException) {
-                Log.w(TAG, "MeshService not registered or already unbound: ${e.message}")
             }
             isMeshServiceBound = false
             meshService = null
         }
     }
 }
-

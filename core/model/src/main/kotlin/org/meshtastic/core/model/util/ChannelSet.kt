@@ -5,7 +5,6 @@ package org.meshtastic.core.model.util
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Base64
-import co.touchlab.kermit.Logger
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.journeyapps.barcodescanner.BarcodeEncoder
@@ -56,7 +55,6 @@ fun ChannelSet.qrCode(shouldAdd: Boolean): Bitmap? = try {
     val barcodeEncoder = BarcodeEncoder()
     barcodeEncoder.createBitmap(bitMatrix)
 } catch (ex: Throwable) {
-    Logger.e { "URL was too complex to render as barcode" }
     null
 }
 

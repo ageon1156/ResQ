@@ -1,7 +1,6 @@
 
 package org.meshtastic.core.service
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -71,8 +70,6 @@ class ServiceRepository @Inject constructor() {
         get() = _clientNotification
 
     fun setClientNotification(notification: MeshProtos.ClientNotification?) {
-        Logger.e { notification?.message.orEmpty() }
-
         _clientNotification.value = notification
     }
 
@@ -85,7 +82,6 @@ class ServiceRepository @Inject constructor() {
         get() = _errorMessage
 
     fun setErrorMessage(text: String) {
-        Logger.e { text }
         _errorMessage.value = text
     }
 
@@ -153,12 +149,9 @@ class ServiceRepository @Inject constructor() {
         val deferred = CompletableDeferred<Boolean>()
         pendingRetries[packetId] = deferred
 
-        Logger.i { "ServiceRepository: Setting retry event for packet $packetId" }
         _retryEvents.value = event
-        Logger.i { "ServiceRepository: Retry event set, waiting for response..." }
 
         val result = withTimeoutOrNull(timeoutMs) { deferred.await() } ?: true
-        Logger.i { "ServiceRepository: Retry result for packet $packetId: $result" }
         return result
     }
 

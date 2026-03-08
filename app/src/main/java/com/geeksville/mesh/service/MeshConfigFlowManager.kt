@@ -1,7 +1,6 @@
 
 package com.geeksville.mesh.service
 
-import co.touchlab.kermit.Logger
 import com.geeksville.mesh.concurrent.handledLaunch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,17 +53,13 @@ constructor(
         when (configCompleteId) {
             configOnlyNonce -> handleConfigOnlyComplete()
             nodeInfoNonce -> handleNodeInfoComplete()
-            else -> Logger.w { "Config complete id mismatch: $configCompleteId" }
+            else -> {}
         }
     }
 
     private fun handleConfigOnlyComplete() {
-        Logger.i { "Config-only complete" }
-        if (newMyNodeInfo == null) {
-            Logger.e { "Did not receive a valid config - newMyNodeInfo is null" }
-        } else {
+        if (newMyNodeInfo != null) {
             myNodeInfo = newMyNodeInfo
-            Logger.i { "myNodeInfo committed successfully" }
         }
 
         scope.handledLaunch {
@@ -80,14 +75,11 @@ constructor(
             packetHandler.sendToRadio(
                 MeshProtos.ToRadio.newBuilder().apply { heartbeat = MeshProtos.Heartbeat.getDefaultInstance() },
             )
-            Logger.d { "Heartbeat sent between nonce stages" }
-        } catch (ex: IOException) {
-            Logger.w(ex) { "Failed to send heartbeat; proceeding with node-info stage" }
+        } catch (_: IOException) {
         }
     }
 
     private fun handleNodeInfoComplete() {
-        Logger.i { "NodeInfo complete" }
         val entities =
             newNodes.map { info ->
                 nodeManager.installNodeInfo(info, withBroadcast = false)
@@ -113,7 +105,6 @@ constructor(
     }
 
     fun handleMyInfo(myInfo: MeshProtos.MyNodeInfo) {
-        Logger.i { "MyNodeInfo received: ${myInfo.myNodeNum}" }
         rawMyNodeInfo = myInfo
         nodeManager.myNodeNum = myInfo.myNodeNum
         regenMyNodeInfo()
@@ -126,7 +117,6 @@ constructor(
     }
 
     fun handleLocalMetadata(metadata: MeshProtos.DeviceMetadata) {
-        Logger.i { "Local Metadata received" }
         regenMyNodeInfo(metadata)
     }
 

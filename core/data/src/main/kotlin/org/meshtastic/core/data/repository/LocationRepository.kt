@@ -11,7 +11,6 @@ import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.location.LocationRequestCompat
 import androidx.core.location.altitude.AltitudeConverterCompat
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +51,6 @@ constructor(
                 try {
                     AltitudeConverterCompat.addMslAltitudeToLocation(context, location)
                 } catch (e: Exception) {
-                    Logger.e(e) { "addMslAltitudeToLocation() failed" }
                 }
             }
             
@@ -69,9 +67,6 @@ constructor(
             }
         }
 
-        Logger.i {
-            "Starting location updates with $providerList intervalMs=${intervalMs}ms and minDistanceM=${minDistanceM}m"
-        }
         _receivingLocationUpdates.value = true
         analytics.track("location_start") 
 
@@ -90,7 +85,6 @@ constructor(
         }
 
         awaitClose {
-            Logger.i { "Stopping location requests" }
             _receivingLocationUpdates.value = false
             analytics.track("location_stop")
 

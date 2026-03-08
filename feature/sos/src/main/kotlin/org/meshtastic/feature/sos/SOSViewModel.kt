@@ -9,7 +9,6 @@ import android.location.LocationManager
 import android.os.RemoteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,10 +85,8 @@ class SOSViewModel @Inject constructor(
                 _lastSentTime.value = System.currentTimeMillis()
                 _uiState.value = SOSUiState.Sent(locationIncluded = location != null)
             } catch (ex: RemoteException) {
-                Logger.e(ex) { "SOS send failed" }
                 _uiState.value = SOSUiState.Error(ex.message ?: "Send failed")
             } catch (ex: Exception) {
-                Logger.e(ex) { "SOS send failed" }
                 _uiState.value = SOSUiState.Error(ex.message ?: "Unknown error")
             }
         }

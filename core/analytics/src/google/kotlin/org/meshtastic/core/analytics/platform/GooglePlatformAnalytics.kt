@@ -153,10 +153,8 @@ constructor(
 
     fun updateAnalyticsConsent(allowed: Boolean) {
         if (!isPlatformServicesAvailable || isInTestLab) {
-            KermitLogger.i { "Analytics not available or in test lab, consent update skipped." }
             return
         }
-        KermitLogger.i { if (allowed) "Analytics enabled" else "Analytics disabled" }
 
         Datadog.setTrackingConsent(if (allowed) TrackingConsent.GRANTED else TrackingConsent.NOT_GRANTED)
         Firebase.crashlytics.isCrashlyticsCollectionEnabled = allowed

@@ -6,7 +6,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -31,12 +30,8 @@ class RecentAddressesDataSource @Inject constructor(private val dataStore: DataS
                 try {
                     Json.decodeFromString<List<RecentAddress>>(jsonString)
                 } catch (e: IllegalArgumentException) {
-                    Logger.w { "Could not parse recent addresses, falling back to legacy parsing: ${e.message}" }
-                    
                     parseLegacyRecentAddresses(jsonString)
                 } catch (e: SerializationException) {
-                    Logger.w { "Could not parse recent addresses, falling back to legacy parsing: ${e.message}" }
-                    
                     parseLegacyRecentAddresses(jsonString)
                 }
             } else {
@@ -57,8 +52,6 @@ class RecentAddressesDataSource @Inject constructor(private val dataStore: DataS
                     RecentAddress(address = item, name = "Meshtastic")
                 }
                 else -> {
-                    
-                    Logger.w { "Unknown item type in recent IP addresses: $item" }
                     null
                 }
             }
