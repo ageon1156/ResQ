@@ -55,6 +55,9 @@ import org.meshtastic.feature.node.metrics.CommonCharts.Y_AXIS_WEIGHT
 import org.meshtastic.feature.node.metrics.GraphUtil.createPath
 import org.meshtastic.feature.node.metrics.GraphUtil.plotPoint
 import org.meshtastic.feature.node.model.TimeFrame
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.meshtastic.core.ui.theme.AppTheme
+import org.meshtastic.proto.TelemetryProtos
 import org.meshtastic.proto.TelemetryProtos.Telemetry
 
 private enum class Device(val color: Color) {
