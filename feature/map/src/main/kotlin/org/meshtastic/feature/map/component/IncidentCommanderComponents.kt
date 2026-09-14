@@ -1,5 +1,8 @@
 package org.meshtastic.feature.map.component
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,7 +34,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.meshtastic.core.model.triage.TriageLevel
@@ -215,10 +220,16 @@ fun MyAssignmentCard(
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurface,
             )
+            val context = LocalContext.current
             Text(
                 text = "%.5f, %.5f".format(pin.lat, pin.lon),
                 fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable {
+                    val uri = Uri.parse("https://maps.google.com/?q=${pin.lat},${pin.lon}")
+                    context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                },
             )
         }
     }

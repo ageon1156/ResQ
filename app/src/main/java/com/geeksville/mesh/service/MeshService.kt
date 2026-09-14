@@ -11,11 +11,12 @@ import androidx.core.app.ServiceCompat
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.model.NO_DEVICE_SELECTED
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
+import com.geeksville.mesh.util.Exceptions
 import com.geeksville.mesh.util.toRemoteExceptions
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -65,7 +66,7 @@ class MeshService : Service() {
 
     @Inject lateinit var router: MeshRouter
 
-    private val serviceJob = Job()
+    private val serviceJob = SupervisorJob()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
     private val myNodeNum: Int
@@ -108,7 +109,13 @@ class MeshService : Service() {
         serviceScope.handledLaunch { radioInterfaceService.connect() }
 
         radioInterfaceService.receivedData
-            .onEach { bytes -> messageProcessor.handleFromRadio(bytes, nodeManager.myNodeNum) }
+            .onEach { bytes ->
+                try {
+                    messageProcessor.handleFromRadio(bytes, nodeManager.myNodeNum)
+                } catch (e: Exception) {
+                    Exceptions.report(e, "MeshService-receivedData", "handleFromRadio failed")
+                }
+            }
             .launchIn(serviceScope)
 
         serviceRepository.serviceAction.onEach(router.actionHandler::onServiceAction).launchIn(serviceScope)
