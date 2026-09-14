@@ -2,6 +2,7 @@
 package com.geeksville.mesh.service
 
 import android.app.Notification
+import co.touchlab.kermit.Logger
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.repository.radio.RadioInterfaceService
 import com.meshtastic.core.strings.getString
@@ -14,6 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withTimeoutOrNull
 import org.meshtastic.core.analytics.DataPair
 import org.meshtastic.core.analytics.platform.PlatformAnalytics
 import org.meshtastic.core.data.repository.NodeRepository
@@ -56,6 +58,7 @@ constructor(
     private var scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var sleepTimeout: Job? = null
     private var locationRequestsJob: Job? = null
+    private var configHandshakeWatchdog: Job? = null
     private var connectTimeMsec = 0L
 
     fun start(scope: CoroutineScope) {
@@ -104,6 +107,10 @@ constructor(
         if (connectionStateHolder.connectionState.value == c && c !is ConnectionState.Connected) return
         sleepTimeout?.cancel()
         sleepTimeout = null
+        if (c !is ConnectionState.Connecting) {
+            configHandshakeWatchdog?.cancel()
+            configHandshakeWatchdog = null
+        }
 
         when (c) {
             is ConnectionState.Connecting -> connectionStateHolder.setState(ConnectionState.Connecting)
@@ -120,6 +127,23 @@ constructor(
         connectTimeMsec = System.currentTimeMillis()
         scope.handledLaunch { nodeRepository.clearMyNodeInfo() }
         startConfigOnly()
+        startConfigHandshakeWatchdog()
+    }
+
+    private fun startConfigHandshakeWatchdog() {
+        configHandshakeWatchdog?.cancel()
+        configHandshakeWatchdog = scope.handledLaunch {
+            val completedOrDisconnected =
+                withTimeoutOrNull(CONFIG_HANDSHAKE_TIMEOUT_MS) {
+                    connectionStateHolder.connectionState.first {
+                        it is ConnectionState.Connected || it is ConnectionState.Disconnected
+                    }
+                }
+            if (completedOrDisconnected == null) {
+                Logger.w(TAG) { "Config handshake timed out; forcing radio reconnect" }
+                radioInterfaceService.forceReconnect()
+            }
+        }
     }
 
     private fun handleDeviceSleep() {
@@ -228,10 +252,12 @@ constructor(
     }
 
     companion object {
+        private const val TAG = "MeshConnectionManager"
         private const val CONFIG_ONLY_NONCE = 69420
         private const val NODE_INFO_NONCE = 69421
         private const val MILLISECONDS_IN_SECOND = 1000.0
         private const val DEVICE_SLEEP_TIMEOUT_SECONDS = 30
+        private const val CONFIG_HANDSHAKE_TIMEOUT_MS = 25_000L
 
         private const val EVENT_CONNECTED_SECONDS = "connected_seconds"
         private const val EVENT_MESH_DISCONNECT = "mesh_disconnect"

@@ -4,6 +4,7 @@ package com.geeksville.mesh.repository.radio
 import android.app.Application
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
+import co.touchlab.kermit.Logger
 import com.geeksville.mesh.concurrent.handledLaunch
 import com.geeksville.mesh.repository.bluetooth.BluetoothRepository
 import com.geeksville.mesh.repository.network.NetworkRepository
@@ -89,6 +90,7 @@ constructor(
     }
 
     companion object {
+        private const val TAG = "RadioInterfaceService"
         private const val HEARTBEAT_INTERVAL_MILLIS = 30 * 1000L
     }
 
@@ -142,6 +144,7 @@ constructor(
 
     fun onConnect() {
         if (_connectionState.value != ConnectionState.Connected) {
+            Logger.d(TAG) { "Radio interface connected" }
             broadcastConnectionChanged(ConnectionState.Connected)
         }
     }
@@ -149,11 +152,13 @@ constructor(
     fun onDisconnect(isPermanent: Boolean) {
         val newTargetState = if (isPermanent) ConnectionState.Disconnected else ConnectionState.DeviceSleep
         if (_connectionState.value != newTargetState) {
+            Logger.d(TAG) { "Radio interface disconnected, permanent=$isPermanent" }
             broadcastConnectionChanged(newTargetState)
         }
     }
 
     fun onDisconnect(error: BleError) {
+        Logger.w(TAG) { "Radio interface error: ${error.message}, shouldReconnect=${error.shouldReconnect}" }
         processLifecycle.coroutineScope.launch(dispatchers.default) { _connectionError.emit(error) }
         onDisconnect(!error.shouldReconnect)
     }
@@ -213,6 +218,12 @@ constructor(
         }
 
     fun setDeviceAddress(deviceAddr: String?): Boolean = toRemoteExceptions { setBondedDeviceAddress(deviceAddr) }
+
+    fun forceReconnect() {
+        Logger.w(TAG) { "Forcing reconnect of radio interface" }
+        ignoreException { stopInterface() }
+        startInterface()
+    }
 
     fun connect() = toRemoteExceptions {
 

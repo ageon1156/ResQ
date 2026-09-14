@@ -3,6 +3,7 @@
 package com.geeksville.mesh.repository.radio
 
 import com.geeksville.mesh.service.RadioNotConnectedException
+import kotlinx.coroutines.TimeoutCancellationException
 import no.nordicsemi.kotlin.ble.client.exception.BluetoothUnavailableException
 import no.nordicsemi.kotlin.ble.client.exception.ConnectionFailedException
 import no.nordicsemi.kotlin.ble.client.exception.InvalidAttributeException
@@ -18,6 +19,9 @@ import no.nordicsemi.kotlin.ble.core.exception.ManagerClosedException
 sealed class BleError(val message: String, val shouldReconnect: Boolean) {
 
     data object PeripheralNotFound : BleError("Peripheral not found", shouldReconnect = false)
+
+    class ConnectionTimeout(exception: Throwable) :
+        BleError("Connection timed out: ${exception.message}", shouldReconnect = true)
 
     class ConnectionFailed(exception: Throwable) :
         BleError("Connection failed: ${exception.message}", shouldReconnect = true)
@@ -59,6 +63,7 @@ sealed class BleError(val message: String, val shouldReconnect: Boolean) {
 
     companion object {
         fun from(exception: Throwable): BleError = when (exception) {
+            is TimeoutCancellationException -> ConnectionTimeout(exception)
             is GattException -> {
                 when (exception) {
                     is ConnectionFailedException -> ConnectionFailed(exception)

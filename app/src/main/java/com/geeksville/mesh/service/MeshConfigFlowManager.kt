@@ -1,6 +1,7 @@
 
 package com.geeksville.mesh.service
 
+import co.touchlab.kermit.Logger
 import com.geeksville.mesh.concurrent.handledLaunch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,11 @@ constructor(
     private val packetHandler: PacketHandler,
 ) {
     private var scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    companion object {
+        private const val TAG = "MeshConfigFlowManager"
+    }
+
     private val configOnlyNonce = 69420
     private val nodeInfoNonce = 69421
     private val wantConfigDelay = 100L
@@ -51,9 +57,15 @@ constructor(
 
     fun handleConfigComplete(configCompleteId: Int) {
         when (configCompleteId) {
-            configOnlyNonce -> handleConfigOnlyComplete()
-            nodeInfoNonce -> handleNodeInfoComplete()
-            else -> {}
+            configOnlyNonce -> {
+                Logger.d(TAG) { "Config-only handshake complete" }
+                handleConfigOnlyComplete()
+            }
+            nodeInfoNonce -> {
+                Logger.d(TAG) { "Node-info handshake complete" }
+                handleNodeInfoComplete()
+            }
+            else -> Logger.w(TAG) { "Received configComplete for unknown nonce $configCompleteId" }
         }
     }
 

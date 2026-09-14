@@ -8,12 +8,15 @@ import com.geeksville.mesh.repository.radio.BleConstants.BTM_LOGRADIO_CHARACTER
 import com.geeksville.mesh.repository.radio.BleConstants.BTM_SERVICE_UUID
 import com.geeksville.mesh.repository.radio.BleConstants.BTM_TORADIO_CHARACTER
 import com.geeksville.mesh.service.RadioNotConnectedException
+import co.touchlab.kermit.Logger
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -29,6 +32,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import no.nordicsemi.kotlin.ble.client.RemoteCharacteristic
 import no.nordicsemi.kotlin.ble.client.android.CentralManager
 import no.nordicsemi.kotlin.ble.client.android.ConnectionPriority
@@ -115,13 +120,19 @@ constructor(
         connectionScope.launch {
             try {
                 connectionStartTime = System.currentTimeMillis()
-                peripheral = retryCall { findAndConnectPeripheral() }
+                Logger.d(TAG) { "Connecting to $address" }
+                withTimeout(CONNECT_TIMEOUT_MS) { peripheral = retryCall { findAndConnectPeripheral() } }
+                Logger.d(TAG) { "GATT connected to $address, starting service discovery" }
                 peripheral?.let {
                     onConnected()
                     observePeripheralChanges()
                     discoverServicesAndSetupCharacteristics(it)
                 }
+            } catch (e: TimeoutCancellationException) {
+                Logger.w(TAG) { "Timed out connecting to $address" }
+                service.onDisconnect(BleError.ConnectionTimeout(e))
             } catch (e: Exception) {
+                Logger.w(TAG, throwable = e) { "Failed to connect to $address" }
                 service.onDisconnect(BleError.from(e))
             }
         }
@@ -156,6 +167,7 @@ constructor(
             p.state
                 .onEach { state ->
                     if (state is ConnectionState.Disconnected) {
+                        Logger.w(TAG) { "Peripheral $address disconnected: ${state.reason}" }
                         service.onDisconnect(BleError.Disconnected(reason = state.reason))
                     }
                 }
@@ -167,6 +179,10 @@ constructor(
     @Suppress("TooGenericExceptionCaught")
     @OptIn(ExperimentalUuidApi::class)
     private fun discoverServicesAndSetupCharacteristics(peripheral: Peripheral) {
+        // The services() flow keeps observing for the life of the connection, so only the FIRST
+        // result is timeout-guarded here; discoveryDone signals that first result has arrived.
+        val discoveryDone = CompletableDeferred<Unit>()
+
         connectionScope.launch {
             peripheral
                 .services(listOf(BTM_SERVICE_UUID.toKotlinUuid()))
@@ -188,23 +204,41 @@ constructor(
                                 it != null
                             }
                         ) {
+                            Logger.d(TAG) { "Discovery succeeded for $address, setting up notifications" }
                             setupNotifications()
                             service.onConnect()
                         } else {
+                            Logger.w(TAG) { "One or more required characteristics not found for $address" }
                             service.onDisconnect(BleError.DiscoveryFailed("One or more characteristics not found"))
                         }
                     } else {
+                        Logger.w(TAG) { "Meshtastic service not found for $address" }
                         service.onDisconnect(BleError.DiscoveryFailed("Meshtastic service not found"))
                     }
+                    discoveryDone.complete(Unit)
                 }
                 .catch { e ->
                     try {
                         peripheral.disconnect()
                     } catch (e2: Exception) {
                     }
+                    Logger.w(TAG, throwable = e) { "Discovery failed for $address" }
                     service.onDisconnect(BleError.from(e))
+                    discoveryDone.complete(Unit)
                 }
                 .launchIn(connectionScope)
+        }
+
+        connectionScope.launch {
+            val completed = withTimeoutOrNull(DISCOVERY_TIMEOUT_MS) { discoveryDone.await() }
+            if (completed == null) {
+                Logger.w(TAG) { "Timed out discovering services for $address" }
+                try {
+                    peripheral.disconnect()
+                } catch (e: Exception) {
+                }
+                service.onDisconnect(BleError.ConnectionTimeout(Exception("Discovery timed out for $address")))
+            }
         }
     }
 
@@ -278,8 +312,11 @@ constructor(
     }
 
     companion object {
+        private const val TAG = "NordicBleInterface"
         private const val RETRY_COUNT = 3
         private const val RETRY_DELAY_MS = 500L
+        private const val CONNECT_TIMEOUT_MS = 15_000L
+        private const val DISCOVERY_TIMEOUT_MS = 10_000L
     }
 }
 
